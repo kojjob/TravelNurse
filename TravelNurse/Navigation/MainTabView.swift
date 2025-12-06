@@ -104,18 +104,7 @@ struct ExpensesPlaceholderView: View {
     }
 }
 
-struct TaxHomePlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "house.lodge.fill",
-                description: Text("Tax home compliance tracking will be available in the next update.")
-            )
-            .navigationTitle("Tax Home")
-        }
-    }
-}
+// TaxHomePlaceholderView removed - using TaxHomeView instead
 
 struct ReportsPlaceholderView: View {
     var body: some View {
