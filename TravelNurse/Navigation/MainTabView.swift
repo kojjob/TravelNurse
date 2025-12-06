@@ -99,6 +99,7 @@ struct MainTabView: View {
     }
 }
 
+
 struct ExpensesPlaceholderView: View {
     var body: some View {
         NavigationStack {

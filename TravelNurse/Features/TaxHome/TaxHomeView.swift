@@ -56,10 +56,12 @@ struct TaxHomeView: View {
                 viewModel.configure(with: modelContext)
             }
             .sheet(isPresented: $viewModel.showingRecordVisitSheet) {
-                RecordVisitSheet(
-                    isPresented: $viewModel.showingRecordVisitSheet,
-                    onRecordVisit: { date, days in
-                        viewModel.recordVisit(days: days)
+                TaxHomeRecordVisitSheet(
+                    days: $viewModel.visitDaysToRecord,
+                    onRecord: {
+                        viewModel.recordVisit(days: viewModel.visitDaysToRecord)
+                        viewModel.showingRecordVisitSheet = false
+                        viewModel.visitDaysToRecord = 1
                     }
                 )
                 .presentationDetents([.height(400)])
@@ -185,9 +187,10 @@ struct TaxHomeView: View {
 
             // Residence Category
             if !viewModel.residenceItems.isEmpty {
-                ChecklistCategorySection(
-                    categoryName: "Residence",
-                    iconName: "house.fill",
+                TaxHomeChecklistSection(
+                    title: "Residence",
+                    icon: "house.fill",
+                    color: .orange,
                     items: viewModel.residenceItems,
                     onToggleItem: { itemId in
                         Task { await viewModel.toggleChecklistItem(id: itemId) }
@@ -197,9 +200,10 @@ struct TaxHomeView: View {
 
             // Presence Category
             if !viewModel.presenceItems.isEmpty {
-                ChecklistCategorySection(
-                    categoryName: "Physical Presence",
-                    iconName: "mappin.and.ellipse",
+                TaxHomeChecklistSection(
+                    title: "Physical Presence",
+                    icon: "mappin.and.ellipse",
+                    color: TNColors.primary,
                     items: viewModel.presenceItems,
                     onToggleItem: { itemId in
                         Task { await viewModel.toggleChecklistItem(id: itemId) }
@@ -209,9 +213,10 @@ struct TaxHomeView: View {
 
             // Community Ties Category
             if !viewModel.tiesItems.isEmpty {
-                ChecklistCategorySection(
-                    categoryName: "Community Ties",
-                    iconName: "person.2.fill",
+                TaxHomeChecklistSection(
+                    title: "Community Ties",
+                    icon: "person.2.fill",
+                    color: .purple,
                     items: viewModel.tiesItems,
                     onToggleItem: { itemId in
                         Task { await viewModel.toggleChecklistItem(id: itemId) }
@@ -328,6 +333,161 @@ struct TaxHomeStatCard: View {
         .background(TNColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
         .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+    }
+}
+
+// MARK: - Tax Home Checklist Section
+
+struct TaxHomeChecklistSection: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let items: [ComplianceChecklistItem]
+    let onToggle: (ComplianceChecklistItem) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: TNSpacing.sm) {
+            HStack(spacing: TNSpacing.xs) {
+                Image(systemName: icon)
+                    .font(.system(size: 14))
+                    .foregroundStyle(color)
+
+                Text(title)
+                    .font(TNTypography.titleSmall)
+                    .foregroundStyle(TNColors.textPrimary)
+
+                Spacer()
+
+                let completed = items.filter { $0.status == .complete }.count
+                Text("\(completed)/\(items.count)")
+                    .font(TNTypography.caption)
+                    .foregroundStyle(TNColors.textSecondary)
+            }
+
+            VStack(spacing: 0) {
+                ForEach(items) { item in
+                    TaxHomeChecklistRow(item: item, onToggle: { onToggle(item) })
+
+                    if item.id != items.last?.id {
+                        Divider()
+                            .padding(.leading, 40)
+                    }
+                }
+            }
+            .padding(TNSpacing.sm)
+            .background(TNColors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+            .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+        }
+    }
+}
+
+// MARK: - Tax Home Checklist Row
+
+struct TaxHomeChecklistRow: View {
+    let item: ComplianceChecklistItem
+    let onToggle: () -> Void
+
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: TNSpacing.sm) {
+                Image(systemName: item.status.iconName)
+                    .font(.system(size: 20))
+                    .foregroundStyle(item.status.color)
+                    .frame(width: 24)
+
+                VStack(alignment: .leading, spacing: TNSpacing.xxs) {
+                    Text(item.title)
+                        .font(TNTypography.bodyMedium)
+                        .foregroundStyle(item.status == .complete ? TNColors.textSecondary : TNColors.textPrimary)
+                        .strikethrough(item.status == .complete)
+
+                    Text(item.description)
+                        .font(TNTypography.caption)
+                        .foregroundStyle(TNColors.textTertiary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+            }
+            .padding(.vertical, TNSpacing.sm)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Tax Home Record Visit Sheet
+
+struct TaxHomeRecordVisitSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var days: Int
+
+    let onRecord: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: TNSpacing.lg) {
+                Text("Record Tax Home Visit")
+                    .font(TNTypography.headlineMedium)
+                    .foregroundStyle(TNColors.textPrimary)
+
+                Text("How many days did you spend at your tax home?")
+                    .font(TNTypography.bodyMedium)
+                    .foregroundStyle(TNColors.textSecondary)
+                    .multilineTextAlignment(.center)
+
+                HStack(spacing: TNSpacing.lg) {
+                    Button {
+                        if days > 1 { days -= 1 }
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .font(.system(size: 44))
+                            .foregroundStyle(days > 1 ? TNColors.primary : TNColors.textTertiary)
+                    }
+                    .disabled(days <= 1)
+
+                    Text("\(days)")
+                        .font(TNTypography.displayLarge)
+                        .foregroundStyle(TNColors.textPrimary)
+                        .frame(minWidth: 60)
+
+                    Button {
+                        if days < 30 { days += 1 }
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 44))
+                            .foregroundStyle(days < 30 ? TNColors.primary : TNColors.textTertiary)
+                    }
+                    .disabled(days >= 30)
+                }
+
+                Text(days == 1 ? "day" : "days")
+                    .font(TNTypography.bodyMedium)
+                    .foregroundStyle(TNColors.textSecondary)
+
+                Spacer()
+
+                Button(action: onRecord) {
+                    Text("Record Visit")
+                        .font(TNTypography.buttonMedium)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, TNSpacing.md)
+                        .background(TNColors.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+                }
+            }
+            .padding(TNSpacing.lg)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundStyle(TNColors.textSecondary)
+                }
+            }
+        }
     }
 }
 
