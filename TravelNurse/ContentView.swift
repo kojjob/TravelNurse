@@ -867,7 +867,7 @@ struct ExpensesPreviewView: View {
                 // Expense list
                 ScrollView {
                     LazyVStack(spacing: TNSpacing.sm) {
-                        ExpenseRow(
+                        ExpensePreviewRow(
                             category: "Mileage",
                             description: "Home → Stanford Medical",
                             date: "Today",
@@ -875,7 +875,7 @@ struct ExpensesPreviewView: View {
                             icon: "car.fill",
                             color: TNColors.accent
                         )
-                        ExpenseRow(
+                        ExpensePreviewRow(
                             category: "Professional",
                             description: "Scrubs - Cherokee brand",
                             date: "Yesterday",
@@ -883,7 +883,7 @@ struct ExpensesPreviewView: View {
                             icon: "tshirt.fill",
                             color: TNColors.primary
                         )
-                        ExpenseRow(
+                        ExpensePreviewRow(
                             category: "Housing",
                             description: "Assignment housing rent",
                             date: "Dec 1",
@@ -891,7 +891,7 @@ struct ExpensesPreviewView: View {
                             icon: "house.fill",
                             color: TNColors.secondary
                         )
-                        ExpenseRow(
+                        ExpensePreviewRow(
                             category: "Meals",
                             description: "Lunch during shift",
                             date: "Dec 3",
@@ -899,7 +899,7 @@ struct ExpensesPreviewView: View {
                             icon: "fork.knife",
                             color: TNColors.warning
                         )
-                        ExpenseRow(
+                        ExpensePreviewRow(
                             category: "Professional",
                             description: "BLS Certification renewal",
                             date: "Nov 28",
@@ -1010,7 +1010,7 @@ struct ExpenseCategoryPill: View {
     }
 }
 
-struct ExpenseRow: View {
+struct ExpensePreviewRow: View {
     let category: String
     let description: String
     let date: String
@@ -1020,41 +1020,45 @@ struct ExpenseRow: View {
 
     var body: some View {
         HStack(spacing: TNSpacing.md) {
-            Circle()
-                .fill(color.opacity(0.15))
-                .frame(width: 44, height: 44)
-                .overlay {
-                    Image(systemName: icon)
-                        .foregroundStyle(color)
-                }
+            // Category Icon
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 44, height: 44)
 
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(color)
+            }
+
+            // Details
             VStack(alignment: .leading, spacing: TNSpacing.xxs) {
                 Text(description)
                     .font(TNTypography.bodyMedium)
                     .foregroundStyle(TNColors.textPrimary)
                     .lineLimit(1)
-                HStack(spacing: TNSpacing.xs) {
-                    Text(category)
-                        .font(TNTypography.caption)
-                        .foregroundStyle(color)
-                    Text("•")
-                        .foregroundStyle(TNColors.textTertiary)
-                    Text(date)
-                        .font(TNTypography.caption)
-                        .foregroundStyle(TNColors.textTertiary)
-                }
+
+                Text(category)
+                    .font(TNTypography.caption)
+                    .foregroundStyle(TNColors.textSecondary)
+
+                Text(date)
+                    .font(TNTypography.caption)
+                    .foregroundStyle(TNColors.textTertiary)
             }
 
             Spacer()
 
+            // Amount
             Text(amount)
                 .font(TNTypography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundStyle(TNColors.textPrimary)
+                .foregroundStyle(TNColors.error)
         }
-        .padding(TNSpacing.sm)
+        .padding(TNSpacing.md)
         .background(TNColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: TNSpacing.buttonRadius))
+        .shadow(color: TNColors.shadowColor, radius: TNSpacing.shadowRadius, x: 0, y: 2)
     }
 }
 

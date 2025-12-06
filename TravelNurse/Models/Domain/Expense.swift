@@ -139,3 +139,54 @@ extension Expense {
         }
     }
 }
+
+// MARK: - Preview Helper
+
+extension Expense {
+    /// Sample expense for SwiftUI previews
+    static var preview: Expense {
+        let expense = Expense(
+            category: .meals,
+            amount: 45.99,
+            date: Date(),
+            merchantName: "Whole Foods Market",
+            notes: "Groceries for the week",
+            isDeductible: true
+        )
+        return expense
+    }
+
+    /// Sample expenses array for previews
+    static var previews: [Expense] {
+        [
+            Expense(
+                category: .meals,
+                amount: 45.99,
+                date: Date(),
+                merchantName: "Whole Foods Market",
+                isDeductible: true
+            ),
+            Expense(
+                category: .gasoline,
+                amount: 68.50,
+                date: Calendar.current.date(byAdding: .day, value: -1, to: Date())!,
+                merchantName: "Shell Gas Station",
+                isDeductible: true
+            ),
+            Expense(
+                category: .licensure,
+                amount: 150.00,
+                date: Calendar.current.date(byAdding: .day, value: -3, to: Date())!,
+                merchantName: "State Board of Nursing",
+                isDeductible: true
+            ),
+            Expense(
+                category: .uniformsScrubs,
+                amount: 89.00,
+                date: Calendar.current.date(byAdding: .day, value: -5, to: Date())!,
+                merchantName: "Cherokee Uniforms",
+                isDeductible: true
+            )
+        ]
+    }
+}

@@ -57,7 +57,7 @@ struct MainTabView: View {
                 }
                 .tag(Tab.assignments)
 
-            ExpensesPlaceholderView()
+            ExpenseListView()
                 .tabItem {
                     Label(Tab.expenses.title, systemImage: Tab.expenses.icon)
                 }
@@ -90,19 +90,6 @@ struct MainTabView: View {
 }
 
 // MARK: - Placeholder Views (to be replaced in later sprints)
-
-struct ExpensesPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "creditcard.fill",
-                description: Text("Expense tracking will be available in the next update.")
-            )
-            .navigationTitle("Expenses")
-        }
-    }
-}
 
 struct TaxHomePlaceholderView: View {
     var body: some View {
