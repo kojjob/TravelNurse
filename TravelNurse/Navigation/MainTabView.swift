@@ -89,6 +89,47 @@ struct MainTabView: View {
     }
 }
 
+// MARK: - Placeholder Views (to be replaced in later sprints)
+
+struct ExpensesPlaceholderView: View {
+    var body: some View {
+        NavigationStack {
+            ContentUnavailableView(
+                "Coming Soon",
+                systemImage: "creditcard.fill",
+                description: Text("Expense tracking will be available in the next update.")
+            )
+            .navigationTitle("Expenses")
+        }
+    }
+}
+
+struct TaxHomePlaceholderView: View {
+    var body: some View {
+        NavigationStack {
+            ContentUnavailableView(
+                "Coming Soon",
+                systemImage: "house.lodge.fill",
+                description: Text("Tax home compliance tracking will be available in the next update.")
+            )
+            .navigationTitle("Tax Home")
+        }
+    }
+}
+
+struct ReportsPlaceholderView: View {
+    var body: some View {
+        NavigationStack {
+            ContentUnavailableView(
+                "Coming Soon",
+                systemImage: "chart.bar.fill",
+                description: Text("Tax reports and exports will be available in the next update.")
+            )
+            .navigationTitle("Reports")
+        }
+    }
+}
+
 #Preview {
     MainTabView()
         .modelContainer(for: [
