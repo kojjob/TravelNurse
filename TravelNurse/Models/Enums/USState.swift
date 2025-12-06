@@ -130,6 +130,16 @@ public enum USState: String, CaseIterable, Codable, Identifiable, Hashable {
         }
     }
 
+    /// Whether this state has income tax
+    public var hasIncomeTax: Bool {
+        !hasNoIncomeTax
+    }
+
+    /// Display name (alias for fullName)
+    public var displayName: String {
+        fullName
+    }
+
     /// States with no income tax (popular for travel nurse tax homes)
     public static var noIncomeTaxStates: [USState] {
         allCases.filter { $0.hasNoIncomeTax }

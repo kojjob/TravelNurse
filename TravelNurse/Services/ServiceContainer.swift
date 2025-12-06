@@ -39,6 +39,9 @@ public final class ServiceContainer {
     /// Mileage tracking service
     public private(set) var mileageService: MileageService?
 
+    /// Location tracking service for GPS mileage
+    public private(set) var locationService: LocationService?
+
     // MARK: - Initialization
 
     private init() {}
@@ -53,6 +56,9 @@ public final class ServiceContainer {
         self.expenseService = ExpenseService(modelContext: modelContext)
         self.complianceService = ComplianceService(modelContext: modelContext)
         self.mileageService = MileageService(modelContext: modelContext)
+
+        // Initialize location service (doesn't need model context)
+        self.locationService = LocationService()
     }
 
     // MARK: - Service Access
@@ -89,6 +95,14 @@ public final class ServiceContainer {
         return service
     }
 
+    /// Get location service (throws if not configured)
+    public func getLocationService() throws -> LocationService {
+        guard let service = locationService else {
+            throw ServiceContainerError.serviceNotConfigured("LocationService")
+        }
+        return service
+    }
+
     // MARK: - Testing Support
 
     /// Reset all services (primarily for testing)
@@ -97,6 +111,7 @@ public final class ServiceContainer {
         expenseService = nil
         complianceService = nil
         mileageService = nil
+        locationService = nil
         modelContext = nil
     }
 
