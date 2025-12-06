@@ -17,11 +17,11 @@ struct MainTabView: View {
     @State private var selectedTab: Tab = .home
 
     enum Tab: Int, CaseIterable {
-        case home
-        case assignments
-        case expenses
-        case taxHome
-        case reports
+        case home = 0
+        case assignments = 1
+        case expenses = 2
+        case taxHome = 3
+        case reports = 4
 
         var title: String {
             switch self {
@@ -110,6 +110,10 @@ struct ExpensesPlaceholderView: View {
         }
     }
 }
+
+// TaxHomePlaceholderView removed - using TaxHomeView instead
+
+// ReportsPlaceholderView removed - using ReportsView from Sprint 7
 
 #Preview {
     MainTabView()
