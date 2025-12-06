@@ -56,7 +56,7 @@ struct TaxHomeView: View {
                 viewModel.configure(with: modelContext)
             }
             .sheet(isPresented: $viewModel.showingRecordVisitSheet) {
-                RecordVisitSheet(
+                TaxHomeRecordVisitSheet(
                     days: $viewModel.visitDaysToRecord,
                     onRecord: {
                         viewModel.recordVisit(days: viewModel.visitDaysToRecord)
@@ -185,7 +185,7 @@ struct TaxHomeView: View {
 
             // Residence Category
             if !viewModel.residenceItems.isEmpty {
-                ChecklistCategorySection(
+                TaxHomeChecklistSection(
                     title: "Residence",
                     icon: "house.fill",
                     color: .orange,
@@ -196,7 +196,7 @@ struct TaxHomeView: View {
 
             // Presence Category
             if !viewModel.presenceItems.isEmpty {
-                ChecklistCategorySection(
+                TaxHomeChecklistSection(
                     title: "Physical Presence",
                     icon: "mappin.and.ellipse",
                     color: TNColors.primary,
@@ -207,7 +207,7 @@ struct TaxHomeView: View {
 
             // Community Ties Category
             if !viewModel.tiesItems.isEmpty {
-                ChecklistCategorySection(
+                TaxHomeChecklistSection(
                     title: "Community Ties",
                     icon: "person.2.fill",
                     color: .purple,
@@ -216,40 +216,6 @@ struct TaxHomeView: View {
                 )
             }
         }
-    }
-}
-
-// MARK: - Compliance Score Ring
-
-struct ComplianceScoreRing: View {
-    let score: Int
-    let level: ComplianceLevel
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(TNColors.border, lineWidth: 10)
-
-            Circle()
-                .trim(from: 0, to: Double(score) / 100)
-                .stroke(
-                    level.color,
-                    style: StrokeStyle(lineWidth: 10, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: score)
-
-            VStack(spacing: 0) {
-                Text("\(score)")
-                    .font(TNTypography.displayMedium)
-                    .foregroundStyle(level.color)
-
-                Text("%")
-                    .font(TNTypography.caption)
-                    .foregroundStyle(TNColors.textSecondary)
-            }
-        }
-        .frame(width: 100, height: 100)
     }
 }
 
@@ -362,9 +328,9 @@ struct TaxHomeStatCard: View {
     }
 }
 
-// MARK: - Checklist Category Section
+// MARK: - Tax Home Checklist Section
 
-struct ChecklistCategorySection: View {
+struct TaxHomeChecklistSection: View {
     let title: String
     let icon: String
     let color: Color
@@ -392,7 +358,7 @@ struct ChecklistCategorySection: View {
 
             VStack(spacing: 0) {
                 ForEach(items) { item in
-                    ChecklistItemRow(item: item, onToggle: { onToggle(item) })
+                    TaxHomeChecklistRow(item: item, onToggle: { onToggle(item) })
 
                     if item.id != items.last?.id {
                         Divider()
@@ -408,9 +374,9 @@ struct ChecklistCategorySection: View {
     }
 }
 
-// MARK: - Checklist Item Row
+// MARK: - Tax Home Checklist Row
 
-struct ChecklistItemRow: View {
+struct TaxHomeChecklistRow: View {
     let item: ComplianceChecklistItem
     let onToggle: () -> Void
 
@@ -443,9 +409,9 @@ struct ChecklistItemRow: View {
     }
 }
 
-// MARK: - Record Visit Sheet
+// MARK: - Tax Home Record Visit Sheet
 
-struct RecordVisitSheet: View {
+struct TaxHomeRecordVisitSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var days: Int
 
