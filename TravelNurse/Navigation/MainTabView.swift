@@ -13,10 +13,10 @@ import SwiftData
 struct MainTabView: View {
 
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedTab: Tab = .dashboard
+    @State private var selectedTab: Tab = .home
 
     enum Tab: Int, CaseIterable {
-        case dashboard = 0
+        case home = 0
         case assignments = 1
         case expenses = 2
         case taxHome = 3
@@ -24,7 +24,7 @@ struct MainTabView: View {
 
         var title: String {
             switch self {
-            case .dashboard: return "Dashboard"
+            case .home: return "Home"
             case .assignments: return "Assignments"
             case .expenses: return "Expenses"
             case .taxHome: return "Tax Home"
@@ -34,10 +34,10 @@ struct MainTabView: View {
 
         var icon: String {
             switch self {
-            case .dashboard: return "house.fill"
+            case .home: return "house.fill"
             case .assignments: return "briefcase.fill"
             case .expenses: return "creditcard.fill"
-            case .taxHome: return "house.lodge.fill"
+            case .taxHome: return "mappin.and.ellipse"
             case .reports: return "chart.bar.fill"
             }
         }
@@ -47,9 +47,9 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             DashboardView()
                 .tabItem {
-                    Label(Tab.dashboard.title, systemImage: Tab.dashboard.icon)
+                    Label(Tab.home.title, systemImage: Tab.home.icon)
                 }
-                .tag(Tab.dashboard)
+                .tag(Tab.home)
 
             AssignmentListView()
                 .tabItem {
@@ -63,13 +63,13 @@ struct MainTabView: View {
                 }
                 .tag(Tab.expenses)
 
-            TaxHomePlaceholderView()
+            TaxHomeView()
                 .tabItem {
                     Label(Tab.taxHome.title, systemImage: Tab.taxHome.icon)
                 }
                 .tag(Tab.taxHome)
 
-            ReportsPlaceholderView()
+            ReportsView()
                 .tabItem {
                     Label(Tab.reports.title, systemImage: Tab.reports.icon)
                 }
@@ -85,34 +85,6 @@ struct MainTabView: View {
         // Configure ServiceContainer if not already configured
         if ServiceContainer.shared.modelContext == nil {
             ServiceContainer.shared.configure(with: modelContext)
-        }
-    }
-}
-
-// MARK: - Placeholder Views (to be replaced in later sprints)
-
-struct TaxHomePlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "house.lodge.fill",
-                description: Text("Tax home compliance tracking will be available in the next update.")
-            )
-            .navigationTitle("Tax Home")
-        }
-    }
-}
-
-struct ReportsPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "chart.bar.fill",
-                description: Text("Tax reports and exports will be available in the next update.")
-            )
-            .navigationTitle("Reports")
         }
     }
 }

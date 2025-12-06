@@ -2,7 +2,7 @@
 //  ExpenseListView.swift
 //  TravelNurse
 //
-//  Main view for displaying and managing expenses
+//  Main view for displaying and managing expenses with consistent card-based design
 //
 
 import SwiftUI
@@ -20,17 +20,39 @@ struct ExpenseListView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                TNColors.background.ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: TNSpacing.lg) {
+                    if viewModel.isLoading {
+                        loadingView
+                    } else if viewModel.hasExpenses {
+                        // Summary Metrics
+                        metricsSection
 
-                if viewModel.isLoading {
-                    loadingView
-                } else if viewModel.hasExpenses {
-                    expenseContent
-                } else {
-                    emptyStateView
+                        // Receipt Warning (if any)
+                        if !viewModel.expensesNeedingReceipts.isEmpty {
+                            receiptWarningCard
+                        }
+
+                        // Category Filter
+                        CategoryFilterBar(selectedFilter: $viewModel.filterCategory)
+
+                        // Year Selector (if multiple years)
+                        if viewModel.availableTaxYears.count > 1 {
+                            YearFilterBar(
+                                selectedYear: $selectedYear,
+                                availableYears: viewModel.availableTaxYears
+                            )
+                        }
+
+                        // Expenses List
+                        expensesListSection
+                    } else {
+                        emptyStateView
+                    }
                 }
+                .padding(TNSpacing.md)
             }
+            .background(TNColors.background)
             .navigationTitle("Expenses")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -38,7 +60,7 @@ struct ExpenseListView: View {
                         showingAddSheet = true
                     } label: {
                         Image(systemName: "plus.circle.fill")
-                            .font(.title2)
+                            .font(.system(size: 24))
                             .foregroundStyle(TNColors.primary)
                     }
                 }
@@ -69,96 +91,48 @@ struct ExpenseListView: View {
         }
     }
 
-    // MARK: - Main Content
+    // MARK: - Metrics Section
 
-    private var expenseContent: some View {
-        ScrollView {
-            VStack(spacing: TNSpacing.md) {
-                // Summary Card
-                summaryCard
-
-                // Category Filter
-                CategoryFilterBar(selectedFilter: $viewModel.filterCategory)
-
-                // Year Selector (if multiple years)
-                if viewModel.availableTaxYears.count > 1 {
-                    YearFilterBar(
-                        selectedYear: $selectedYear,
-                        availableYears: viewModel.availableTaxYears
-                    )
-                }
-
-                // Receipt Warning (if any high-value expenses missing receipts)
-                if !viewModel.expensesNeedingReceipts.isEmpty {
-                    receiptWarningBanner
-                }
-
-                // Expenses List
-                expensesList
-            }
-            .padding(.vertical, TNSpacing.md)
-        }
-    }
-
-    // MARK: - Summary Card
-
-    private var summaryCard: some View {
-        VStack(spacing: TNSpacing.md) {
-            // Header with gradient
-            VStack(alignment: .leading, spacing: TNSpacing.xs) {
-                Text("YTD Expenses")
-                    .font(TNTypography.labelMedium)
-                    .foregroundStyle(.white.opacity(0.8))
-
-                Text(formatCurrency(viewModel.totalExpensesAmount))
-                    .font(.system(size: 36, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-
-                Text("\(viewModel.expenseCount) expenses tracked")
-                    .font(TNTypography.caption)
-                    .foregroundStyle(.white.opacity(0.7))
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(TNSpacing.lg)
-            .background(
-                LinearGradient(
-                    colors: [TNColors.error, TNColors.error.opacity(0.8)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+    private var metricsSection: some View {
+        LazyVGrid(columns: [
+            GridItem(.flexible()),
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ], spacing: TNSpacing.sm) {
+            ExpenseMetricCard(
+                value: formatCurrency(viewModel.totalExpensesAmount),
+                label: "Total",
+                icon: "creditcard.fill",
+                color: TNColors.error
             )
-            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusLG))
 
-            // Stats Row
-            HStack(spacing: TNSpacing.md) {
-                StatCard(
-                    title: "Deductible",
-                    value: formatCurrency(viewModel.totalDeductibleAmount),
-                    icon: "checkmark.seal.fill",
-                    color: TNColors.success
-                )
+            ExpenseMetricCard(
+                value: formatCurrency(viewModel.totalDeductibleAmount),
+                label: "Deductible",
+                icon: "checkmark.seal.fill",
+                color: TNColors.success
+            )
 
-                StatCard(
-                    title: "Non-Deductible",
-                    value: formatCurrency(viewModel.totalExpensesAmount - viewModel.totalDeductibleAmount),
-                    icon: "xmark.seal.fill",
-                    color: TNColors.textTertiary
-                )
-            }
+            ExpenseMetricCard(
+                value: "\(viewModel.expenseCount)",
+                label: "Expenses",
+                icon: "doc.text.fill",
+                color: TNColors.primary
+            )
         }
-        .padding(.horizontal, TNSpacing.md)
     }
 
-    // MARK: - Receipt Warning
+    // MARK: - Receipt Warning Card
 
-    private var receiptWarningBanner: some View {
+    private var receiptWarningCard: some View {
         HStack(spacing: TNSpacing.sm) {
             Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 20))
                 .foregroundStyle(TNColors.warning)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: TNSpacing.xxs) {
                 Text("\(viewModel.expensesNeedingReceipts.count) expenses need receipts")
-                    .font(TNTypography.labelSmall)
+                    .font(TNTypography.titleSmall)
                     .foregroundStyle(TNColors.textPrimary)
 
                 Text("Expenses over $75 require documentation for IRS")
@@ -169,70 +143,78 @@ struct ExpenseListView: View {
             Spacer()
 
             Image(systemName: "chevron.right")
-                .font(.caption)
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(TNColors.textTertiary)
         }
         .padding(TNSpacing.md)
         .background(TNColors.warning.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .padding(.horizontal, TNSpacing.md)
     }
 
-    // MARK: - Expenses List
+    // MARK: - Expenses List Section
 
-    private var expensesList: some View {
-        LazyVStack(spacing: TNSpacing.sm) {
+    private var expensesListSection: some View {
+        VStack(alignment: .leading, spacing: TNSpacing.md) {
             ForEach(groupedExpenses.keys.sorted(by: >), id: \.self) { month in
-                Section {
-                    ForEach(groupedExpenses[month] ?? []) { expense in
-                        ExpenseRow(expense: expense)
-                            .onTapGesture {
+                VStack(alignment: .leading, spacing: TNSpacing.sm) {
+                    // Month Header
+                    HStack {
+                        Text(formatMonth(month))
+                            .font(TNTypography.headlineMedium)
+                            .foregroundStyle(TNColors.textPrimary)
+
+                        Spacer()
+
+                        Text(formatMonthTotal(for: month))
+                            .font(TNTypography.caption)
+                            .foregroundStyle(TNColors.textSecondary)
+                    }
+
+                    // Expenses for this month
+                    VStack(spacing: TNSpacing.sm) {
+                        ForEach(groupedExpenses[month] ?? []) { expense in
+                            ExpenseCard(expense: expense) {
                                 selectedExpense = expense
                             }
+                        }
                     }
-                } header: {
-                    monthHeader(for: month)
                 }
             }
         }
-        .padding(.horizontal, TNSpacing.md)
-    }
-
-    private func monthHeader(for date: Date) -> some View {
-        HStack {
-            Text(formatMonth(date))
-                .font(TNTypography.labelMedium)
-                .foregroundStyle(TNColors.textSecondary)
-
-            Spacer()
-
-            Text(formatMonthTotal(for: date))
-                .font(TNTypography.labelSmall)
-                .foregroundStyle(TNColors.textTertiary)
-        }
-        .padding(.vertical, TNSpacing.xs)
     }
 
     // MARK: - Empty State
 
     private var emptyStateView: some View {
-        ContentUnavailableView {
-            Label("No Expenses", systemImage: "creditcard.fill")
-        } description: {
+        VStack(spacing: TNSpacing.md) {
+            Image(systemName: "creditcard")
+                .font(.system(size: 48))
+                .foregroundStyle(TNColors.textTertiary)
+
+            Text("No Expenses Yet")
+                .font(TNTypography.headlineMedium)
+                .foregroundStyle(TNColors.textPrimary)
+
             Text("Start tracking your tax-deductible expenses to maximize your refund.")
-        } actions: {
+                .font(TNTypography.bodyMedium)
+                .foregroundStyle(TNColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, TNSpacing.lg)
+
             Button {
                 showingAddSheet = true
             } label: {
                 Text("Add First Expense")
                     .font(TNTypography.buttonMedium)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, TNSpacing.xl)
-                    .padding(.vertical, TNSpacing.md)
-                    .background(TNColors.primary)
-                    .clipShape(Capsule())
             }
+            .buttonStyle(.borderedProminent)
+            .tint(TNColors.primary)
         }
+        .frame(maxWidth: .infinity)
+        .padding(TNSpacing.xl)
+        .background(TNColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
     }
 
     // MARK: - Loading View
@@ -240,11 +222,12 @@ struct ExpenseListView: View {
     private var loadingView: some View {
         VStack(spacing: TNSpacing.md) {
             ProgressView()
-                .scaleEffect(1.2)
+                .scaleEffect(1.5)
             Text("Loading expenses...")
                 .font(TNTypography.bodyMedium)
                 .foregroundStyle(TNColors.textSecondary)
         }
+        .frame(maxWidth: .infinity, minHeight: 300)
     }
 
     // MARK: - Computed Properties
@@ -290,7 +273,8 @@ struct ExpenseListView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
-        return formatter.string(from: amount as NSDecimalNumber) ?? "$0.00"
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: amount as NSDecimalNumber) ?? "$0"
     }
 
     private func formatMonth(_ date: Date) -> String {
@@ -306,37 +290,141 @@ struct ExpenseListView: View {
     }
 }
 
-// MARK: - Stat Card Component
+// MARK: - Expense Metric Card
 
-struct StatCard: View {
-    let title: String
+struct ExpenseMetricCard: View {
     let value: String
+    let label: String
     let icon: String
     let color: Color
 
     var body: some View {
-        HStack(spacing: TNSpacing.sm) {
+        VStack(spacing: TNSpacing.xs) {
             Image(systemName: icon)
-                .font(.system(size: 20))
+                .font(.system(size: 18))
                 .foregroundStyle(color)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(value)
-                    .font(TNTypography.titleSmall)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(TNColors.textPrimary)
+            Text(value)
+                .font(TNTypography.titleLarge)
+                .foregroundStyle(TNColors.textPrimary)
 
-                Text(title)
-                    .font(TNTypography.caption)
-                    .foregroundStyle(TNColors.textTertiary)
-            }
-
-            Spacer()
+            Text(label)
+                .font(TNTypography.caption)
+                .foregroundStyle(TNColors.textSecondary)
         }
-        .padding(TNSpacing.md)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, TNSpacing.md)
         .background(TNColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+    }
+}
+
+// MARK: - Expense Card
+
+struct ExpenseCard: View {
+    let expense: Expense
+    let onTap: () -> Void
+
+    private var formattedAmount: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        return "-" + (formatter.string(from: expense.amount as NSDecimalNumber) ?? "$0.00")
+    }
+
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: expense.date)
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: TNSpacing.md) {
+                // Category Icon
+                ZStack {
+                    Circle()
+                        .fill(expense.category.color.opacity(0.15))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: expense.category.iconName)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(expense.category.color)
+                }
+
+                // Details
+                VStack(alignment: .leading, spacing: TNSpacing.xxs) {
+                    Text(expense.merchantName ?? expense.category.displayName)
+                        .font(TNTypography.titleSmall)
+                        .foregroundStyle(TNColors.textPrimary)
+                        .lineLimit(1)
+
+                    HStack(spacing: TNSpacing.xs) {
+                        Text(expense.category.displayName)
+
+                        if expense.isDeductible {
+                            Text("•")
+                            Text("Tax Deductible")
+                                .foregroundStyle(TNColors.success)
+                        }
+                    }
+                    .font(TNTypography.caption)
+                    .foregroundStyle(TNColors.textSecondary)
+                }
+
+                Spacer()
+
+                // Amount and Receipt Status
+                VStack(alignment: .trailing, spacing: TNSpacing.xxs) {
+                    Text(formattedAmount)
+                        .font(TNTypography.titleSmall)
+                        .foregroundStyle(TNColors.error)
+
+                    receiptStatus
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(TNColors.textTertiary)
+            }
+            .padding(TNSpacing.md)
+            .background(TNColors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+            .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var receiptStatus: some View {
+        if expense.receipt != nil {
+            HStack(spacing: 2) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 10))
+                Text("Receipt")
+                    .font(TNTypography.caption)
+            }
+            .foregroundStyle(TNColors.success)
+        } else if expense.amount >= 75 {
+            HStack(spacing: 2) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .font(.system(size: 10))
+                Text("Need Receipt")
+                    .font(TNTypography.caption)
+            }
+            .foregroundStyle(TNColors.warning)
+        } else {
+            Text(formattedDate)
+                .font(TNTypography.caption)
+                .foregroundStyle(TNColors.textTertiary)
+        }
+    }
+
+    private var formattedDateShort: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: expense.date)
     }
 }
 

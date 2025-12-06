@@ -678,7 +678,7 @@ struct AssignmentsPreviewView: View {
 
                     // Assignment cards
                     VStack(spacing: TNSpacing.md) {
-                        AssignmentCard(
+                        AssignmentPreviewCard(
                             facility: "Stanford Medical Center",
                             location: "Palo Alto, CA",
                             specialty: "ICU",
@@ -688,7 +688,7 @@ struct AssignmentsPreviewView: View {
                             progress: 0.62
                         )
 
-                        AssignmentCard(
+                        AssignmentPreviewCard(
                             facility: "UCSF Medical Center",
                             location: "San Francisco, CA",
                             specialty: "Emergency",
@@ -698,7 +698,7 @@ struct AssignmentsPreviewView: View {
                             progress: 1.0
                         )
 
-                        AssignmentCard(
+                        AssignmentPreviewCard(
                             facility: "UCLA Health",
                             location: "Los Angeles, CA",
                             specialty: "ICU",
@@ -767,7 +767,7 @@ enum AssignmentDisplayStatus {
     }
 }
 
-struct AssignmentCard: View {
+struct AssignmentPreviewCard: View {
     let facility: String
     let location: String
     let specialty: String

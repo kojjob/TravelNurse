@@ -57,7 +57,7 @@ struct ExpenseRow: View {
         .padding(TNSpacing.md)
         .background(TNColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
     }
 
     // MARK: - Subviews

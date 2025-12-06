@@ -17,12 +17,12 @@ struct CategoryFilterBar: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: TNSpacing.sm) {
                 // All filter
-                FilterPill(
+                CategoryFilterPill(
                     title: "All",
                     icon: "tray.full.fill",
                     isSelected: selectedFilter == .all
                 ) {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
                         selectedFilter = .all
                     }
                 }
@@ -30,13 +30,13 @@ struct CategoryFilterBar: View {
                 // Group filters (if enabled)
                 if showGroups {
                     ForEach(ExpenseGroup.allCases) { group in
-                        FilterPill(
+                        CategoryFilterPill(
                             title: group.rawValue,
                             icon: group.iconName,
                             color: group.color,
                             isSelected: selectedFilter == .group(group)
                         ) {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            withAnimation(.easeInOut(duration: 0.2)) {
                                 selectedFilter = .group(group)
                             }
                         }
@@ -49,9 +49,9 @@ struct CategoryFilterBar: View {
     }
 }
 
-// MARK: - Filter Pill
+// MARK: - Category Filter Pill
 
-struct FilterPill: View {
+struct CategoryFilterPill: View {
 
     let title: String
     var icon: String? = nil
@@ -75,10 +75,7 @@ struct FilterPill: View {
             .background(isSelected ? color : TNColors.surface)
             .foregroundStyle(isSelected ? .white : TNColors.textSecondary)
             .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .strokeBorder(isSelected ? color : TNColors.border, lineWidth: 1)
-            )
+            .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
         }
         .buttonStyle(.plain)
     }
@@ -154,10 +151,7 @@ struct YearPill: View {
                 .background(isSelected ? TNColors.primary : TNColors.surface)
                 .foregroundStyle(isSelected ? .white : TNColors.textSecondary)
                 .clipShape(Capsule())
-                .overlay(
-                    Capsule()
-                        .strokeBorder(isSelected ? TNColors.primary : TNColors.border, lineWidth: 1)
-                )
+                .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
         }
         .buttonStyle(.plain)
     }
@@ -200,7 +194,7 @@ struct ExpenseSummaryBar: View {
         .padding(TNSpacing.md)
         .background(TNColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
     }
 
     private func formatCurrency(_ amount: Decimal) -> String {
