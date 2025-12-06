@@ -2,82 +2,75 @@
 //  MainTabView.swift
 //  TravelNurse
 //
-//  Main navigation container with tab-based navigation
+//  Main navigation container with 4-tab layout
 //
 
 import SwiftUI
 import SwiftData
 
 /// Main navigation container for the app
-/// Manages tab-based navigation and service injection
+/// Manages tab-based navigation with 4 primary tabs:
+/// Home, Taxes, Reports, Settings
 struct MainTabView: View {
 
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedTab: Tab = .dashboard
+    @State private var selectedTab: Tab = .home
 
     enum Tab: Int, CaseIterable {
-        case dashboard = 0
-        case assignments = 1
-        case expenses = 2
-        case taxHome = 3
-        case reports = 4
+        case home = 0
+        case taxes = 1
+        case reports = 2
+        case settings = 3
 
         var title: String {
             switch self {
-            case .dashboard: return "Dashboard"
-            case .assignments: return "Assignments"
-            case .expenses: return "Expenses"
-            case .taxHome: return "Tax Home"
+            case .home: return "Home"
+            case .taxes: return "Taxes"
             case .reports: return "Reports"
+            case .settings: return "Settings"
             }
         }
 
         var icon: String {
             switch self {
-            case .dashboard: return "house.fill"
-            case .assignments: return "briefcase.fill"
-            case .expenses: return "creditcard.fill"
-            case .taxHome: return "house.lodge.fill"
-            case .reports: return "chart.bar.fill"
+            case .home: return "house.fill"
+            case .taxes: return "chart.line.uptrend.xyaxis"
+            case .reports: return "doc.text.fill"
+            case .settings: return "gearshape.fill"
             }
         }
     }
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            DashboardView()
+            HomeView()
                 .tabItem {
-                    Label(Tab.dashboard.title, systemImage: Tab.dashboard.icon)
+                    Label(Tab.home.title, systemImage: Tab.home.icon)
                 }
-                .tag(Tab.dashboard)
+                .tag(Tab.home)
 
-            AssignmentsPlaceholderView()
+            TaxesView()
                 .tabItem {
-                    Label(Tab.assignments.title, systemImage: Tab.assignments.icon)
+                    Label(Tab.taxes.title, systemImage: Tab.taxes.icon)
                 }
-                .tag(Tab.assignments)
-
-            ExpensesPlaceholderView()
-                .tabItem {
-                    Label(Tab.expenses.title, systemImage: Tab.expenses.icon)
-                }
-                .tag(Tab.expenses)
-
-            TaxHomePlaceholderView()
-                .tabItem {
-                    Label(Tab.taxHome.title, systemImage: Tab.taxHome.icon)
-                }
-                .tag(Tab.taxHome)
+                .tag(Tab.taxes)
 
             ReportsView()
                 .tabItem {
                     Label(Tab.reports.title, systemImage: Tab.reports.icon)
                 }
                 .tag(Tab.reports)
+
+            SettingsView()
+                .tabItem {
+                    Label(Tab.settings.title, systemImage: Tab.settings.icon)
+                }
+                .tag(Tab.settings)
         }
         .tint(TNColors.primary)
         .onAppear {
             configureServices()
+            configureTabBarAppearance()
         }
     }
 
@@ -87,62 +80,23 @@ struct MainTabView: View {
             ServiceContainer.shared.configure(with: modelContext)
         }
     }
-}
 
-// MARK: - Placeholder Views (to be replaced in later sprints)
+    private func configureTabBarAppearance() {
+        // Configure tab bar appearance for consistent styling
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.systemBackground
 
-struct AssignmentsPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "briefcase.fill",
-                description: Text("Assignment management will be available in the next update.")
-            )
-            .navigationTitle("Assignments")
-        }
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 }
-
-struct ExpensesPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "creditcard.fill",
-                description: Text("Expense tracking will be available in the next update.")
-            )
-            .navigationTitle("Expenses")
-        }
-    }
-}
-
-struct TaxHomePlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "house.lodge.fill",
-                description: Text("Tax home compliance tracking will be available in the next update.")
-            )
-            .navigationTitle("Tax Home")
-        }
-    }
-}
-
-// ReportsPlaceholderView removed - using ReportsView from Sprint 7
 
 #Preview {
     MainTabView()
         .modelContainer(for: [
             Assignment.self,
-            UserProfile.self,
-            Address.self,
-            PayBreakdown.self,
             Expense.self,
-            Receipt.self,
-            MileageTrip.self,
-            TaxHomeCompliance.self,
-            Document.self
+            MileageTrip.self
         ], inMemory: true)
 }

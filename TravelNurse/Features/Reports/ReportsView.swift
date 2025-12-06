@@ -2,16 +2,56 @@
 //  ReportsView.swift
 //  TravelNurse
 //
-//  Main Reports & Export view with annual summary and state breakdown
+//  Simplified Reports & Export view with list-based layout
 //
 
 import SwiftUI
 import SwiftData
 
-/// Main Reports & Export view
+/// Report type options
+enum ReportType: String, CaseIterable, Identifiable {
+    case annual = "Annual Summary"
+    case stateBreakdown = "State Tax Breakdown"
+    case expenses = "Expense Report"
+    case mileage = "Mileage Log"
+
+    var id: String { rawValue }
+
+    var iconName: String {
+        switch self {
+        case .annual: return "doc.text.fill"
+        case .stateBreakdown: return "map.fill"
+        case .expenses: return "creditcard.fill"
+        case .mileage: return "car.fill"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .annual: return "Complete year-end tax summary"
+        case .stateBreakdown: return "Income and taxes by state"
+        case .expenses: return "Deductible business expenses"
+        case .mileage: return "Business travel mileage"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .annual: return TNColors.primary
+        case .stateBreakdown: return TNColors.accent
+        case .expenses: return TNColors.error
+        case .mileage: return TNColors.success
+        }
+    }
+}
+
+/// Main Reports & Export view - simplified list layout
 struct ReportsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = ReportsViewModel()
+    @State private var selectedReport: ReportType?
+    @State private var showShareSheet = false
+    @State private var exportURL: URL?
 
     var body: some View {
         NavigationStack {
@@ -20,60 +60,34 @@ struct ReportsView: View {
                     // Year Selector
                     yearSelector
 
-                    if viewModel.isLoading {
-                        loadingView
-                    } else {
-                        // Annual Summary Card
-                        annualSummaryCard
+                    // Quick Summary Card
+                    quickSummaryCard
 
-                        // Key Metrics Grid
-                        keyMetricsGrid
+                    // Report Types List
+                    reportTypesList
 
-                        // State Breakdown Section
-                        stateBreakdownSection
-
-                        // Expense Breakdown Section
-                        expenseBreakdownSection
-
-                        // Export Section
-                        exportSection
-                    }
+                    // Export All Section
+                    exportAllSection
                 }
                 .padding(.horizontal, TNSpacing.md)
                 .padding(.bottom, TNSpacing.xl)
             }
             .background(TNColors.background)
-            .navigationTitle("Tax Reports")
+            .navigationTitle("Reports")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        viewModel.showExportSheet = true
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                            .foregroundColor(TNColors.primary)
-                    }
-                }
-            }
-            .sheet(isPresented: $viewModel.showExportSheet) {
-                ExportOptionsSheet(viewModel: viewModel)
-            }
-            .alert("Error", isPresented: $viewModel.showError) {
-                Button("OK") {
-                    viewModel.dismissError()
-                }
-            } message: {
-                Text(viewModel.errorMessage ?? "An error occurred")
-            }
-            .alert("Export Complete", isPresented: $viewModel.showExportSuccess) {
-                Button("OK") {
-                    viewModel.dismissExportSuccess()
-                }
-            } message: {
-                Text(viewModel.exportSuccessMessage ?? "Report exported successfully")
+            .refreshable {
+                await viewModel.loadReports()
             }
             .task {
                 await viewModel.loadReports()
+            }
+            .alert("Error", isPresented: $viewModel.showError) {
+                Button("OK") { viewModel.dismissError() }
+            } message: {
+                Text(viewModel.errorMessage ?? "An error occurred")
+            }
+            .sheet(isPresented: $viewModel.showExportSheet) {
+                ExportOptionsSheet(viewModel: viewModel)
             }
         }
     }
@@ -84,398 +98,478 @@ struct ReportsView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: TNSpacing.sm) {
                 ForEach(viewModel.availableYears, id: \.self) { year in
-                    yearButton(year)
+                    Button {
+                        Task {
+                            await viewModel.selectYear(year)
+                        }
+                    } label: {
+                        Text(String(year))
+                            .font(TNTypography.labelMedium)
+                            .foregroundColor(year == viewModel.selectedYear ? .white : TNColors.textPrimary)
+                            .padding(.horizontal, TNSpacing.md)
+                            .padding(.vertical, TNSpacing.sm)
+                            .background(
+                                year == viewModel.selectedYear
+                                    ? TNColors.primary
+                                    : TNColors.surface
+                            )
+                            .clipShape(Capsule())
+                            .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, TNSpacing.xs)
+            .padding(.vertical, TNSpacing.xs)
         }
     }
 
-    private func yearButton(_ year: Int) -> some View {
-        Button {
-            Task {
-                await viewModel.selectYear(year)
-            }
-        } label: {
-            Text(String(year))
-                .font(TNTypography.titleMedium)
-                .foregroundColor(year == viewModel.selectedYear ? .white : TNColors.textPrimary)
-                .padding(.horizontal, TNSpacing.md)
-                .padding(.vertical, TNSpacing.sm)
-                .background(
-                    Capsule()
-                        .fill(year == viewModel.selectedYear ? TNColors.primary : TNColors.surface)
-                )
-                .overlay(
-                    Capsule()
-                        .strokeBorder(year == viewModel.selectedYear ? Color.clear : TNColors.border, lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
-    }
+    // MARK: - Quick Summary Card
 
-    // MARK: - Loading View
-
-    private var loadingView: some View {
-        VStack(spacing: TNSpacing.md) {
-            ProgressView()
-                .scaleEffect(1.2)
-            Text("Loading reports...")
-                .font(TNTypography.bodyLarge)
-                .foregroundColor(TNColors.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, TNSpacing.xxxl)
-    }
-
-    // MARK: - Annual Summary Card
-
-    private var annualSummaryCard: some View {
-        VStack(spacing: TNSpacing.md) {
-            // Header
+    private var quickSummaryCard: some View {
+        VStack(alignment: .leading, spacing: TNSpacing.md) {
             HStack {
-                VStack(alignment: .leading, spacing: TNSpacing.xs) {
-                    Text("\(viewModel.selectedYear) Tax Summary")
-                        .font(TNTypography.headlineLarge)
+                Text("\(viewModel.selectedYear) Overview")
+                    .font(TNTypography.titleMedium)
+                    .foregroundColor(.white.opacity(0.9))
+
+                Spacer()
+
+                Image(systemName: "chart.bar.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+
+            HStack(spacing: TNSpacing.lg) {
+                summaryItem(
+                    value: viewModel.annualSummary.formattedGrossIncome,
+                    label: "Gross Income"
+                )
+
+                summaryItem(
+                    value: viewModel.annualSummary.formattedTotalDeductions,
+                    label: "Deductions"
+                )
+
+                summaryItem(
+                    value: "\(viewModel.annualSummary.statesWorkedIn)",
+                    label: "States"
+                )
+            }
+        }
+        .padding(TNSpacing.lg)
+        .background(
+            LinearGradient(
+                colors: [TNColors.success, Color(hex: "059669")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusLG))
+    }
+
+    private func summaryItem(value: String, label: String) -> some View {
+        VStack(alignment: .leading, spacing: TNSpacing.xxs) {
+            Text(value)
+                .font(TNTypography.titleMedium)
+                .foregroundColor(.white)
+
+            Text(label)
+                .font(TNTypography.caption)
+                .foregroundColor(.white.opacity(0.7))
+        }
+    }
+
+    // MARK: - Report Types List
+
+    private var reportTypesList: some View {
+        VStack(alignment: .leading, spacing: TNSpacing.sm) {
+            Text("AVAILABLE REPORTS")
+                .font(TNTypography.caption)
+                .foregroundColor(TNColors.textSecondary)
+                .tracking(0.5)
+
+            VStack(spacing: 0) {
+                ForEach(ReportType.allCases) { reportType in
+                    reportTypeRow(reportType)
+
+                    if reportType != ReportType.allCases.last {
+                        Divider()
+                            .padding(.leading, 56)
+                    }
+                }
+            }
+            .background(TNColors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+            .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
+        }
+    }
+
+    private func reportTypeRow(_ reportType: ReportType) -> some View {
+        NavigationLink {
+            reportDetailView(for: reportType)
+        } label: {
+            HStack(spacing: TNSpacing.md) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(reportType.color.opacity(0.1))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: reportType.iconName)
+                        .font(.system(size: 20))
+                        .foregroundColor(reportType.color)
+                }
+
+                // Info
+                VStack(alignment: .leading, spacing: TNSpacing.xxs) {
+                    Text(reportType.rawValue)
+                        .font(TNTypography.titleMedium)
                         .foregroundColor(TNColors.textPrimary)
 
-                    Text("\(viewModel.annualSummary.totalAssignments) assignments · \(viewModel.annualSummary.statesWorkedIn) states")
+                    Text(reportType.description)
                         .font(TNTypography.caption)
                         .foregroundColor(TNColors.textSecondary)
                 }
 
                 Spacer()
 
-                Image(systemName: "doc.text.fill")
-                    .font(.system(size: 28))
-                    .foregroundColor(TNColors.primary)
+                // Chevron
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(TNColors.textTertiary)
             }
-
-            Divider()
-
-            // Income Summary
-            VStack(spacing: TNSpacing.sm) {
-                summaryRow(
-                    label: "Gross Income",
-                    value: viewModel.annualSummary.formattedGrossIncome,
-                    color: TNColors.textPrimary
-                )
-
-                summaryRow(
-                    label: "Tax-Free Stipends",
-                    value: viewModel.annualSummary.formattedStipends,
-                    color: TNColors.success,
-                    isHighlighted: true
-                )
-
-                summaryRow(
-                    label: "Taxable Income",
-                    value: viewModel.annualSummary.formattedTaxableIncome,
-                    color: TNColors.warning
-                )
-            }
-
-            Divider()
-
-            // Deductions Summary
-            VStack(spacing: TNSpacing.sm) {
-                summaryRow(
-                    label: "Business Expenses",
-                    value: viewModel.annualSummary.formattedExpenses,
-                    color: TNColors.textSecondary
-                )
-
-                summaryRow(
-                    label: "Mileage Deduction",
-                    value: viewModel.annualSummary.formattedMileageDeduction,
-                    color: TNColors.textSecondary
-                )
-
-                summaryRow(
-                    label: "Total Deductions",
-                    value: viewModel.annualSummary.formattedTotalDeductions,
-                    color: TNColors.success,
-                    isHighlighted: true
-                )
-            }
+            .padding(TNSpacing.md)
         }
-        .padding(TNSpacing.md)
-        .background(TNColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .shadow(color: TNColors.cardShadow, radius: 4, x: 0, y: 2)
+        .buttonStyle(.plain)
     }
 
-    private func summaryRow(label: String, value: String, color: Color, isHighlighted: Bool = false) -> some View {
-        HStack {
-            Text(label)
-                .font(TNTypography.bodyLarge)
-                .foregroundColor(TNColors.textSecondary)
-
-            Spacer()
-
-            Text(value)
-                .font(isHighlighted ? TNTypography.titleMedium : TNTypography.bodyLarge)
-                .foregroundColor(color)
+    @ViewBuilder
+    private func reportDetailView(for reportType: ReportType) -> some View {
+        switch reportType {
+        case .annual:
+            AnnualSummaryDetailView(viewModel: viewModel)
+        case .stateBreakdown:
+            StateTaxSummaryView(
+                stateSummaries: viewModel.sortedStateSummaries,
+                year: viewModel.selectedYear
+            )
+        case .expenses:
+            ExpenseReportDetailView(viewModel: viewModel)
+        case .mileage:
+            MileageReportDetailView(viewModel: viewModel)
         }
     }
 
-    // MARK: - Key Metrics Grid
+    // MARK: - Export All Section
 
-    private var keyMetricsGrid: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: TNSpacing.sm),
-            GridItem(.flexible(), spacing: TNSpacing.sm)
-        ], spacing: TNSpacing.sm) {
-            metricCard(
-                icon: "calendar",
-                title: "Days Worked",
-                value: "\(viewModel.annualSummary.totalDaysWorked)",
-                color: TNColors.primary
-            )
-
-            metricCard(
-                icon: "briefcase.fill",
-                title: "Assignments",
-                value: "\(viewModel.annualSummary.totalAssignments)",
-                color: TNColors.accent
-            )
-
-            metricCard(
-                icon: "map.fill",
-                title: "States",
-                value: "\(viewModel.annualSummary.statesWorkedIn)",
-                color: TNColors.secondary
-            )
-
-            metricCard(
-                icon: "dollarsign.circle.fill",
-                title: "Avg/Assignment",
-                value: averagePerAssignment,
-                color: TNColors.success
-            )
-        }
-    }
-
-    private var averagePerAssignment: String {
-        guard viewModel.annualSummary.totalAssignments > 0 else { return "$0" }
-        let average = viewModel.annualSummary.totalGrossIncome / Decimal(viewModel.annualSummary.totalAssignments)
-        return viewModel.formatCurrency(average)
-    }
-
-    private func metricCard(icon: String, title: String, value: String, color: Color) -> some View {
-        VStack(spacing: TNSpacing.sm) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(color)
-
-            Text(value)
-                .font(TNTypography.titleLarge)
-                .foregroundColor(TNColors.textPrimary)
-
-            Text(title)
+    private var exportAllSection: some View {
+        VStack(alignment: .leading, spacing: TNSpacing.sm) {
+            Text("EXPORT OPTIONS")
                 .font(TNTypography.caption)
                 .foregroundColor(TNColors.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(TNSpacing.md)
-        .background(TNColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
-    }
-
-    // MARK: - State Breakdown Section
-
-    private var stateBreakdownSection: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.md) {
-            sectionHeader(title: "Income by State", icon: "map")
-
-            if viewModel.sortedStateSummaries.isEmpty {
-                emptyStateView(message: "No state data available")
-            } else {
-                VStack(spacing: TNSpacing.sm) {
-                    ForEach(viewModel.sortedStateSummaries.prefix(5)) { summary in
-                        stateRow(summary)
-                    }
-
-                    if viewModel.sortedStateSummaries.count > 5 {
-                        NavigationLink {
-                            StateTaxSummaryView(
-                                stateSummaries: viewModel.sortedStateSummaries,
-                                year: viewModel.selectedYear
-                            )
-                        } label: {
-                            HStack {
-                                Text("View All \(viewModel.sortedStateSummaries.count) States")
-                                    .font(TNTypography.titleMedium)
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 14, weight: .semibold))
-                            }
-                            .foregroundColor(TNColors.primary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, TNSpacing.sm)
-                        }
-                    }
-                }
-                .padding(TNSpacing.md)
-                .background(TNColors.surface)
-                .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-                .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
-            }
-        }
-    }
-
-    private func stateRow(_ summary: StateTaxSummary) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: TNSpacing.xxs) {
-                HStack(spacing: TNSpacing.xs) {
-                    Text(summary.state.rawValue)
-                        .font(TNTypography.caption)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, TNSpacing.xs)
-                        .padding(.vertical, 2)
-                        .background(TNColors.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-
-                    Text(summary.state.fullName)
-                        .font(TNTypography.titleMedium)
-                        .foregroundColor(TNColors.textPrimary)
-                }
-
-                Text("\(summary.daysWorked) days · \(summary.assignments.count) assignments")
-                    .font(TNTypography.caption)
-                    .foregroundColor(TNColors.textSecondary)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: TNSpacing.xxs) {
-                Text(summary.formattedGrossIncome)
-                    .font(TNTypography.titleMedium)
-                    .foregroundColor(TNColors.textPrimary)
-
-                if summary.state.hasNoIncomeTax {
-                    Text("No State Tax")
-                        .font(TNTypography.caption)
-                        .foregroundColor(TNColors.success)
-                }
-            }
-        }
-        .padding(.vertical, TNSpacing.xs)
-    }
-
-    // MARK: - Expense Breakdown Section
-
-    private var expenseBreakdownSection: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.md) {
-            sectionHeader(title: "Expense Categories", icon: "creditcard")
-
-            if viewModel.topExpenseCategories.isEmpty {
-                emptyStateView(message: "No expenses recorded")
-            } else {
-                VStack(spacing: TNSpacing.sm) {
-                    ForEach(viewModel.topExpenseCategories, id: \.category) { item in
-                        expenseRow(category: item.category, amount: item.amount)
-                    }
-                }
-                .padding(TNSpacing.md)
-                .background(TNColors.surface)
-                .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-                .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
-            }
-        }
-    }
-
-    private func expenseRow(category: ExpenseCategory, amount: Decimal) -> some View {
-        HStack {
-            Image(systemName: category.iconName)
-                .font(.system(size: 20))
-                .foregroundColor(category.color)
-                .frame(width: 32)
-
-            Text(category.displayName)
-                .font(TNTypography.bodyLarge)
-                .foregroundColor(TNColors.textPrimary)
-
-            Spacer()
-
-            Text(viewModel.formatCurrency(amount))
-                .font(TNTypography.titleMedium)
-                .foregroundColor(TNColors.textPrimary)
-        }
-        .padding(.vertical, TNSpacing.xs)
-    }
-
-    // MARK: - Export Section
-
-    private var exportSection: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.md) {
-            sectionHeader(title: "Export Report", icon: "square.and.arrow.up")
+                .tracking(0.5)
 
             HStack(spacing: TNSpacing.md) {
-                exportButton(format: .csv)
-                exportButton(format: .pdf)
+                exportButton(
+                    title: "Export CSV",
+                    icon: "tablecells",
+                    subtitle: "For spreadsheets"
+                ) {
+                    Task {
+                        _ = await viewModel.exportReport(format: .csv)
+                    }
+                }
+
+                exportButton(
+                    title: "Export PDF",
+                    icon: "doc.richtext",
+                    subtitle: "For records"
+                ) {
+                    Task {
+                        _ = await viewModel.exportReport(format: .pdf)
+                    }
+                }
             }
         }
     }
 
-    private func exportButton(format: ExportFormat) -> some View {
-        Button {
-            Task {
-                if let url = await viewModel.exportReport(format: format) {
-                    shareReport(url: url)
+    private func exportButton(title: String, icon: String, subtitle: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: TNSpacing.sm) {
+                Image(systemName: icon)
+                    .font(.system(size: 28))
+                    .foregroundColor(TNColors.primary)
+
+                VStack(spacing: TNSpacing.xxs) {
+                    Text(title)
+                        .font(TNTypography.labelMedium)
+                        .foregroundColor(TNColors.textPrimary)
+
+                    Text(subtitle)
+                        .font(TNTypography.caption)
+                        .foregroundColor(TNColors.textSecondary)
                 }
             }
-        } label: {
-            HStack {
-                Image(systemName: format.iconName)
-                    .font(.system(size: 20))
-                Text(format.rawValue)
-                    .font(TNTypography.titleMedium)
-            }
-            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, TNSpacing.md)
-            .background(TNColors.primary)
+            .padding(TNSpacing.md)
+            .background(TNColors.surface)
             .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+            .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
         }
         .buttonStyle(.plain)
         .disabled(viewModel.isExporting)
         .opacity(viewModel.isExporting ? 0.6 : 1.0)
     }
+}
 
-    // MARK: - Helper Views
+// MARK: - Annual Summary Detail View
 
-    private func sectionHeader(title: String, icon: String) -> some View {
-        HStack(spacing: TNSpacing.sm) {
-            Image(systemName: icon)
-                .font(.system(size: 18))
-                .foregroundColor(TNColors.primary)
-            Text(title)
-                .font(TNTypography.headlineLarge)
-                .foregroundColor(TNColors.textPrimary)
+struct AnnualSummaryDetailView: View {
+    @Bindable var viewModel: ReportsViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: TNSpacing.lg) {
+                // Income Section
+                detailSection(title: "Income") {
+                    detailRow("Gross Income", viewModel.annualSummary.formattedGrossIncome)
+                    detailRow("Tax-Free Stipends", viewModel.annualSummary.formattedStipends, highlight: TNColors.success)
+                    detailRow("Taxable Income", viewModel.annualSummary.formattedTaxableIncome, highlight: TNColors.warning)
+                }
+
+                // Deductions Section
+                detailSection(title: "Deductions") {
+                    detailRow("Business Expenses", viewModel.annualSummary.formattedExpenses)
+                    detailRow("Mileage Deduction", viewModel.annualSummary.formattedMileageDeduction)
+                    detailRow("Total Deductions", viewModel.annualSummary.formattedTotalDeductions, highlight: TNColors.success)
+                }
+
+                // Work Summary Section
+                detailSection(title: "Work Summary") {
+                    detailRow("Total Assignments", "\(viewModel.annualSummary.totalAssignments)")
+                    detailRow("States Worked", "\(viewModel.annualSummary.statesWorkedIn)")
+                    detailRow("Days Worked", "\(viewModel.annualSummary.totalDaysWorked)")
+                }
+
+                // Export Button
+                Button {
+                    Task {
+                        _ = await viewModel.exportReport(format: .pdf)
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "square.and.arrow.up")
+                        Text("Export Annual Summary")
+                    }
+                    .font(TNTypography.titleMedium)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(TNSpacing.md)
+                    .background(TNColors.primary)
+                    .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, TNSpacing.md)
+            .padding(.bottom, TNSpacing.xl)
         }
+        .background(TNColors.background)
+        .navigationTitle("Annual Summary")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func emptyStateView(message: String) -> some View {
-        VStack(spacing: TNSpacing.sm) {
-            Image(systemName: "doc.text")
-                .font(.system(size: 32))
-                .foregroundColor(TNColors.textTertiary)
-            Text(message)
-                .font(TNTypography.bodyLarge)
+    private func detailSection(title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: TNSpacing.sm) {
+            Text(title.uppercased())
+                .font(TNTypography.caption)
                 .foregroundColor(TNColors.textSecondary)
+                .tracking(0.5)
+
+            VStack(spacing: 0) {
+                content()
+            }
+            .background(TNColors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+            .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
         }
-        .frame(maxWidth: .infinity)
-        .padding(TNSpacing.lg)
-        .background(TNColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
     }
 
-    // MARK: - Actions
+    private func detailRow(_ label: String, _ value: String, highlight: Color? = nil) -> some View {
+        HStack {
+            Text(label)
+                .font(TNTypography.bodyMedium)
+                .foregroundColor(TNColors.textSecondary)
 
-    private func shareReport(url: URL) {
-        // Share functionality would go here
-        // Using UIActivityViewController in production
+            Spacer()
+
+            Text(value)
+                .font(TNTypography.titleMedium)
+                .foregroundColor(highlight ?? TNColors.textPrimary)
+        }
+        .padding(TNSpacing.md)
+    }
+}
+
+// MARK: - Expense Report Detail View
+
+struct ExpenseReportDetailView: View {
+    @Bindable var viewModel: ReportsViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: TNSpacing.lg) {
+                // Summary Card
+                VStack(alignment: .leading, spacing: TNSpacing.md) {
+                    Text("Total Deductible Expenses")
+                        .font(TNTypography.bodyMedium)
+                        .foregroundColor(TNColors.textSecondary)
+
+                    Text(viewModel.annualSummary.formattedExpenses)
+                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .foregroundColor(TNColors.textPrimary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(TNSpacing.lg)
+                .background(TNColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+                .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
+
+                // Expense Categories
+                if !viewModel.topExpenseCategories.isEmpty {
+                    VStack(alignment: .leading, spacing: TNSpacing.sm) {
+                        Text("BY CATEGORY")
+                            .font(TNTypography.caption)
+                            .foregroundColor(TNColors.textSecondary)
+                            .tracking(0.5)
+
+                        VStack(spacing: 0) {
+                            ForEach(viewModel.topExpenseCategories, id: \.category) { item in
+                                HStack {
+                                    Image(systemName: item.category.iconName)
+                                        .font(.system(size: 20))
+                                        .foregroundColor(item.category.color)
+                                        .frame(width: 32)
+
+                                    Text(item.category.displayName)
+                                        .font(TNTypography.bodyMedium)
+                                        .foregroundColor(TNColors.textPrimary)
+
+                                    Spacer()
+
+                                    Text(viewModel.formatCurrency(item.amount))
+                                        .font(TNTypography.titleMedium)
+                                        .foregroundColor(TNColors.textPrimary)
+                                }
+                                .padding(TNSpacing.md)
+
+                                if item.category != viewModel.topExpenseCategories.last?.category {
+                                    Divider()
+                                        .padding(.leading, 52)
+                                }
+                            }
+                        }
+                        .background(TNColors.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+                        .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
+                    }
+                }
+
+                // Export Button
+                Button {
+                    Task {
+                        _ = await viewModel.exportReport(format: .csv)
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "square.and.arrow.up")
+                        Text("Export Expense Report")
+                    }
+                    .font(TNTypography.titleMedium)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(TNSpacing.md)
+                    .background(TNColors.primary)
+                    .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, TNSpacing.md)
+            .padding(.bottom, TNSpacing.xl)
+        }
+        .background(TNColors.background)
+        .navigationTitle("Expense Report")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Mileage Report Detail View
+
+struct MileageReportDetailView: View {
+    @Bindable var viewModel: ReportsViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: TNSpacing.lg) {
+                // Summary Card
+                VStack(alignment: .leading, spacing: TNSpacing.md) {
+                    Text("Total Mileage Deduction")
+                        .font(TNTypography.bodyMedium)
+                        .foregroundColor(TNColors.textSecondary)
+
+                    Text(viewModel.annualSummary.formattedMileageDeduction)
+                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .foregroundColor(TNColors.textPrimary)
+
+                    Text("Based on IRS standard mileage rate")
+                        .font(TNTypography.caption)
+                        .foregroundColor(TNColors.textTertiary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(TNSpacing.lg)
+                .background(TNColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+                .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
+
+                // Info Card
+                VStack(alignment: .leading, spacing: TNSpacing.sm) {
+                    Label("Tax Tip", systemImage: "lightbulb.fill")
+                        .font(TNTypography.titleMedium)
+                        .foregroundColor(TNColors.warning)
+
+                    Text("Keep detailed mileage logs for business travel. The IRS requires documentation of date, destination, purpose, and miles driven.")
+                        .font(TNTypography.bodyMedium)
+                        .foregroundColor(TNColors.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(TNSpacing.md)
+                .background(TNColors.warning.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+
+                // Export Button
+                Button {
+                    Task {
+                        _ = await viewModel.exportReport(format: .csv)
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "square.and.arrow.up")
+                        Text("Export Mileage Log")
+                    }
+                    .font(TNTypography.titleMedium)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(TNSpacing.md)
+                    .background(TNColors.primary)
+                    .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, TNSpacing.md)
+            .padding(.bottom, TNSpacing.xl)
+        }
+        .background(TNColors.background)
+        .navigationTitle("Mileage Log")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -483,5 +577,5 @@ struct ReportsView: View {
 
 #Preview {
     ReportsView()
-        .modelContainer(for: [Assignment.self, Expense.self, MileageTrip.self])
+        .modelContainer(for: [Assignment.self, Expense.self, MileageTrip.self], inMemory: true)
 }

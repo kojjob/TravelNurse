@@ -22,6 +22,9 @@ public enum TNColors {
     /// Accent color - Purple
     public static let accent = Color(hex: "8B5CF6")
 
+    /// Primary dark - Darker shade of primary for gradients
+    public static let primaryDark = Color(hex: "0052CC")
+
     // MARK: - Semantic Colors
 
     /// Success state color
