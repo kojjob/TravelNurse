@@ -33,7 +33,7 @@ struct DashboardView: View {
                 .padding(TNSpacing.md)
             }
             .background(TNColors.background)
-            .navigationTitle("Dashboard")
+            .navigationTitle("Home")
             .refreshable {
                 viewModel.refresh()
             }
