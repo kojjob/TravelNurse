@@ -91,6 +91,9 @@ public enum TNColors {
         endPoint: .bottomTrailing
     )
 
+    /// Card background (alias for surface)
+    public static let cardBackground = surface
+
     /// Card shadow color
     public static let cardShadow = Color.black.opacity(0.08)
 

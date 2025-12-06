@@ -678,7 +678,7 @@ struct AssignmentsPreviewView: View {
 
                     // Assignment cards
                     VStack(spacing: TNSpacing.md) {
-                        AssignmentCard(
+                        AssignmentPreviewCard(
                             facility: "Stanford Medical Center",
                             location: "Palo Alto, CA",
                             specialty: "ICU",
@@ -688,7 +688,7 @@ struct AssignmentsPreviewView: View {
                             progress: 0.62
                         )
 
-                        AssignmentCard(
+                        AssignmentPreviewCard(
                             facility: "UCSF Medical Center",
                             location: "San Francisco, CA",
                             specialty: "Emergency",
@@ -698,7 +698,7 @@ struct AssignmentsPreviewView: View {
                             progress: 1.0
                         )
 
-                        AssignmentCard(
+                        AssignmentPreviewCard(
                             facility: "UCLA Health",
                             location: "Los Angeles, CA",
                             specialty: "ICU",
@@ -767,7 +767,7 @@ enum AssignmentDisplayStatus {
     }
 }
 
-struct AssignmentCard: View {
+struct AssignmentPreviewCard: View {
     let facility: String
     let location: String
     let specialty: String
@@ -867,7 +867,7 @@ struct ExpensesPreviewView: View {
                 // Expense list
                 ScrollView {
                     LazyVStack(spacing: TNSpacing.sm) {
-                        ExpenseRow(
+                        ExpensePreviewRow(
                             category: "Mileage",
                             description: "Home → Stanford Medical",
                             date: "Today",
@@ -875,7 +875,7 @@ struct ExpensesPreviewView: View {
                             icon: "car.fill",
                             color: TNColors.accent
                         )
-                        ExpenseRow(
+                        ExpensePreviewRow(
                             category: "Professional",
                             description: "Scrubs - Cherokee brand",
                             date: "Yesterday",
@@ -883,7 +883,7 @@ struct ExpensesPreviewView: View {
                             icon: "tshirt.fill",
                             color: TNColors.primary
                         )
-                        ExpenseRow(
+                        ExpensePreviewRow(
                             category: "Housing",
                             description: "Assignment housing rent",
                             date: "Dec 1",
@@ -891,7 +891,7 @@ struct ExpensesPreviewView: View {
                             icon: "house.fill",
                             color: TNColors.secondary
                         )
-                        ExpenseRow(
+                        ExpensePreviewRow(
                             category: "Meals",
                             description: "Lunch during shift",
                             date: "Dec 3",
@@ -899,7 +899,7 @@ struct ExpensesPreviewView: View {
                             icon: "fork.knife",
                             color: TNColors.warning
                         )
-                        ExpenseRow(
+                        ExpensePreviewRow(
                             category: "Professional",
                             description: "BLS Certification renewal",
                             date: "Nov 28",
@@ -1010,7 +1010,7 @@ struct ExpenseCategoryPill: View {
     }
 }
 
-struct ExpenseRow: View {
+struct ExpensePreviewRow: View {
     let category: String
     let description: String
     let date: String
@@ -1020,41 +1020,45 @@ struct ExpenseRow: View {
 
     var body: some View {
         HStack(spacing: TNSpacing.md) {
-            Circle()
-                .fill(color.opacity(0.15))
-                .frame(width: 44, height: 44)
-                .overlay {
-                    Image(systemName: icon)
-                        .foregroundStyle(color)
-                }
+            // Category Icon
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 44, height: 44)
 
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(color)
+            }
+
+            // Details
             VStack(alignment: .leading, spacing: TNSpacing.xxs) {
                 Text(description)
                     .font(TNTypography.bodyMedium)
                     .foregroundStyle(TNColors.textPrimary)
                     .lineLimit(1)
-                HStack(spacing: TNSpacing.xs) {
-                    Text(category)
-                        .font(TNTypography.caption)
-                        .foregroundStyle(color)
-                    Text("•")
-                        .foregroundStyle(TNColors.textTertiary)
-                    Text(date)
-                        .font(TNTypography.caption)
-                        .foregroundStyle(TNColors.textTertiary)
-                }
+
+                Text(category)
+                    .font(TNTypography.caption)
+                    .foregroundStyle(TNColors.textSecondary)
+
+                Text(date)
+                    .font(TNTypography.caption)
+                    .foregroundStyle(TNColors.textTertiary)
             }
 
             Spacer()
 
+            // Amount
             Text(amount)
                 .font(TNTypography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundStyle(TNColors.textPrimary)
+                .foregroundStyle(TNColors.error)
         }
-        .padding(TNSpacing.sm)
+        .padding(TNSpacing.md)
         .background(TNColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: TNSpacing.buttonRadius))
+        .shadow(color: TNColors.shadowColor, radius: TNSpacing.shadowRadius, x: 0, y: 2)
     }
 }
 
@@ -1072,7 +1076,14 @@ struct TaxHomePreviewView: View {
                     TaxHomeAddressCard()
 
                     // 30 Day Tracker
-                    ThirtyDayTrackerCard()
+                    ThirtyDayTrackerCard(
+                        daysUntilReturn: 22,
+                        isAtRisk: false,
+                        isViolated: false,
+                        lastVisit: Calendar.current.date(byAdding: .day, value: -8, to: Date()),
+                        daysAtTaxHome: 45,
+                        onRecordVisit: {}
+                    )
 
                     // Documents
                     DocumentsSection()
@@ -1183,74 +1194,7 @@ struct TaxHomeAddressCard: View {
     }
 }
 
-struct ThirtyDayTrackerCard: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.md) {
-            HStack {
-                Text("30-Day Rule Tracker")
-                    .font(TNTypography.headlineSmall)
-                    .foregroundStyle(TNColors.textPrimary)
-                Spacer()
-                Text("Last 12 months")
-                    .font(TNTypography.caption)
-                    .foregroundStyle(TNColors.textTertiary)
-            }
-
-            HStack(spacing: TNSpacing.lg) {
-                VStack(spacing: TNSpacing.xs) {
-                    Text("45")
-                        .font(TNTypography.moneyLarge)
-                        .foregroundStyle(TNColors.success)
-                    Text("Days at Home")
-                        .font(TNTypography.caption)
-                        .foregroundStyle(TNColors.textSecondary)
-                }
-
-                Divider()
-                    .frame(height: 50)
-
-                VStack(spacing: TNSpacing.xs) {
-                    Text("30")
-                        .font(TNTypography.moneyLarge)
-                        .foregroundStyle(TNColors.textTertiary)
-                    Text("Minimum Required")
-                        .font(TNTypography.caption)
-                        .foregroundStyle(TNColors.textSecondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.largeTitle)
-                    .foregroundStyle(TNColors.success)
-            }
-
-            // Progress bar
-            VStack(alignment: .leading, spacing: TNSpacing.xs) {
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(TNColors.success.opacity(0.2))
-                            .frame(height: 8)
-
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(TNColors.success)
-                            .frame(width: geo.size.width * min(45.0 / 30.0, 1.0), height: 8)
-                    }
-                }
-                .frame(height: 8)
-
-                Text("You've exceeded the 30-day minimum by 15 days")
-                    .font(TNTypography.caption)
-                    .foregroundStyle(TNColors.success)
-            }
-        }
-        .padding(TNSpacing.cardPadding)
-        .background(TNColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.cardRadius))
-        .shadow(color: TNColors.shadowColor, radius: TNSpacing.shadowRadius, x: 0, y: 2)
-    }
-}
+// ThirtyDayTrackerCard moved to Features/TaxHome/Components/ThirtyDayTrackerView.swift
 
 struct DocumentsSection: View {
     var body: some View {
