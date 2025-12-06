@@ -89,6 +89,56 @@ final class TaxHomeViewModel {
         checklistItems.filter { $0.category == .documentation }
     }
 
+    // MARK: - ComplianceChecklistView Support
+
+    /// All available categories that have items
+    var categories: [ChecklistCategory] {
+        let availableCategories = Set(checklistItems.map { $0.category })
+        return ChecklistCategory.allCases.filter { availableCategories.contains($0) }
+    }
+
+    /// Alias for completedItemsCount (used by ComplianceChecklistView)
+    var completedChecklistItems: Int {
+        completedItemsCount
+    }
+
+    /// Alias for totalItemsCount (used by ComplianceChecklistView)
+    var totalChecklistItems: Int {
+        totalItemsCount
+    }
+
+    /// Returns items for a specific category
+    func items(for category: ChecklistCategory) -> [ComplianceChecklistItem] {
+        checklistItems.filter { $0.category == category }
+    }
+
+    /// Returns display name for a category
+    func formatCategoryName(_ category: ChecklistCategory) -> String {
+        category.rawValue
+    }
+
+    /// Returns SF Symbol name for a category
+    func iconForCategory(_ category: ChecklistCategory) -> String {
+        switch category {
+        case .residence:
+            return "house.fill"
+        case .presence:
+            return "mappin.and.ellipse"
+        case .ties:
+            return "person.2.fill"
+        case .financial:
+            return "dollarsign.circle.fill"
+        case .documentation:
+            return "doc.text.fill"
+        }
+    }
+
+    /// Async version of toggle for use with Task
+    func toggleChecklistItem(id: String) async {
+        guard let item = checklistItems.first(where: { $0.id == id }) else { return }
+        toggleItemStatus(item)
+    }
+
     // MARK: - Formatted Values
 
     var formattedLastVisit: String {
@@ -223,5 +273,20 @@ final class TaxHomeViewModel {
         } catch {
             errorMessage = "Failed to save changes: \(error.localizedDescription)"
         }
+    }
+}
+
+// MARK: - Preview Support
+
+extension TaxHomeViewModel {
+    /// Preview instance with sample data
+    static var preview: TaxHomeViewModel {
+        let viewModel = TaxHomeViewModel()
+        // Create a sample compliance for preview
+        let sampleCompliance = TaxHomeCompliance(taxYear: Calendar.current.component(.year, from: Date()))
+        sampleCompliance.daysAtTaxHome = 45
+        sampleCompliance.lastTaxHomeVisit = Calendar.current.date(byAdding: .day, value: -15, to: Date())
+        viewModel.compliance = sampleCompliance
+        return viewModel
     }
 }

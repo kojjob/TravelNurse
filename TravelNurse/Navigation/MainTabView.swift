@@ -2,26 +2,26 @@
 //  MainTabView.swift
 //  TravelNurse
 //
-//  Main navigation container with 4-tab layout
+//  Main navigation container with 5-tab layout
 //
 
 import SwiftUI
 import SwiftData
 
 /// Main navigation container for the app
-/// Manages tab-based navigation with 4 primary tabs:
-/// Home, Taxes, Reports, Settings
+/// Manages tab-based navigation with 5 primary tabs:
+/// Home, Assignments, Expenses, Tax Home, Reports
 struct MainTabView: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var selectedTab: Tab = .home
 
     enum Tab: Int, CaseIterable {
-        case home = 0
-        case assignments = 1
-        case expenses = 2
-        case taxHome = 3
-        case reports = 4
+        case home
+        case assignments
+        case expenses
+        case taxHome
+        case reports
 
         var title: String {
             switch self {
@@ -30,7 +30,6 @@ struct MainTabView: View {
             case .expenses: return "Expenses"
             case .taxHome: return "Tax Home"
             case .reports: return "Reports"
-            case .settings: return "Settings"
             }
         }
 
@@ -55,9 +54,9 @@ struct MainTabView: View {
 
             AssignmentListView()
                 .tabItem {
-                    Label(Tab.taxes.title, systemImage: Tab.taxes.icon)
+                    Label(Tab.assignments.title, systemImage: Tab.assignments.icon)
                 }
-                .tag(Tab.taxes)
+                .tag(Tab.assignments)
 
             ExpenseListView()
                 .tabItem {
@@ -69,13 +68,13 @@ struct MainTabView: View {
                 .tabItem {
                     Label(Tab.taxHome.title, systemImage: Tab.taxHome.icon)
                 }
-                .tag(Tab.reports)
+                .tag(Tab.taxHome)
 
             ReportsView()
                 .tabItem {
-                    Label(Tab.settings.title, systemImage: Tab.settings.icon)
+                    Label(Tab.reports.title, systemImage: Tab.reports.icon)
                 }
-                .tag(Tab.settings)
+                .tag(Tab.reports)
         }
         .tint(TNColors.primary)
         .onAppear {
@@ -91,6 +90,14 @@ struct MainTabView: View {
         }
     }
 
+    private func configureTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+}
+
 struct ExpensesPlaceholderView: View {
     var body: some View {
         NavigationStack {
@@ -103,10 +110,6 @@ struct ExpensesPlaceholderView: View {
         }
     }
 }
-
-// TaxHomePlaceholderView removed - using TaxHomeView instead
-
-// ReportsPlaceholderView removed - using ReportsView from Sprint 7
 
 #Preview {
     MainTabView()

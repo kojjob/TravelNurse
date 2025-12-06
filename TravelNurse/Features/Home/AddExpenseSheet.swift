@@ -112,7 +112,7 @@ struct AddExpenseSheet: View {
                 }
             }
             .sheet(isPresented: $showingCategoryPicker) {
-                CategoryPickerSheet(selectedCategory: $selectedCategory)
+                SimpleCategoryPickerSheet(selectedCategory: $selectedCategory)
             }
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) { }
@@ -161,7 +161,7 @@ struct AddExpenseSheet: View {
 
 // MARK: - Category Picker Sheet
 
-struct CategoryPickerSheet: View {
+private struct SimpleCategoryPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedCategory: ExpenseCategory
 

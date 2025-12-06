@@ -397,8 +397,6 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "TravelNurse uses your location to track mileage even when the app is in the background, ensuring accurate trip records for tax deductions.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "TravelNurse uses your location to automatically track mileage during work-related trips for tax deduction purposes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -430,8 +428,6 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "TravelNurse uses your location to track mileage even when the app is in the background, ensuring accurate trip records for tax deductions.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "TravelNurse uses your location to automatically track mileage during work-related trips for tax deduction purposes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

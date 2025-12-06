@@ -8,6 +8,45 @@
 import Foundation
 import SwiftUI
 
+/// Export format options for tax reports
+enum ExportFormat: String, CaseIterable, Identifiable {
+    case csv = "CSV Spreadsheet"
+    case pdf = "PDF Document"
+    case json = "JSON Data"
+
+    var id: String { rawValue }
+
+    var description: String {
+        switch self {
+        case .csv:
+            return "Best for importing into Excel, Google Sheets, or other spreadsheet apps"
+        case .pdf:
+            return "Professional formatted report ready for printing or sharing with your accountant"
+        case .json:
+            return "Raw data format for backup or integration with other apps"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .csv:
+            return "tablecells"
+        case .pdf:
+            return "doc.richtext"
+        case .json:
+            return "curlybraces"
+        }
+    }
+
+    var fileExtension: String {
+        switch self {
+        case .csv: return "csv"
+        case .pdf: return "pdf"
+        case .json: return "json"
+        }
+    }
+}
+
 /// Data model for state-by-state earnings breakdown
 struct StateBreakdown: Identifiable {
     var id: String { state.rawValue }
@@ -32,6 +71,7 @@ final class ReportsViewModel {
     // MARK: - Published Properties
 
     var isLoading = false
+    var isExporting = false
     var selectedYear: Int = Calendar.current.component(.year, from: Date())
 
     var totalIncome: Decimal = 0
@@ -107,6 +147,101 @@ final class ReportsViewModel {
     func shareReport(year: Int) {
         // TODO: Implement share functionality
         print("Sharing report for year: \(year)")
+    }
+
+    /// Export report in the specified format
+    /// - Parameter format: The export format to use
+    /// - Returns: URL to the exported file, or nil if export failed
+    func exportReport(format: ExportFormat) async -> URL? {
+        isExporting = true
+        defer { isExporting = false }
+
+        // Simulate export delay for UI feedback
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+
+        let fileName = "TaxReport_\(selectedYear).\(format.fileExtension)"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+
+        do {
+            switch format {
+            case .csv:
+                let csvContent = generateCSVContent()
+                try csvContent.write(to: tempURL, atomically: true, encoding: .utf8)
+
+            case .pdf:
+                // For now, generate a simple text file as PDF generation requires more setup
+                let pdfContent = generateTextReportContent()
+                try pdfContent.write(to: tempURL, atomically: true, encoding: .utf8)
+
+            case .json:
+                let jsonContent = generateJSONContent()
+                try jsonContent.write(to: tempURL, atomically: true, encoding: .utf8)
+            }
+
+            return tempURL
+        } catch {
+            print("Export failed: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    // MARK: - Export Content Generation
+
+    private func generateCSVContent() -> String {
+        var csv = "Category,Amount\n"
+        csv += "Total Income,\(totalIncome)\n"
+        csv += "Total Expenses,\(totalExpenses)\n"
+        csv += "Mileage Deduction,\(totalMileageDeduction)\n"
+        csv += "Total Miles,\(totalMiles)\n"
+        csv += "Net Income,\(netIncome)\n"
+        csv += "\nState,Earnings,Weeks Worked,Has State Tax\n"
+        for breakdown in stateBreakdowns {
+            csv += "\(breakdown.state.rawValue),\(breakdown.earnings),\(breakdown.weeksWorked),\(breakdown.hasStateTax)\n"
+        }
+        return csv
+    }
+
+    private func generateTextReportContent() -> String {
+        var report = "TAX REPORT - \(selectedYear)\n"
+        report += "========================\n\n"
+        report += "SUMMARY\n"
+        report += "-------\n"
+        report += "Total Income: \(formattedTotalIncome)\n"
+        report += "Total Expenses: \(formattedTotalExpenses)\n"
+        report += "Mileage Deduction: \(formattedMileageDeduction)\n"
+        report += "Total Miles: \(Int(totalMiles))\n"
+        report += "Net Income: \(formattedNetIncome)\n\n"
+        report += "STATE BREAKDOWN\n"
+        report += "---------------\n"
+        for breakdown in stateBreakdowns {
+            report += "\(breakdown.state.rawValue): \(breakdown.formattedEarnings) (\(breakdown.weeksWorked) weeks)\n"
+        }
+        return report
+    }
+
+    private func generateJSONContent() -> String {
+        let data: [String: Any] = [
+            "year": selectedYear,
+            "totalIncome": "\(totalIncome)",
+            "totalExpenses": "\(totalExpenses)",
+            "mileageDeduction": "\(totalMileageDeduction)",
+            "totalMiles": totalMiles,
+            "netIncome": "\(netIncome)",
+            "stateBreakdowns": stateBreakdowns.map { breakdown in
+                [
+                    "state": breakdown.state.rawValue,
+                    "earnings": "\(breakdown.earnings)",
+                    "weeksWorked": breakdown.weeksWorked,
+                    "hasStateTax": breakdown.hasStateTax
+                ]
+            }
+        ]
+
+        if let jsonData = try? JSONSerialization.data(withJSONObject: data, options: .prettyPrinted),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            return jsonString
+        }
+        return "{}"
     }
 
     // MARK: - Private Methods
