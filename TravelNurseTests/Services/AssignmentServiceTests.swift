@@ -250,11 +250,11 @@ final class AssignmentServiceTests: XCTestCase {
     func test_totalEarnings_calculatesCorrectSum() throws {
         // Given
         let assignment1 = createTestAssignment(facilityName: "Hospital 1")
-        let pay1 = PayBreakdown(hourlyRate: 50, weeklyHours: 36)
+        let pay1 = PayBreakdown(hourlyRate: 50, guaranteedHours: 36)
         assignment1.payBreakdown = pay1
 
         let assignment2 = createTestAssignment(facilityName: "Hospital 2")
-        let pay2 = PayBreakdown(hourlyRate: 60, weeklyHours: 36)
+        let pay2 = PayBreakdown(hourlyRate: 60, guaranteedHours: 36)
         assignment2.payBreakdown = pay2
 
         try modelContext.save()
