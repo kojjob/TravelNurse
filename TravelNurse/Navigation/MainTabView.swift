@@ -106,18 +106,7 @@ struct ExpensesPlaceholderView: View {
 
 // TaxHomePlaceholderView removed - using TaxHomeView instead
 
-struct ReportsPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "chart.bar.fill",
-                description: Text("Tax reports and exports will be available in the next update.")
-            )
-            .navigationTitle("Reports")
-        }
-    }
-}
+// ReportsPlaceholderView removed - using ReportsView from Sprint 7
 
 #Preview {
     MainTabView()
