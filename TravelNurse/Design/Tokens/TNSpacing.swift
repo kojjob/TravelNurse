@@ -72,6 +72,12 @@ public enum TNSpacing {
     /// Screen edge padding
     public static let screenEdge: CGFloat = 20
 
+    /// Screen padding (alias for screenEdge)
+    public static let screenPadding: CGFloat = 20
+
+    /// Default shadow radius
+    public static let shadowRadius: CGFloat = 8
+
     /// Section spacing
     public static let sectionSpacing: CGFloat = 32
 

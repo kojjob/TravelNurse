@@ -90,6 +90,9 @@ public enum TNColors {
 
     /// Card shadow color
     public static let cardShadow = Color.black.opacity(0.08)
+
+    /// Shadow color for general use
+    public static let shadowColor = Color.black.opacity(0.08)
 }
 
 // MARK: - Color Extension for Hex Support
