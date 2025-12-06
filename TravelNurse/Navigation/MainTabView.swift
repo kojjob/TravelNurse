@@ -57,7 +57,7 @@ struct MainTabView: View {
                 }
                 .tag(Tab.assignments)
 
-            ExpensesPlaceholderView()
+            MileageTrackerView()
                 .tabItem {
                     Label(Tab.expenses.title, systemImage: Tab.expenses.icon)
                 }
