@@ -8,6 +8,31 @@
 import Foundation
 import SwiftUI
 
+/// Export format options for tax reports
+enum ExportFormat: String, CaseIterable, Identifiable {
+    case pdf = "PDF"
+    case csv = "CSV"
+    case json = "JSON"
+
+    var id: String { rawValue }
+
+    var iconName: String {
+        switch self {
+        case .pdf: return "doc.fill"
+        case .csv: return "tablecells"
+        case .json: return "curlybraces"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .pdf: return "Best for printing and sharing with your accountant"
+        case .csv: return "Import into Excel or accounting software"
+        case .json: return "For developers and data integration"
+        }
+    }
+}
+
 /// Data model for state-by-state earnings breakdown
 struct StateBreakdown: Identifiable {
     var id: String { state.rawValue }
@@ -32,6 +57,7 @@ final class ReportsViewModel {
     // MARK: - Published Properties
 
     var isLoading = false
+    var isExporting = false
     var selectedYear: Int = Calendar.current.component(.year, from: Date())
 
     var totalIncome: Decimal = 0
@@ -107,6 +133,41 @@ final class ReportsViewModel {
     func shareReport(year: Int) {
         // TODO: Implement share functionality
         print("Sharing report for year: \(year)")
+    }
+
+    func exportReport(format: ExportFormat) async -> URL? {
+        isExporting = true
+        defer { isExporting = false }
+
+        // Simulate export processing
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+
+        switch format {
+        case .pdf:
+            return generatePDFURL()
+        case .csv:
+            return generateCSVURL()
+        case .json:
+            return generateJSONURL()
+        }
+    }
+
+    private func generatePDFURL() -> URL? {
+        // TODO: Implement actual PDF generation
+        let documentsPath = FileManager.default.temporaryDirectory
+        return documentsPath.appendingPathComponent("tax_report_\(selectedYear).pdf")
+    }
+
+    private func generateCSVURL() -> URL? {
+        // TODO: Implement actual CSV generation
+        let documentsPath = FileManager.default.temporaryDirectory
+        return documentsPath.appendingPathComponent("tax_report_\(selectedYear).csv")
+    }
+
+    private func generateJSONURL() -> URL? {
+        // TODO: Implement actual JSON generation
+        let documentsPath = FileManager.default.temporaryDirectory
+        return documentsPath.appendingPathComponent("tax_report_\(selectedYear).json")
     }
 
     // MARK: - Private Methods

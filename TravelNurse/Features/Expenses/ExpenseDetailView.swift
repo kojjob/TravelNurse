@@ -178,7 +178,7 @@ struct ExpenseDetailView: View {
             // Status Badges
             HStack(spacing: TNSpacing.sm) {
                 if expense.isDeductible {
-                    StatusBadge(
+                    ExpenseStatusBadge(
                         title: "Tax Deductible",
                         icon: "checkmark.seal.fill",
                         color: TNColors.success
@@ -186,13 +186,13 @@ struct ExpenseDetailView: View {
                 }
 
                 if expense.hasReceipt {
-                    StatusBadge(
+                    ExpenseStatusBadge(
                         title: "Receipt Attached",
                         icon: "doc.text.fill",
                         color: TNColors.primary
                     )
                 } else if expense.amount >= 75 {
-                    StatusBadge(
+                    ExpenseStatusBadge(
                         title: "Needs Receipt",
                         icon: "exclamationmark.triangle.fill",
                         color: TNColors.warning
@@ -610,7 +610,7 @@ private struct ExpenseDetailRow: View {
     }
 }
 
-private struct StatusBadge: View {
+private struct ExpenseStatusBadge: View {
     let title: String
     let icon: String
     let color: Color

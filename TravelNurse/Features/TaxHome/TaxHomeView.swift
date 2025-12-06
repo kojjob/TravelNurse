@@ -57,14 +57,12 @@ struct TaxHomeView: View {
             }
             .sheet(isPresented: $viewModel.showingRecordVisitSheet) {
                 RecordVisitSheet(
-                    days: $viewModel.visitDaysToRecord,
-                    onRecord: {
-                        viewModel.recordVisit(days: viewModel.visitDaysToRecord)
-                        viewModel.showingRecordVisitSheet = false
-                        viewModel.visitDaysToRecord = 1
+                    isPresented: $viewModel.showingRecordVisitSheet,
+                    onRecordVisit: { date, days in
+                        viewModel.recordVisit(days: days)
                     }
                 )
-                .presentationDetents([.height(300)])
+                .presentationDetents([.height(400)])
             }
         }
     }
@@ -94,7 +92,9 @@ struct TaxHomeView: View {
                 // Score Ring
                 ComplianceScoreRing(
                     score: viewModel.complianceScore,
-                    level: viewModel.complianceLevel
+                    level: viewModel.complianceLevel,
+                    size: 100,
+                    strokeWidth: 10
                 )
 
                 // Status Details
@@ -186,70 +186,39 @@ struct TaxHomeView: View {
             // Residence Category
             if !viewModel.residenceItems.isEmpty {
                 ChecklistCategorySection(
-                    title: "Residence",
-                    icon: "house.fill",
-                    color: .orange,
+                    categoryName: "Residence",
+                    iconName: "house.fill",
                     items: viewModel.residenceItems,
-                    onToggle: viewModel.toggleItemStatus
+                    onToggleItem: { itemId in
+                        Task { await viewModel.toggleChecklistItem(id: itemId) }
+                    }
                 )
             }
 
             // Presence Category
             if !viewModel.presenceItems.isEmpty {
                 ChecklistCategorySection(
-                    title: "Physical Presence",
-                    icon: "mappin.and.ellipse",
-                    color: TNColors.primary,
+                    categoryName: "Physical Presence",
+                    iconName: "mappin.and.ellipse",
                     items: viewModel.presenceItems,
-                    onToggle: viewModel.toggleItemStatus
+                    onToggleItem: { itemId in
+                        Task { await viewModel.toggleChecklistItem(id: itemId) }
+                    }
                 )
             }
 
             // Community Ties Category
             if !viewModel.tiesItems.isEmpty {
                 ChecklistCategorySection(
-                    title: "Community Ties",
-                    icon: "person.2.fill",
-                    color: .purple,
+                    categoryName: "Community Ties",
+                    iconName: "person.2.fill",
                     items: viewModel.tiesItems,
-                    onToggle: viewModel.toggleItemStatus
+                    onToggleItem: { itemId in
+                        Task { await viewModel.toggleChecklistItem(id: itemId) }
+                    }
                 )
             }
         }
-    }
-}
-
-// MARK: - Compliance Score Ring
-
-struct ComplianceScoreRing: View {
-    let score: Int
-    let level: ComplianceLevel
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(TNColors.border, lineWidth: 10)
-
-            Circle()
-                .trim(from: 0, to: Double(score) / 100)
-                .stroke(
-                    level.color,
-                    style: StrokeStyle(lineWidth: 10, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: score)
-
-            VStack(spacing: 0) {
-                Text("\(score)")
-                    .font(TNTypography.displayMedium)
-                    .foregroundStyle(level.color)
-
-                Text("%")
-                    .font(TNTypography.caption)
-                    .foregroundStyle(TNColors.textSecondary)
-            }
-        }
-        .frame(width: 100, height: 100)
     }
 }
 
@@ -359,161 +328,6 @@ struct TaxHomeStatCard: View {
         .background(TNColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
         .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
-    }
-}
-
-// MARK: - Checklist Category Section
-
-struct ChecklistCategorySection: View {
-    let title: String
-    let icon: String
-    let color: Color
-    let items: [ComplianceChecklistItem]
-    let onToggle: (ComplianceChecklistItem) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.sm) {
-            HStack(spacing: TNSpacing.xs) {
-                Image(systemName: icon)
-                    .font(.system(size: 14))
-                    .foregroundStyle(color)
-
-                Text(title)
-                    .font(TNTypography.titleSmall)
-                    .foregroundStyle(TNColors.textPrimary)
-
-                Spacer()
-
-                let completed = items.filter { $0.status == .complete }.count
-                Text("\(completed)/\(items.count)")
-                    .font(TNTypography.caption)
-                    .foregroundStyle(TNColors.textSecondary)
-            }
-
-            VStack(spacing: 0) {
-                ForEach(items) { item in
-                    ChecklistItemRow(item: item, onToggle: { onToggle(item) })
-
-                    if item.id != items.last?.id {
-                        Divider()
-                            .padding(.leading, 40)
-                    }
-                }
-            }
-            .padding(TNSpacing.sm)
-            .background(TNColors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-            .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
-        }
-    }
-}
-
-// MARK: - Checklist Item Row
-
-struct ChecklistItemRow: View {
-    let item: ComplianceChecklistItem
-    let onToggle: () -> Void
-
-    var body: some View {
-        Button(action: onToggle) {
-            HStack(spacing: TNSpacing.sm) {
-                Image(systemName: item.status.iconName)
-                    .font(.system(size: 20))
-                    .foregroundStyle(item.status.color)
-                    .frame(width: 24)
-
-                VStack(alignment: .leading, spacing: TNSpacing.xxs) {
-                    Text(item.title)
-                        .font(TNTypography.bodyMedium)
-                        .foregroundStyle(item.status == .complete ? TNColors.textSecondary : TNColors.textPrimary)
-                        .strikethrough(item.status == .complete)
-
-                    Text(item.description)
-                        .font(TNTypography.caption)
-                        .foregroundStyle(TNColors.textTertiary)
-                        .lineLimit(2)
-                }
-
-                Spacer()
-            }
-            .padding(.vertical, TNSpacing.sm)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Record Visit Sheet
-
-struct RecordVisitSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var days: Int
-
-    let onRecord: () -> Void
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: TNSpacing.lg) {
-                Text("Record Tax Home Visit")
-                    .font(TNTypography.headlineMedium)
-                    .foregroundStyle(TNColors.textPrimary)
-
-                Text("How many days did you spend at your tax home?")
-                    .font(TNTypography.bodyMedium)
-                    .foregroundStyle(TNColors.textSecondary)
-                    .multilineTextAlignment(.center)
-
-                HStack(spacing: TNSpacing.lg) {
-                    Button {
-                        if days > 1 { days -= 1 }
-                    } label: {
-                        Image(systemName: "minus.circle.fill")
-                            .font(.system(size: 44))
-                            .foregroundStyle(days > 1 ? TNColors.primary : TNColors.textTertiary)
-                    }
-                    .disabled(days <= 1)
-
-                    Text("\(days)")
-                        .font(TNTypography.displayLarge)
-                        .foregroundStyle(TNColors.textPrimary)
-                        .frame(minWidth: 60)
-
-                    Button {
-                        if days < 30 { days += 1 }
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 44))
-                            .foregroundStyle(days < 30 ? TNColors.primary : TNColors.textTertiary)
-                    }
-                    .disabled(days >= 30)
-                }
-
-                Text(days == 1 ? "day" : "days")
-                    .font(TNTypography.bodyMedium)
-                    .foregroundStyle(TNColors.textSecondary)
-
-                Spacer()
-
-                Button(action: onRecord) {
-                    Text("Record Visit")
-                        .font(TNTypography.buttonMedium)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, TNSpacing.md)
-                        .background(TNColors.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-                }
-            }
-            .padding(TNSpacing.lg)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundStyle(TNColors.textSecondary)
-                }
-            }
-        }
     }
 }
 

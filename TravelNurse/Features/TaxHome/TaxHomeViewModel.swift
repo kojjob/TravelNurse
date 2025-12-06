@@ -224,4 +224,65 @@ final class TaxHomeViewModel {
             errorMessage = "Failed to save changes: \(error.localizedDescription)"
         }
     }
+
+    // MARK: - Checklist Support for ComplianceChecklistView
+
+    /// All available checklist categories
+    var categories: [ChecklistCategory] {
+        ChecklistCategory.allCases
+    }
+
+    /// Completed checklist items count
+    var completedChecklistItems: Int {
+        completedItemsCount
+    }
+
+    /// Total checklist items count
+    var totalChecklistItems: Int {
+        totalItemsCount
+    }
+
+    /// Get checklist items for a specific category
+    func items(for category: ChecklistCategory) -> [ComplianceChecklistItem] {
+        checklistItems.filter { $0.category == category }
+    }
+
+    /// Format category name for display
+    func formatCategoryName(_ category: ChecklistCategory) -> String {
+        category.rawValue
+    }
+
+    /// Get icon for a category
+    func iconForCategory(_ category: ChecklistCategory) -> String {
+        switch category {
+        case .residence:
+            return "house.fill"
+        case .presence:
+            return "calendar.badge.clock"
+        case .ties:
+            return "person.2.fill"
+        case .financial:
+            return "banknote.fill"
+        case .documentation:
+            return "doc.text.fill"
+        }
+    }
+
+    /// Toggle a checklist item (async for use with Task)
+    @MainActor
+    func toggleChecklistItem(id: String) async {
+        guard let item = checklistItems.first(where: { $0.id == id }) else { return }
+        toggleItemStatus(item)
+    }
+}
+
+// MARK: - Preview Support
+
+extension TaxHomeViewModel {
+    /// Preview instance with sample data
+    static var preview: TaxHomeViewModel {
+        let viewModel = TaxHomeViewModel()
+        // Setup preview state without requiring ModelContext
+        return viewModel
+    }
 }
