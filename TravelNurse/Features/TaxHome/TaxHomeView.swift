@@ -192,8 +192,8 @@ struct TaxHomeView: View {
                     icon: "house.fill",
                     color: .orange,
                     items: viewModel.residenceItems,
-                    onToggleItem: { itemId in
-                        Task { await viewModel.toggleChecklistItem(id: itemId) }
+                    onToggle: { item in
+                        Task { await viewModel.toggleChecklistItem(id: item.id) }
                     }
                 )
             }
@@ -205,8 +205,8 @@ struct TaxHomeView: View {
                     icon: "mappin.and.ellipse",
                     color: TNColors.primary,
                     items: viewModel.presenceItems,
-                    onToggleItem: { itemId in
-                        Task { await viewModel.toggleChecklistItem(id: itemId) }
+                    onToggle: { item in
+                        Task { await viewModel.toggleChecklistItem(id: item.id) }
                     }
                 )
             }
@@ -218,8 +218,8 @@ struct TaxHomeView: View {
                     icon: "person.2.fill",
                     color: .purple,
                     items: viewModel.tiesItems,
-                    onToggleItem: { itemId in
-                        Task { await viewModel.toggleChecklistItem(id: itemId) }
+                    onToggle: { item in
+                        Task { await viewModel.toggleChecklistItem(id: item.id) }
                     }
                 )
             }

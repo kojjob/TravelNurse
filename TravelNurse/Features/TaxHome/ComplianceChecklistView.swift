@@ -261,52 +261,56 @@ struct ChecklistPreviewCard: View {
 
 // MARK: - Previews
 
-#Preview("Compliance Checklist View") {
-    ComplianceChecklistView(viewModel: TaxHomeViewModel.preview)
+struct ComplianceChecklistView_Previews: PreviewProvider {
+    static var previews: some View {
+        ComplianceChecklistView(viewModel: TaxHomeViewModel.preview)
+    }
 }
 
-#Preview("Checklist Preview Card") {
-    ChecklistPreviewCard(
-        completedCount: 5,
-        totalCount: 10,
-        completionPercentage: 0.5,
-        level: .good,
-        previewItems: [
-            ComplianceChecklistItem(
-                id: "1",
-                title: "Maintain primary residence",
-                description: "Keep your home maintained",
-                category: .residence,
-                weight: 15,
-                status: .incomplete
-            ),
-            ComplianceChecklistItem(
-                id: "2",
-                title: "Keep driver's license",
-                description: "Maintain valid ID",
-                category: .ties,
-                weight: 10,
-                status: .incomplete
-            ),
-            ComplianceChecklistItem(
-                id: "3",
-                title: "Pay local taxes",
-                description: "",
-                category: .ties,
-                weight: 5,
-                status: .incomplete
-            ),
-            ComplianceChecklistItem(
-                id: "4",
-                title: "Vehicle registration",
-                description: "",
-                category: .ties,
-                weight: 5,
-                status: .incomplete
-            )
-        ],
-        onViewAll: {},
-        onToggleItem: { _ in }
-    )
-    .padding()
+struct ChecklistPreviewCard_Previews: PreviewProvider {
+    static var previews: some View {
+        ChecklistPreviewCard(
+            completedCount: 5,
+            totalCount: 10,
+            completionPercentage: 0.5,
+            level: .good,
+            previewItems: [
+                ComplianceChecklistItem(
+                    id: "1",
+                    title: "Maintain primary residence",
+                    description: "Keep your home maintained",
+                    category: .residence,
+                    weight: 15,
+                    status: .incomplete
+                ),
+                ComplianceChecklistItem(
+                    id: "2",
+                    title: "Keep driver's license",
+                    description: "Maintain valid ID",
+                    category: .ties,
+                    weight: 10,
+                    status: .incomplete
+                ),
+                ComplianceChecklistItem(
+                    id: "3",
+                    title: "Pay local taxes",
+                    description: "",
+                    category: .ties,
+                    weight: 5,
+                    status: .incomplete
+                ),
+                ComplianceChecklistItem(
+                    id: "4",
+                    title: "Vehicle registration",
+                    description: "",
+                    category: .ties,
+                    weight: 5,
+                    status: .incomplete
+                )
+            ],
+            onViewAll: {},
+            onToggleItem: { _ in }
+        )
+        .padding()
+    }
 }

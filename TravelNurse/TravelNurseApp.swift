@@ -44,7 +44,7 @@ struct TravelNurseApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
+            RootView()
         }
         .modelContainer(sharedModelContainer)
     }
