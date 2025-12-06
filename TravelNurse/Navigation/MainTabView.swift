@@ -51,7 +51,7 @@ struct MainTabView: View {
                 }
                 .tag(Tab.dashboard)
 
-            AssignmentsPlaceholderView()
+            AssignmentListView()
                 .tabItem {
                     Label(Tab.assignments.title, systemImage: Tab.assignments.icon)
                 }
@@ -90,19 +90,6 @@ struct MainTabView: View {
 }
 
 // MARK: - Placeholder Views (to be replaced in later sprints)
-
-struct AssignmentsPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "briefcase.fill",
-                description: Text("Assignment management will be available in the next update.")
-            )
-            .navigationTitle("Assignments")
-        }
-    }
-}
 
 struct ExpensesPlaceholderView: View {
     var body: some View {
