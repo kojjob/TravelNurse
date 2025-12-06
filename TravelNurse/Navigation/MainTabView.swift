@@ -13,10 +13,10 @@ import SwiftData
 struct MainTabView: View {
 
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedTab: Tab = .dashboard
+    @State private var selectedTab: Tab = .home
 
     enum Tab: Int, CaseIterable {
-        case dashboard = 0
+        case home = 0
         case assignments = 1
         case expenses = 2
         case taxHome = 3
@@ -24,7 +24,7 @@ struct MainTabView: View {
 
         var title: String {
             switch self {
-            case .dashboard: return "Dashboard"
+            case .home: return "Home"
             case .assignments: return "Assignments"
             case .expenses: return "Expenses"
             case .taxHome: return "Tax Home"
@@ -34,10 +34,10 @@ struct MainTabView: View {
 
         var icon: String {
             switch self {
-            case .dashboard: return "house.fill"
+            case .home: return "house.fill"
             case .assignments: return "briefcase.fill"
             case .expenses: return "creditcard.fill"
-            case .taxHome: return "house.lodge.fill"
+            case .taxHome: return "mappin.and.ellipse"
             case .reports: return "chart.bar.fill"
             }
         }
@@ -47,17 +47,17 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             DashboardView()
                 .tabItem {
-                    Label(Tab.dashboard.title, systemImage: Tab.dashboard.icon)
+                    Label(Tab.home.title, systemImage: Tab.home.icon)
                 }
-                .tag(Tab.dashboard)
+                .tag(Tab.home)
 
-            AssignmentsPlaceholderView()
+            AssignmentListView()
                 .tabItem {
                     Label(Tab.assignments.title, systemImage: Tab.assignments.icon)
                 }
                 .tag(Tab.assignments)
 
-            ExpensesPlaceholderView()
+            ExpenseListView()
                 .tabItem {
                     Label(Tab.expenses.title, systemImage: Tab.expenses.icon)
                 }
@@ -69,7 +69,7 @@ struct MainTabView: View {
                 }
                 .tag(Tab.taxHome)
 
-            ReportsPlaceholderView()
+            ReportsView()
                 .tabItem {
                     Label(Tab.reports.title, systemImage: Tab.reports.icon)
                 }
@@ -90,19 +90,6 @@ struct MainTabView: View {
 }
 
 // MARK: - Placeholder Views (to be replaced in later sprints)
-
-struct AssignmentsPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "briefcase.fill",
-                description: Text("Assignment management will be available in the next update.")
-            )
-            .navigationTitle("Assignments")
-        }
-    }
-}
 
 struct ExpensesPlaceholderView: View {
     var body: some View {

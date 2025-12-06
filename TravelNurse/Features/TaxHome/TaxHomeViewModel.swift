@@ -2,276 +2,226 @@
 //  TaxHomeViewModel.swift
 //  TravelNurse
 //
-//  ViewModel for Tax Home Compliance feature
+//  ViewModel for tax home compliance tracking
 //
 
 import Foundation
-import SwiftUI
 import SwiftData
+import SwiftUI
 
-/// ViewModel managing Tax Home Compliance state and business logic
-@MainActor
+/// ViewModel for TaxHomeView managing compliance data and checklist state
 @Observable
 final class TaxHomeViewModel {
 
-    // MARK: - State
+    // MARK: - Published Properties
 
-    /// Current compliance record
-    private(set) var compliance: TaxHomeCompliance?
-
-    /// Loading state
-    private(set) var isLoading = false
-
-    /// Error message if something goes wrong
-    private(set) var errorMessage: String?
-
-    /// Whether to show error alert
-    var showError = false
-
-    /// Whether to show record visit confirmation
-    var showRecordVisitConfirmation = false
-
-    /// Whether to show success toast
-    var showSuccessToast = false
-
-    /// Success message for toast
-    private(set) var successMessage: String?
-
-    // MARK: - Dependencies
-
-    private let serviceContainer: ServiceContainer
+    var compliance: TaxHomeCompliance?
+    var isLoading = false
+    var errorMessage: String?
+    var showingRecordVisitSheet = false
+    var visitDaysToRecord = 1
 
     // MARK: - Computed Properties
 
-    /// Current compliance score (0-100)
     var complianceScore: Int {
         compliance?.complianceScore ?? 0
     }
 
-    /// Current compliance level
     var complianceLevel: ComplianceLevel {
         compliance?.complianceLevel ?? .unknown
     }
 
-    /// Days spent at tax home this year
     var daysAtTaxHome: Int {
         compliance?.daysAtTaxHome ?? 0
     }
 
-    /// Days until 30-day return is required
-    var daysUntil30DayReturn: Int {
-        compliance?.daysUntil30DayReturn ?? 30
+    var daysUntil30DayReturn: Int? {
+        compliance?.daysUntil30DayReturn
     }
 
-    /// Whether 30-day rule is at risk
     var thirtyDayRuleAtRisk: Bool {
         compliance?.thirtyDayRuleAtRisk ?? false
     }
 
-    /// Whether 30-day rule is violated
     var thirtyDayRuleViolated: Bool {
         compliance?.thirtyDayRuleViolated ?? false
     }
 
-    /// Last tax home visit date
-    var lastTaxHomeVisit: Date? {
+    var lastVisitDate: Date? {
         compliance?.lastTaxHomeVisit
     }
 
-    /// Formatted last visit date
-    var lastVisitFormatted: String {
-        guard let date = lastTaxHomeVisit else {
-            return "No visits recorded"
-        }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
+    var checklistItems: [ComplianceChecklistItem] {
+        compliance?.checklistItems ?? []
     }
 
-    /// Checklist items organized by category
-    var checklistItemsByCategory: [ChecklistCategory: [ComplianceChecklistItem]] {
-        guard let items = compliance?.checklistItems else { return [:] }
-        return Dictionary(grouping: items) { $0.category }
+    var completedItemsCount: Int {
+        compliance?.completedItemsCount ?? 0
     }
 
-    /// Categories in display order
-    var categories: [ChecklistCategory] {
-        [.residence, .presence, .ties, .financial, .documentation]
+    var totalItemsCount: Int {
+        compliance?.totalItemsCount ?? 0
     }
 
-    /// Total checklist items count
-    var totalChecklistItems: Int {
-        compliance?.checklistItems.count ?? 0
-    }
-
-    /// Completed checklist items count
-    var completedChecklistItems: Int {
-        compliance?.checklistItems.filter { $0.status == .complete }.count ?? 0
-    }
-
-    /// Checklist completion percentage
     var checklistCompletionPercentage: Double {
-        guard totalChecklistItems > 0 else { return 0 }
-        return Double(completedChecklistItems) / Double(totalChecklistItems)
+        compliance?.checklistCompletionPercentage ?? 0
     }
 
-    /// 30-day rule status color
+    // MARK: - Grouped Checklist Items
+
+    var residenceItems: [ComplianceChecklistItem] {
+        checklistItems.filter { $0.category == .residence }
+    }
+
+    var presenceItems: [ComplianceChecklistItem] {
+        checklistItems.filter { $0.category == .presence }
+    }
+
+    var tiesItems: [ComplianceChecklistItem] {
+        checklistItems.filter { $0.category == .ties }
+    }
+
+    var financialItems: [ComplianceChecklistItem] {
+        checklistItems.filter { $0.category == .financial }
+    }
+
+    var documentationItems: [ComplianceChecklistItem] {
+        checklistItems.filter { $0.category == .documentation }
+    }
+
+    // MARK: - Formatted Values
+
+    var formattedLastVisit: String {
+        guard let date = lastVisitDate else {
+            return "Never"
+        }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
+    var formattedComplianceScore: String {
+        "\(complianceScore)%"
+    }
+
+    var thirtyDayStatusMessage: String {
+        guard let days = daysUntil30DayReturn else {
+            return "Schedule your first visit"
+        }
+
+        if days <= 0 {
+            return "Overdue! Visit tax home immediately"
+        } else if days <= 7 {
+            return "\(days) days remaining - Schedule soon!"
+        } else {
+            return "\(days) days until required visit"
+        }
+    }
+
     var thirtyDayStatusColor: Color {
-        if thirtyDayRuleViolated {
+        guard let days = daysUntil30DayReturn else {
+            return TNColors.textSecondary
+        }
+
+        if days <= 0 {
             return TNColors.error
-        } else if thirtyDayRuleAtRisk {
+        } else if days <= 7 {
             return TNColors.warning
         } else {
             return TNColors.success
         }
     }
 
-    /// 30-day rule status text
-    var thirtyDayStatusText: String {
-        if thirtyDayRuleViolated {
-            return "30-Day Rule Violated"
-        } else if thirtyDayRuleAtRisk {
-            return "Visit Required Soon"
-        } else {
-            return "On Track"
-        }
+    // MARK: - Private Properties
+
+    private var modelContext: ModelContext?
+
+    // MARK: - Public Methods
+
+    func configure(with modelContext: ModelContext) {
+        self.modelContext = modelContext
+        loadCompliance()
     }
 
-    /// Progress toward 30-day limit (0.0 to 1.0)
-    var thirtyDayProgress: Double {
-        let daysSinceVisit = 30 - daysUntil30DayReturn
-        return min(1.0, max(0.0, Double(daysSinceVisit) / 30.0))
-    }
+    func loadCompliance() {
+        guard let modelContext = modelContext else { return }
 
-    // MARK: - Initialization
-
-    init(serviceContainer: ServiceContainer = .shared) {
-        self.serviceContainer = serviceContainer
-    }
-
-    // MARK: - Actions
-
-    /// Load or create the current compliance record
-    func loadCompliance() async {
         isLoading = true
         errorMessage = nil
 
+        let currentYear = Calendar.current.component(.year, from: Date())
+        let descriptor = FetchDescriptor<TaxHomeCompliance>(
+            predicate: #Predicate { compliance in
+                compliance.taxYear == currentYear
+            }
+        )
+
         do {
-            let service = try serviceContainer.getComplianceService()
-            compliance = service.getOrCreateCurrent()
+            let results = try modelContext.fetch(descriptor)
+            if let existing = results.first {
+                compliance = existing
+            } else {
+                // Create new compliance record for current year
+                let newCompliance = TaxHomeCompliance(taxYear: currentYear)
+                modelContext.insert(newCompliance)
+                try modelContext.save()
+                compliance = newCompliance
+            }
         } catch {
             errorMessage = "Failed to load compliance data: \(error.localizedDescription)"
-            showError = true
         }
 
         isLoading = false
     }
 
-    /// Record a tax home visit
-    func recordTaxHomeVisit(date: Date = Date(), daysStayed: Int = 1) async {
-        guard compliance != nil else { return }
+    func refresh() {
+        loadCompliance()
+    }
 
-        isLoading = true
-        errorMessage = nil
+    func recordVisit(days: Int = 1) {
+        guard let compliance = compliance else { return }
+
+        compliance.recordTaxHomeVisit(days: days, date: Date())
+        saveChanges()
+    }
+
+    func updateChecklistItem(_ itemId: String, status: ComplianceItemStatus) {
+        guard let compliance = compliance else { return }
+
+        var items = compliance.checklistItems
+        if let index = items.firstIndex(where: { $0.id == itemId }) {
+            items[index].status = status
+            items[index].lastUpdated = Date()
+            compliance.checklistItems = items
+            compliance.recalculateScore()
+            saveChanges()
+        }
+    }
+
+    func toggleItemStatus(_ item: ComplianceChecklistItem) {
+        let newStatus: ComplianceItemStatus
+        switch item.status {
+        case .incomplete:
+            newStatus = .complete
+        case .complete:
+            newStatus = .incomplete
+        case .partial:
+            newStatus = .complete
+        case .notApplicable:
+            newStatus = .incomplete
+        }
+        updateChecklistItem(item.id, status: newStatus)
+    }
+
+    // MARK: - Private Methods
+
+    private func saveChanges() {
+        guard let modelContext = modelContext else { return }
 
         do {
-            let service = try serviceContainer.getComplianceService()
-            service.recordTaxHomeVisit(days: daysStayed, date: date)
-
-            // Reload to get updated data
-            compliance = service.getOrCreateCurrent()
-
-            successMessage = "Tax home visit recorded!"
-            showSuccessToast = true
+            try modelContext.save()
         } catch {
-            errorMessage = "Failed to record visit: \(error.localizedDescription)"
-            showError = true
+            errorMessage = "Failed to save changes: \(error.localizedDescription)"
         }
-
-        isLoading = false
-    }
-
-    /// Update a checklist item's status
-    func updateChecklistItem(id: String, isCompleted: Bool, notes: String? = nil) async {
-        guard compliance != nil else { return }
-
-        do {
-            let service = try serviceContainer.getComplianceService()
-            let status: ComplianceItemStatus = isCompleted ? .complete : .incomplete
-            service.updateChecklistItem(itemId: id, status: status, notes: notes)
-
-            // Reload to get updated score
-            compliance = service.getOrCreateCurrent()
-        } catch {
-            errorMessage = "Failed to update checklist item: \(error.localizedDescription)"
-            showError = true
-        }
-    }
-
-    /// Toggle a checklist item's completion status
-    func toggleChecklistItem(id: String) async {
-        guard let item = compliance?.checklistItems.first(where: { $0.id == id }) else { return }
-        let isCurrentlyComplete = item.status == .complete
-        await updateChecklistItem(id: id, isCompleted: !isCurrentlyComplete)
-    }
-
-    /// Get checklist items for a specific category
-    func items(for category: ChecklistCategory) -> [ComplianceChecklistItem] {
-        checklistItemsByCategory[category] ?? []
-    }
-
-    /// Format category name for display
-    func formatCategoryName(_ category: ChecklistCategory) -> String {
-        switch category {
-        case .residence:
-            return "Residence"
-        case .presence:
-            return "Physical Presence"
-        case .ties:
-            return "Community Ties"
-        case .financial:
-            return "Financial"
-        case .documentation:
-            return "Documentation"
-        }
-    }
-
-    /// Get icon for category
-    func iconForCategory(_ category: ChecklistCategory) -> String {
-        switch category {
-        case .residence:
-            return "house.fill"
-        case .presence:
-            return "calendar.badge.clock"
-        case .ties:
-            return "person.3.fill"
-        case .financial:
-            return "dollarsign.circle.fill"
-        case .documentation:
-            return "doc.text.fill"
-        }
-    }
-
-    /// Dismiss error
-    func dismissError() {
-        showError = false
-        errorMessage = nil
-    }
-
-    /// Dismiss success toast
-    func dismissSuccessToast() {
-        showSuccessToast = false
-        successMessage = nil
-    }
-}
-
-// MARK: - Preview Helper
-
-extension TaxHomeViewModel {
-    /// Create a preview instance with mock data
-    static var preview: TaxHomeViewModel {
-        let viewModel = TaxHomeViewModel()
-        // Preview will load data when view appears
-        return viewModel
     }
 }
