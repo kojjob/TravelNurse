@@ -1072,7 +1072,14 @@ struct TaxHomePreviewView: View {
                     TaxHomeAddressCard()
 
                     // 30 Day Tracker
-                    ThirtyDayTrackerCard()
+                    ThirtyDayTrackerCard(
+                        daysUntilReturn: 22,
+                        isAtRisk: false,
+                        isViolated: false,
+                        lastVisit: Calendar.current.date(byAdding: .day, value: -8, to: Date()),
+                        daysAtTaxHome: 45,
+                        onRecordVisit: {}
+                    )
 
                     // Documents
                     DocumentsSection()
@@ -1183,74 +1190,7 @@ struct TaxHomeAddressCard: View {
     }
 }
 
-struct ThirtyDayTrackerCard: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.md) {
-            HStack {
-                Text("30-Day Rule Tracker")
-                    .font(TNTypography.headlineSmall)
-                    .foregroundStyle(TNColors.textPrimary)
-                Spacer()
-                Text("Last 12 months")
-                    .font(TNTypography.caption)
-                    .foregroundStyle(TNColors.textTertiary)
-            }
-
-            HStack(spacing: TNSpacing.lg) {
-                VStack(spacing: TNSpacing.xs) {
-                    Text("45")
-                        .font(TNTypography.moneyLarge)
-                        .foregroundStyle(TNColors.success)
-                    Text("Days at Home")
-                        .font(TNTypography.caption)
-                        .foregroundStyle(TNColors.textSecondary)
-                }
-
-                Divider()
-                    .frame(height: 50)
-
-                VStack(spacing: TNSpacing.xs) {
-                    Text("30")
-                        .font(TNTypography.moneyLarge)
-                        .foregroundStyle(TNColors.textTertiary)
-                    Text("Minimum Required")
-                        .font(TNTypography.caption)
-                        .foregroundStyle(TNColors.textSecondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.largeTitle)
-                    .foregroundStyle(TNColors.success)
-            }
-
-            // Progress bar
-            VStack(alignment: .leading, spacing: TNSpacing.xs) {
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(TNColors.success.opacity(0.2))
-                            .frame(height: 8)
-
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(TNColors.success)
-                            .frame(width: geo.size.width * min(45.0 / 30.0, 1.0), height: 8)
-                    }
-                }
-                .frame(height: 8)
-
-                Text("You've exceeded the 30-day minimum by 15 days")
-                    .font(TNTypography.caption)
-                    .foregroundStyle(TNColors.success)
-            }
-        }
-        .padding(TNSpacing.cardPadding)
-        .background(TNColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.cardRadius))
-        .shadow(color: TNColors.shadowColor, radius: TNSpacing.shadowRadius, x: 0, y: 2)
-    }
-}
+// ThirtyDayTrackerCard moved to Features/TaxHome/Components/ThirtyDayTrackerView.swift
 
 struct DocumentsSection: View {
     var body: some View {
