@@ -18,14 +18,17 @@ struct MainTabView: View {
 
     enum Tab: Int, CaseIterable {
         case home = 0
-        case taxes = 1
-        case reports = 2
-        case settings = 3
+        case assignments = 1
+        case expenses = 2
+        case taxHome = 3
+        case reports = 4
 
         var title: String {
             switch self {
             case .home: return "Home"
-            case .taxes: return "Taxes"
+            case .assignments: return "Assignments"
+            case .expenses: return "Expenses"
+            case .taxHome: return "Tax Home"
             case .reports: return "Reports"
             case .settings: return "Settings"
             }
@@ -34,9 +37,10 @@ struct MainTabView: View {
         var icon: String {
             switch self {
             case .home: return "house.fill"
-            case .taxes: return "chart.line.uptrend.xyaxis"
-            case .reports: return "doc.text.fill"
-            case .settings: return "gearshape.fill"
+            case .assignments: return "briefcase.fill"
+            case .expenses: return "creditcard.fill"
+            case .taxHome: return "mappin.and.ellipse"
+            case .reports: return "chart.bar.fill"
             }
         }
     }
@@ -49,19 +53,25 @@ struct MainTabView: View {
                 }
                 .tag(Tab.home)
 
-            TaxesView()
+            AssignmentListView()
                 .tabItem {
                     Label(Tab.taxes.title, systemImage: Tab.taxes.icon)
                 }
                 .tag(Tab.taxes)
 
-            ReportsView()
+            ExpenseListView()
                 .tabItem {
-                    Label(Tab.reports.title, systemImage: Tab.reports.icon)
+                    Label(Tab.expenses.title, systemImage: Tab.expenses.icon)
+                }
+                .tag(Tab.expenses)
+
+            TaxHomeView()
+                .tabItem {
+                    Label(Tab.taxHome.title, systemImage: Tab.taxHome.icon)
                 }
                 .tag(Tab.reports)
 
-            SettingsView()
+            ReportsView()
                 .tabItem {
                     Label(Tab.settings.title, systemImage: Tab.settings.icon)
                 }
@@ -81,16 +91,22 @@ struct MainTabView: View {
         }
     }
 
-    private func configureTabBarAppearance() {
-        // Configure tab bar appearance for consistent styling
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor.systemBackground
-
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
+struct ExpensesPlaceholderView: View {
+    var body: some View {
+        NavigationStack {
+            ContentUnavailableView(
+                "Coming Soon",
+                systemImage: "creditcard.fill",
+                description: Text("Expense tracking will be available in the next update.")
+            )
+            .navigationTitle("Expenses")
+        }
     }
 }
+
+// TaxHomePlaceholderView removed - using TaxHomeView instead
+
+// ReportsPlaceholderView removed - using ReportsView from Sprint 7
 
 #Preview {
     MainTabView()
