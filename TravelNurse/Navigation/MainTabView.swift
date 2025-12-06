@@ -2,14 +2,15 @@
 //  MainTabView.swift
 //  TravelNurse
 //
-//  Main navigation container with tab-based navigation
+//  Main navigation container with 4-tab layout
 //
 
 import SwiftUI
 import SwiftData
 
 /// Main navigation container for the app
-/// Manages tab-based navigation and service injection
+/// Manages tab-based navigation with 4 primary tabs:
+/// Home, Taxes, Reports, Settings
 struct MainTabView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -29,6 +30,7 @@ struct MainTabView: View {
             case .expenses: return "Expenses"
             case .taxHome: return "Tax Home"
             case .reports: return "Reports"
+            case .settings: return "Settings"
             }
         }
 
@@ -45,7 +47,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            DashboardView()
+            HomeView()
                 .tabItem {
                     Label(Tab.home.title, systemImage: Tab.home.icon)
                 }
@@ -53,9 +55,9 @@ struct MainTabView: View {
 
             AssignmentListView()
                 .tabItem {
-                    Label(Tab.assignments.title, systemImage: Tab.assignments.icon)
+                    Label(Tab.taxes.title, systemImage: Tab.taxes.icon)
                 }
-                .tag(Tab.assignments)
+                .tag(Tab.taxes)
 
             ExpenseListView()
                 .tabItem {
@@ -67,17 +69,18 @@ struct MainTabView: View {
                 .tabItem {
                     Label(Tab.taxHome.title, systemImage: Tab.taxHome.icon)
                 }
-                .tag(Tab.taxHome)
+                .tag(Tab.reports)
 
             ReportsView()
                 .tabItem {
-                    Label(Tab.reports.title, systemImage: Tab.reports.icon)
+                    Label(Tab.settings.title, systemImage: Tab.settings.icon)
                 }
-                .tag(Tab.reports)
+                .tag(Tab.settings)
         }
         .tint(TNColors.primary)
         .onAppear {
             configureServices()
+            configureTabBarAppearance()
         }
     }
 
@@ -87,9 +90,6 @@ struct MainTabView: View {
             ServiceContainer.shared.configure(with: modelContext)
         }
     }
-}
-
-// MARK: - Placeholder Views (to be replaced in later sprints)
 
 struct ExpensesPlaceholderView: View {
     var body: some View {
@@ -112,13 +112,7 @@ struct ExpensesPlaceholderView: View {
     MainTabView()
         .modelContainer(for: [
             Assignment.self,
-            UserProfile.self,
-            Address.self,
-            PayBreakdown.self,
             Expense.self,
-            Receipt.self,
-            MileageTrip.self,
-            TaxHomeCompliance.self,
-            Document.self
+            MileageTrip.self
         ], inMemory: true)
 }

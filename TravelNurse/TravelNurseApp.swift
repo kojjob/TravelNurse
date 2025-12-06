@@ -18,6 +18,7 @@ struct TravelNurseApp: App {
             UserProfile.self,
             Assignment.self,
             Expense.self,
+            Income.self,
             MileageTrip.self,
             TaxHomeCompliance.self,
             Document.self
@@ -43,7 +44,7 @@ struct TravelNurseApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
         }
         .modelContainer(sharedModelContainer)
     }
