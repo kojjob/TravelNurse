@@ -93,13 +93,13 @@ final class HomeViewModel {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
         case 5..<12:
-            return "Good morning,"
+            return "Good Morning"
         case 12..<17:
-            return "Good afternoon,"
+            return "Good Afternoon"
         case 17..<21:
-            return "Good evening,"
+            return "Good Evening"
         default:
-            return "Good night,"
+            return "Good Night"
         }
     }
 
@@ -195,6 +195,131 @@ final class HomeViewModel {
     /// Assignment progress (0.0 to 1.0)
     var assignmentProgress: Double {
         currentAssignment?.progressPercentage ?? 0
+    }
+
+    // MARK: - New Properties for Modern UI
+
+    /// Whether there's tax due to display
+    var hasTaxDue: Bool {
+        estimatedTaxDue > 0
+    }
+
+    /// YTD income as Decimal value for EarningsCard
+    var ytdIncomeValue: Decimal {
+        ytdIncome
+    }
+
+    /// YTD deductions as Decimal value for EarningsCard
+    var ytdDeductionsValue: Decimal {
+        ytdDeductions
+    }
+
+    /// Income change percentage from last month (placeholder calculation)
+    var incomeChangePercent: Double {
+        // TODO: Implement actual month-over-month calculation
+        // For now, return a positive placeholder
+        12.5
+    }
+
+    /// Whether the income change is positive
+    var isIncomePositive: Bool {
+        incomeChangePercent >= 0
+    }
+
+    /// Estimated tax due as Decimal value
+    var estimatedTaxDueValue: Decimal {
+        estimatedTaxDue
+    }
+
+    /// Next tax due date as Date object
+    var taxDueDate: Date {
+        let year = currentYear
+        let month = Calendar.current.component(.month, from: Date())
+
+        var components = DateComponents()
+        components.year = year
+
+        switch month {
+        case 1...3:
+            components.month = 4
+            components.day = 15
+        case 4...5:
+            components.month = 6
+            components.day = 15
+        case 6...8:
+            components.month = 9
+            components.day = 15
+        default:
+            components.year = year + 1
+            components.month = 1
+            components.day = 15
+        }
+
+        return Calendar.current.date(from: components) ?? Date()
+    }
+
+    /// Compliance badge text for Tax Home quick action
+    var complianceBadge: String {
+        // TODO: Get actual compliance status from ComplianceService
+        "On Track"
+    }
+
+    /// Compliance badge color
+    var complianceBadgeColor: Color {
+        // TODO: Calculate based on actual compliance level
+        TNColors.success
+    }
+
+    /// Weekly rate as Decimal value for AssignmentProgressCard
+    var weeklyRateValue: Decimal {
+        currentAssignment?.payBreakdown?.weeklyGross ?? 0
+    }
+
+    // MARK: - Dashboard Card Properties
+
+    /// Trend data for income mini chart (last 6 months normalized 0-1)
+    var incomeTrendData: [Double] {
+        // TODO: Implement actual monthly income trend calculation
+        // For now, return sample upward trend data
+        [0.3, 0.4, 0.35, 0.5, 0.6, 0.75, 0.85]
+    }
+
+    /// Trend data for deductions mini chart (last 6 months normalized 0-1)
+    var deductionsTrendData: [Double] {
+        // TODO: Implement actual monthly deductions trend calculation
+        // For now, return sample trend data
+        [0.2, 0.3, 0.25, 0.4, 0.35, 0.5, 0.45]
+    }
+
+    /// Percentage of quarterly tax already paid (0.0 to 1.0)
+    var taxPaidPercentage: Double {
+        // TODO: Implement actual tax payment tracking
+        // For now, return placeholder (75% paid as shown in design)
+        0.75
+    }
+
+    /// Days remaining in current assignment
+    var daysRemaining: Int {
+        guard let assignment = currentAssignment else { return 0 }
+        let endDate = Calendar.current.date(byAdding: .day, value: assignment.durationWeeks * 7, to: assignment.startDate) ?? Date()
+        let remaining = Calendar.current.dateComponents([.day], from: Date(), to: endDate).day ?? 0
+        return max(0, remaining)
+    }
+
+    /// Total days in current assignment
+    var totalDays: Int {
+        guard let assignment = currentAssignment else { return 0 }
+        return assignment.durationWeeks * 7
+    }
+
+    /// Assignment location name
+    var assignmentLocationName: String {
+        currentAssignment?.facilityName ?? "No Current Assignment"
+    }
+
+    /// Assignment state abbreviation
+    var assignmentState: String {
+        currentAssignment?.state?.rawValue ?? ""
     }
 
     // MARK: - Initialization

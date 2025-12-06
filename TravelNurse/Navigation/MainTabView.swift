@@ -93,10 +93,12 @@ struct MainTabView: View {
     private func configureTabBarAppearance() {
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.systemBackground
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 }
+
 
 struct ExpensesPlaceholderView: View {
     var body: some View {
@@ -110,10 +112,6 @@ struct ExpensesPlaceholderView: View {
         }
     }
 }
-
-// TaxHomePlaceholderView removed - using TaxHomeView instead
-
-// ReportsPlaceholderView removed - using ReportsView from Sprint 7
 
 #Preview {
     MainTabView()

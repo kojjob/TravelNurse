@@ -64,7 +64,7 @@ struct TaxHomeView: View {
                         viewModel.visitDaysToRecord = 1
                     }
                 )
-                .presentationDetents([.height(300)])
+                .presentationDetents([.height(400)])
             }
         }
     }
@@ -94,7 +94,9 @@ struct TaxHomeView: View {
                 // Score Ring
                 ComplianceScoreRing(
                     score: viewModel.complianceScore,
-                    level: viewModel.complianceLevel
+                    level: viewModel.complianceLevel,
+                    size: 100,
+                    strokeWidth: 10
                 )
 
                 // Status Details
@@ -190,7 +192,9 @@ struct TaxHomeView: View {
                     icon: "house.fill",
                     color: .orange,
                     items: viewModel.residenceItems,
-                    onToggle: viewModel.toggleItemStatus
+                    onToggleItem: { itemId in
+                        Task { await viewModel.toggleChecklistItem(id: itemId) }
+                    }
                 )
             }
 
@@ -201,7 +205,9 @@ struct TaxHomeView: View {
                     icon: "mappin.and.ellipse",
                     color: TNColors.primary,
                     items: viewModel.presenceItems,
-                    onToggle: viewModel.toggleItemStatus
+                    onToggleItem: { itemId in
+                        Task { await viewModel.toggleChecklistItem(id: itemId) }
+                    }
                 )
             }
 
@@ -212,7 +218,9 @@ struct TaxHomeView: View {
                     icon: "person.2.fill",
                     color: .purple,
                     items: viewModel.tiesItems,
-                    onToggle: viewModel.toggleItemStatus
+                    onToggleItem: { itemId in
+                        Task { await viewModel.toggleChecklistItem(id: itemId) }
+                    }
                 )
             }
         }
