@@ -66,9 +66,9 @@ struct OnboardingWelcomeView: View {
     private var backgroundGradient: some View {
         LinearGradient(
             colors: [
-                Color(hex: "FFF5EB"),  // Cream
-                Color(hex: "FFE4CC"),  // Light peach
-                Color(hex: "FFECD2")   // Soft peach
+                Color(hex: "E8F4FF"),  // Light blue
+                Color(hex: "CCE7FF"),  // Soft blue
+                Color(hex: "B3DBFF")   // Gentle blue
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -86,7 +86,7 @@ struct OnboardingWelcomeView: View {
 
             Text("Let's get your\nfinances in order")
                 .font(.system(size: 32, weight: .bold))
-                .foregroundColor(Color(hex: "1A1A2E"))
+                .foregroundColor(TNColors.textPrimaryLight)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
         }
@@ -95,23 +95,11 @@ struct OnboardingWelcomeView: View {
     // MARK: - Illustration
 
     private var illustrationView: some View {
-        ZStack {
-            // Yellow circle background
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: "FFD966"), Color(hex: "FFB830")],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 220, height: 220)
-
-            // Travel nurse illustration
-            TravelNurseIllustration()
-                .frame(width: 180, height: 180)
-        }
-        .shadow(color: Color(hex: "FFB830").opacity(0.3), radius: 20, y: 10)
+        // App Logo from assets
+        Image("AppLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 200, height: 200)
     }
 
     // MARK: - Action Buttons
@@ -125,7 +113,7 @@ struct OnboardingWelcomeView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(Color(hex: "1A1A2E"))
+                    .background(TNColors.textPrimaryLight)
                     .clipShape(RoundedRectangle(cornerRadius: 28))
             }
 
@@ -133,14 +121,14 @@ struct OnboardingWelcomeView: View {
             Button(action: onContinueAnonymous) {
                 Text("Continue Anonymous")
                     .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(Color(hex: "1A1A2E"))
+                    .foregroundColor(TNColors.textPrimaryLight)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
                     .background(Color.white.opacity(0.8))
                     .clipShape(RoundedRectangle(cornerRadius: 28))
                     .overlay(
                         RoundedRectangle(cornerRadius: 28)
-                            .stroke(Color(hex: "1A1A2E").opacity(0.1), lineWidth: 1)
+                            .stroke(TNColors.textPrimaryLight.opacity(0.1), lineWidth: 1)
                     )
             }
         }
@@ -153,7 +141,7 @@ struct OnboardingWelcomeView: View {
             Text("ALREADY A MEMBER?")
                 .font(.system(size: 12, weight: .semibold))
                 .tracking(1)
-                .foregroundColor(Color(hex: "6B7280"))
+                .foregroundColor(TNColors.textSecondaryLight)
         }
         .padding(.top, 24)
     }
@@ -183,7 +171,7 @@ struct TravelNurseIllustration: View {
         ZStack {
             // Suitcase
             SuitcaseShape()
-                .fill(Color(hex: "8B5CF6"))
+                .fill(TNColors.accent)
                 .frame(width: 100, height: 80)
                 .offset(y: 30)
 
@@ -195,7 +183,7 @@ struct TravelNurseIllustration: View {
 
             // Stethoscope on suitcase
             StethoscopeShape()
-                .stroke(Color(hex: "10B981"), lineWidth: 4)
+                .stroke(TNColors.success, lineWidth: 4)
                 .frame(width: 50, height: 50)
                 .offset(x: 20, y: 10)
 
@@ -217,7 +205,7 @@ struct TravelNurseIllustration: View {
             // Airplane
             Image(systemName: "airplane")
                 .font(.system(size: 24, weight: .semibold))
-                .foregroundColor(Color(hex: "0066FF"))
+                .foregroundColor(TNColors.primary)
                 .offset(x: 50, y: -55)
                 .rotationEffect(.degrees(-30))
         }
@@ -281,13 +269,13 @@ struct MedicalCrossBadge: View {
             // Cross
             VStack(spacing: 0) {
                 Rectangle()
-                    .fill(Color(hex: "EF4444"))
+                    .fill(TNColors.error)
                     .frame(width: 8, height: 20)
             }
 
             HStack(spacing: 0) {
                 Rectangle()
-                    .fill(Color(hex: "EF4444"))
+                    .fill(TNColors.error)
                     .frame(width: 20, height: 8)
             }
         }
@@ -300,11 +288,11 @@ struct DollarSign: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(Color(hex: "10B981").opacity(0.2))
+                .fill(TNColors.success.opacity(0.2))
 
             Text("$")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(Color(hex: "10B981"))
+                .foregroundColor(TNColors.success)
         }
     }
 }

@@ -93,7 +93,7 @@ struct OnboardingCompleteView: View {
             Circle()
                 .stroke(
                     LinearGradient(
-                        colors: [Color(hex: "00C896"), Color(hex: "10B981")],
+                        colors: [TNColors.secondary, TNColors.success],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
@@ -105,7 +105,7 @@ struct OnboardingCompleteView: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [Color(hex: "00C896").opacity(0.2), Color(hex: "10B981").opacity(0.1)],
+                        colors: [TNColors.secondary.opacity(0.2), TNColors.success.opacity(0.1)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -115,7 +115,7 @@ struct OnboardingCompleteView: View {
             // Checkmark
             Image(systemName: "checkmark")
                 .font(.system(size: 48, weight: .bold))
-                .foregroundColor(Color(hex: "00C896"))
+                .foregroundColor(TNColors.secondary)
         }
     }
 
@@ -125,11 +125,11 @@ struct OnboardingCompleteView: View {
         VStack(spacing: 12) {
             Text("You're All Set!")
                 .font(.system(size: 28, weight: .bold))
-                .foregroundColor(Color(hex: "1A1A2E"))
+                .foregroundColor(TNColors.textPrimaryLight)
 
             Text("Welcome\(userName.isEmpty ? "" : ", \(userName)")! Your TravelNurse companion is ready to help you manage your finances.")
                 .font(.system(size: 16, weight: .regular))
-                .foregroundColor(Color(hex: "6B7280"))
+                .foregroundColor(TNColors.textSecondaryLight)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
         }
@@ -143,21 +143,21 @@ struct OnboardingCompleteView: View {
                 icon: "target",
                 value: "\(selectedGoalsCount)",
                 label: "Goals Set",
-                color: Color(hex: "0066FF")
+                color: TNColors.primary
             )
 
             SummaryCard(
                 icon: "shield.checkered",
                 value: "Secure",
                 label: "Your Data",
-                color: Color(hex: "00C896")
+                color: TNColors.secondary
             )
 
             SummaryCard(
                 icon: "sparkles",
                 value: "Ready",
                 label: "To Track",
-                color: Color(hex: "F59E0B")
+                color: TNColors.warning
             )
         }
     }
@@ -178,13 +178,13 @@ struct OnboardingCompleteView: View {
             .frame(height: 56)
             .background(
                 LinearGradient(
-                    colors: [Color(hex: "00C896"), Color(hex: "10B981")],
+                    colors: [TNColors.secondary, TNColors.success],
                     startPoint: .leading,
                     endPoint: .trailing
                 )
             )
             .clipShape(RoundedRectangle(cornerRadius: 28))
-            .shadow(color: Color(hex: "00C896").opacity(0.3), radius: 8, y: 4)
+            .shadow(color: TNColors.secondary.opacity(0.3), radius: 8, y: 4)
         }
     }
 
@@ -227,11 +227,11 @@ struct SummaryCard: View {
 
             Text(value)
                 .font(.system(size: 16, weight: .bold))
-                .foregroundColor(Color(hex: "1A1A2E"))
+                .foregroundColor(TNColors.textPrimaryLight)
 
             Text(label)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundColor(Color(hex: "6B7280"))
+                .foregroundColor(TNColors.textSecondaryLight)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
@@ -265,7 +265,7 @@ struct ConfettiView: View {
 
     private func createParticles(in size: CGSize) {
         let colors: [Color] = [
-            Color(hex: "00C896"),
+            TNColors.secondary,
             Color(hex: "0066FF"),
             Color(hex: "F59E0B"),
             Color(hex: "8B5CF6"),

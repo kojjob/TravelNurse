@@ -79,11 +79,11 @@ struct OnboardingSignInView: View {
         VStack(spacing: 12) {
             Text("Create Your Account")
                 .font(.system(size: 28, weight: .bold))
-                .foregroundColor(Color(hex: "1A1A2E"))
+                .foregroundColor(TNColors.textPrimaryLight)
 
             Text("Sign in to sync your data across devices and never lose your records")
                 .font(.system(size: 16, weight: .regular))
-                .foregroundColor(Color(hex: "6B7280"))
+                .foregroundColor(TNColors.textSecondaryLight)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
         }
@@ -97,7 +97,7 @@ struct OnboardingSignInView: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [Color(hex: "0066FF").opacity(0.2), Color(hex: "0066FF").opacity(0.1)],
+                        colors: [TNColors.primary.opacity(0.2), TNColors.primary.opacity(0.1)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -108,11 +108,11 @@ struct OnboardingSignInView: View {
             VStack(spacing: 8) {
                 Image(systemName: "shield.checkered")
                     .font(.system(size: 60, weight: .light))
-                    .foregroundColor(Color(hex: "0066FF"))
+                    .foregroundColor(TNColors.primary)
 
                 Image(systemName: "lock.fill")
                     .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(Color(hex: "00C896"))
+                    .foregroundColor(TNColors.secondary)
             }
         }
     }
@@ -135,7 +135,7 @@ struct OnboardingSignInView: View {
             Button(action: onSkip) {
                 Text("Skip for now")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(Color(hex: "6B7280"))
+                    .foregroundColor(TNColors.textSecondaryLight)
             }
             .padding(.top, 8)
 
@@ -151,16 +151,16 @@ struct OnboardingSignInView: View {
             HStack(spacing: 6) {
                 Image(systemName: "lock.shield.fill")
                     .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "00C896"))
+                    .foregroundColor(TNColors.secondary)
 
                 Text("Your data is encrypted and secure")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Color(hex: "6B7280"))
+                    .foregroundColor(TNColors.textSecondaryLight)
             }
 
             Text("By continuing, you agree to our Terms of Service and Privacy Policy")
                 .font(.system(size: 11, weight: .regular))
-                .foregroundColor(Color(hex: "9CA3AF"))
+                .foregroundColor(TNColors.textTertiaryLight)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 16)

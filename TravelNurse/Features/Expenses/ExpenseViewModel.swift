@@ -168,7 +168,7 @@ final class ExpenseViewModel {
         isLoading = true
         errorMessage = nil
 
-        expenses = service.fetchAll()
+        expenses = service.fetchAllOrEmpty()
 
         isLoading = false
     }

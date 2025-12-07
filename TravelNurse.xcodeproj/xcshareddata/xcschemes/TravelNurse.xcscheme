@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "E82F18AE2D4372E00073C34A"
+               BlueprintIdentifier = "E863FEFC2EE3B8FC00E6CCF6"
                BuildableName = "TravelNurse.app"
                BlueprintName = "TravelNurse"
                ReferencedContainer = "container:TravelNurse.xcodeproj">
@@ -67,7 +67,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "E82F18AE2D4372E00073C34A"
+            BlueprintIdentifier = "E863FEFC2EE3B8FC00E6CCF6"
             BuildableName = "TravelNurse.app"
             BlueprintName = "TravelNurse"
             ReferencedContainer = "container:TravelNurse.xcodeproj">
@@ -84,7 +84,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "E82F18AE2D4372E00073C34A"
+            BlueprintIdentifier = "E863FEFC2EE3B8FC00E6CCF6"
             BuildableName = "TravelNurse.app"
             BlueprintName = "TravelNurse"
             ReferencedContainer = "container:TravelNurse.xcodeproj">

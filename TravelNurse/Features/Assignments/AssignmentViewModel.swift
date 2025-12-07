@@ -116,7 +116,7 @@ final class AssignmentViewModel {
         isLoading = true
         errorMessage = nil
 
-        assignments = service.fetchAll()
+        assignments = service.fetchAllOrEmpty()
 
         isLoading = false
     }
@@ -131,19 +131,19 @@ final class AssignmentViewModel {
     /// Add a new assignment
     func addAssignment(_ assignment: Assignment) {
         guard let service = service else { return }
-        service.create(assignment)
+        service.createQuietly(assignment)
     }
 
     /// Update an existing assignment
     func updateAssignment(_ assignment: Assignment) {
         guard let service = service else { return }
-        service.update(assignment)
+        service.updateQuietly(assignment)
     }
 
     /// Delete an assignment
     func deleteAssignment(_ assignment: Assignment) {
         guard let service = service else { return }
-        service.delete(assignment)
+        service.deleteQuietly(assignment)
     }
 
     /// Select an assignment for viewing/editing

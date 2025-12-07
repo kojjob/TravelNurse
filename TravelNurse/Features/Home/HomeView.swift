@@ -45,7 +45,7 @@ struct HomeView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 100)
             }
-            .background(Color(hex: "F5F7FA"))
+            .background(TNColors.backgroundLight)
             .refreshable {
                 await viewModel.refresh()
             }
@@ -68,11 +68,11 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Hi \(viewModel.userName),")
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(Color(hex: "1A1A2E"))
+                    .foregroundColor(TNColors.textPrimaryLight)
 
                 Text(viewModel.greetingText)
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(Color(hex: "1A1A2E"))
+                    .foregroundColor(TNColors.textPrimaryLight)
             }
 
             Spacer()
@@ -86,16 +86,16 @@ struct HomeView: View {
     private var profileAvatar: some View {
         ZStack {
             Circle()
-                .fill(Color(hex: "00A3A3").opacity(0.2))
+                .fill(TNColors.teal.opacity(0.2))
                 .frame(width: 56, height: 56)
 
             Circle()
-                .stroke(Color(hex: "00A3A3"), lineWidth: 2)
+                .stroke(TNColors.teal, lineWidth: 2)
                 .frame(width: 56, height: 56)
 
             Image(systemName: "person.fill")
                 .font(.system(size: 24))
-                .foregroundColor(Color(hex: "00A3A3"))
+                .foregroundColor(TNColors.teal)
         }
     }
 
@@ -130,17 +130,17 @@ struct HomeView: View {
                     // Icon
                     ZStack {
                         Circle()
-                            .fill(Color(hex: "00A3A3").opacity(0.15))
+                            .fill(TNColors.teal.opacity(0.15))
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "dollarsign.circle.fill")
                             .font(.system(size: 22))
-                            .foregroundColor(Color(hex: "00A3A3"))
+                            .foregroundColor(TNColors.teal)
                     }
 
                     Text("Quarterly Tax Estimate")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Color(hex: "1A1A2E"))
+                        .foregroundColor(TNColors.textPrimaryLight)
 
                     Spacer()
                 }
@@ -148,11 +148,11 @@ struct HomeView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(formatCurrency(viewModel.estimatedTaxDue))
                         .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(Color(hex: "1A1A2E"))
+                        .foregroundColor(TNColors.textPrimaryLight)
 
                     Text("due \(viewModel.currentQuarter) \(String(viewModel.currentYear))")
                         .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "6B7280"))
+                        .foregroundColor(TNColors.textSecondaryLight)
                 }
 
                 // Progress bar
@@ -160,11 +160,11 @@ struct HomeView: View {
                     GeometryReader { geometry in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(Color(hex: "E5E7EB"))
+                                .fill(TNColors.borderLight)
                                 .frame(height: 8)
 
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(Color(hex: "00A3A3"))
+                                .fill(TNColors.teal)
                                 .frame(width: geometry.size.width * viewModel.taxPaidPercentage, height: 8)
                         }
                     }
@@ -172,7 +172,7 @@ struct HomeView: View {
 
                     Text("\(Int(viewModel.taxPaidPercentage * 100))% Paid")
                         .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "6B7280"))
+                        .foregroundColor(TNColors.textSecondaryLight)
                 }
             }
             .padding(20)
@@ -193,45 +193,45 @@ struct HomeView: View {
                         // Icon
                         ZStack {
                             Circle()
-                                .fill(Color(hex: "00A3A3").opacity(0.15))
+                                .fill(TNColors.teal.opacity(0.15))
                                 .frame(width: 44, height: 44)
 
                             Image(systemName: "building.2.fill")
                                 .font(.system(size: 20))
-                                .foregroundColor(Color(hex: "00A3A3"))
+                                .foregroundColor(TNColors.teal)
                         }
 
                         Text("Current Assignment")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Color(hex: "1A1A2E"))
+                            .foregroundColor(TNColors.textPrimaryLight)
                     }
 
                     if let assignment = viewModel.currentAssignment {
                         Text(assignment.facilityName)
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(Color(hex: "1A1A2E"))
+                            .foregroundColor(TNColors.textPrimaryLight)
 
                         Text(assignment.location?.cityState ?? "Location TBD")
                             .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "6B7280"))
+                            .foregroundColor(TNColors.textSecondaryLight)
 
                         HStack(spacing: 4) {
                             Text("Days Remaining:")
                                 .font(.system(size: 14))
-                                .foregroundColor(Color(hex: "6B7280"))
+                                .foregroundColor(TNColors.textSecondaryLight)
 
                             Text("\(viewModel.daysRemaining)/\(viewModel.totalDays)")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(Color(hex: "1A1A2E"))
+                                .foregroundColor(TNColors.textPrimaryLight)
                         }
                     } else {
                         Text("No Active Assignment")
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(Color(hex: "6B7280"))
+                            .foregroundColor(TNColors.textSecondaryLight)
 
                         Text("Tap to add an assignment")
                             .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "00A3A3"))
+                            .foregroundColor(TNColors.teal)
                     }
                 }
 
@@ -242,7 +242,7 @@ struct HomeView: View {
                     CircularProgressView(
                         progress: viewModel.assignmentProgress,
                         lineWidth: 6,
-                        color: Color(hex: "00A3A3")
+                        color: TNColors.teal
                     )
                     .frame(width: 50, height: 50)
                 }
@@ -262,7 +262,7 @@ struct HomeView: View {
             HStack {
                 Text("Recent Activity")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(Color(hex: "1A1A2E"))
+                    .foregroundColor(TNColors.textPrimaryLight)
 
                 Spacer()
 
@@ -270,7 +270,7 @@ struct HomeView: View {
                     showingReports = true
                 }
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(Color(hex: "00A3A3"))
+                .foregroundColor(TNColors.teal)
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -284,17 +284,17 @@ struct HomeView: View {
                         VStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(Color(hex: "00A3A3").opacity(0.15))
+                                    .fill(TNColors.teal.opacity(0.15))
                                     .frame(width: 44, height: 44)
 
                                 Image(systemName: "plus")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(Color(hex: "00A3A3"))
+                                    .foregroundColor(TNColors.teal)
                             }
 
                             Text("Add\nExpense")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(Color(hex: "6B7280"))
+                                .foregroundColor(TNColors.textSecondaryLight)
                                 .multilineTextAlignment(.center)
                         }
                         .frame(width: 120, height: 140)
@@ -302,7 +302,7 @@ struct HomeView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(hex: "00A3A3").opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [5]))
+                                .stroke(TNColors.teal.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [5]))
                         )
                     }
                     .buttonStyle(.plain)
@@ -335,11 +335,11 @@ struct DashboardStatCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)
                     .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "6B7280"))
+                    .foregroundColor(TNColors.textSecondaryLight)
 
                 Text(formatCurrency(amount))
                     .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(Color(hex: "00A3A3"))
+                    .foregroundColor(TNColors.teal)
             }
 
             Spacer()
@@ -392,7 +392,7 @@ struct MiniTrendChart: View {
                     path.addLine(to: CGPoint(x: CGFloat(index) * stepX, y: normalizedData[index]))
                 }
             }
-            .stroke(Color(hex: "00A3A3"), style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+            .stroke(TNColors.teal, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
 
             // Add gradient fill
             Path { path in
@@ -415,7 +415,7 @@ struct MiniTrendChart: View {
             }
             .fill(
                 LinearGradient(
-                    gradient: Gradient(colors: [Color(hex: "00A3A3").opacity(0.3), Color(hex: "00A3A3").opacity(0.05)]),
+                    gradient: Gradient(colors: [TNColors.teal.opacity(0.3), TNColors.teal.opacity(0.05)]),
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -470,19 +470,19 @@ struct RecentActivityItemCard: View {
             // Title
             Text(activity.title)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Color(hex: "1A1A2E"))
+                .foregroundColor(TNColors.textPrimaryLight)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
 
             // Amount
             Text(formatCurrency(activity.amount))
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(Color(hex: "00A3A3"))
+                .foregroundColor(TNColors.teal)
 
             // Date
             Text(activity.subtitle)
                 .font(.system(size: 11))
-                .foregroundColor(Color(hex: "9CA3AF"))
+                .foregroundColor(TNColors.textTertiaryLight)
         }
         .frame(width: 120, height: 140)
         .background(Color.white)

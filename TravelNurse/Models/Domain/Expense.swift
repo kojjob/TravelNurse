@@ -69,17 +69,12 @@ public final class Expense {
 
     /// Formatted amount string
     public var amountFormatted: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: amount as NSNumber) ?? "$0.00"
+        TNFormatters.currency(amount)
     }
 
     /// Formatted date string
     public var dateFormatted: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
+        TNFormatters.date(date)
     }
 
     /// Short description for lists

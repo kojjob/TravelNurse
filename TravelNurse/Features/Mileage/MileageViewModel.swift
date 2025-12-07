@@ -144,10 +144,10 @@ public final class MileageViewModel {
         yearTripCount = mileageService.tripCount(forYear: currentYear)
 
         // Load recent trips
-        recentTrips = mileageService.fetchRecent(limit: 10)
+        recentTrips = mileageService.fetchRecentOrEmpty(limit: 10)
 
         // Check for active trip (trip without end time)
-        activeTrip = mileageService.fetchAll().first { $0.endTime == nil }
+        activeTrip = mileageService.fetchAllOrEmpty().first { $0.endTime == nil }
     }
 
     /// Refresh data
@@ -181,7 +181,7 @@ public final class MileageViewModel {
 
         // Create trip record
         let purpose = tripPurpose.isEmpty ? selectedTripType.displayName : tripPurpose
-        activeTrip = mileageService.startTrip(
+        activeTrip = mileageService.startTripQuietly(
             purpose: purpose,
             tripType: selectedTripType,
             startLocation: "Starting location..."
@@ -207,7 +207,7 @@ public final class MileageViewModel {
         }
 
         // Update trip with final data
-        mileageService.endTrip(
+        mileageService.endTripQuietly(
             trip,
             endLocation: "Destination",
             distance: trackedRoute.distanceMiles
@@ -245,7 +245,7 @@ public final class MileageViewModel {
         guard let mileageService, let locationService, let trip = activeTrip else { return }
 
         _ = locationService.stopTracking()
-        mileageService.delete(trip)
+        mileageService.deleteQuietly(trip)
         activeTrip = nil
     }
 
@@ -270,7 +270,7 @@ public final class MileageViewModel {
             isAutoTracked: false
         )
         trip.endTime = date
-        mileageService.create(trip)
+        mileageService.createQuietly(trip)
 
         loadData()
     }
@@ -278,7 +278,7 @@ public final class MileageViewModel {
     /// Delete a trip
     public func deleteTrip(_ trip: MileageTrip) {
         guard let mileageService else { return }
-        mileageService.delete(trip)
+        mileageService.deleteQuietly(trip)
         loadData()
     }
 

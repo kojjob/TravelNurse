@@ -116,7 +116,7 @@ struct OnboardingContainerView: View {
         } label: {
             Image(systemName: "chevron.left")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(Color(hex: "1A1A2E"))
+                .foregroundColor(TNColors.textPrimaryLight)
                 .frame(width: 44, height: 44)
                 .background(Color.white.opacity(0.8))
                 .clipShape(Circle())
@@ -132,8 +132,8 @@ struct OnboardingContainerView: View {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(
                         index <= currentProgressIndex
-                            ? Color(hex: "1A1A2E")
-                            : Color(hex: "1A1A2E").opacity(0.2)
+                            ? TNColors.textPrimaryLight
+                            : TNColors.textPrimaryLight.opacity(0.2)
                     )
                     .frame(width: index == currentProgressIndex ? 24 : 8, height: 8)
                     .animation(.easeInOut(duration: 0.3), value: currentProgressIndex)

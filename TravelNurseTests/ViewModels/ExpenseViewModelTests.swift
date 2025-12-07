@@ -18,57 +18,65 @@ final class MockExpenseService: ExpenseServiceProtocol {
     var lastCreatedExpense: Expense?
     var lastDeletedExpense: Expense?
 
-    func create(_ expense: Expense) {
+    func create(_ expense: Expense) -> Result<Void, ServiceError> {
         createCalled = true
         lastCreatedExpense = expense
         expenses.append(expense)
+        return .success(())
     }
 
-    func fetchAll() -> [Expense] {
-        return expenses.sorted { $0.date > $1.date }
+    func fetchAll() -> Result<[Expense], ServiceError> {
+        return .success(expenses.sorted { $0.date > $1.date })
     }
 
-    func fetch(byId id: UUID) -> Expense? {
-        return expenses.first { $0.id == id }
+    func fetch(byId id: UUID) -> Result<Expense?, ServiceError> {
+        return .success(expenses.first { $0.id == id })
     }
 
-    func fetch(byCategory category: ExpenseCategory) -> [Expense] {
-        return expenses.filter { $0.category == category }
+    func fetch(byCategory category: ExpenseCategory) -> Result<[Expense], ServiceError> {
+        return .success(expenses.filter { $0.category == category })
     }
 
-    func fetch(byYear year: Int) -> [Expense] {
-        return expenses.filter { $0.taxYear == year }
+    func fetch(byYear year: Int) -> Result<[Expense], ServiceError> {
+        return .success(expenses.filter { $0.taxYear == year })
     }
 
-    func fetch(forAssignment assignment: Assignment) -> [Expense] {
-        return expenses.filter { $0.assignment?.id == assignment.id }
+    func fetch(forAssignment assignment: Assignment) -> Result<[Expense], ServiceError> {
+        return .success(expenses.filter { $0.assignment?.id == assignment.id })
     }
 
-    func fetchDeductible() -> [Expense] {
-        return expenses.filter { $0.isDeductible }
+    func fetchDeductible() -> Result<[Expense], ServiceError> {
+        return .success(expenses.filter { $0.isDeductible })
     }
 
-    func update(_ expense: Expense) {
+    func fetchRecent(limit: Int) -> Result<[Expense], ServiceError> {
+        let sorted = expenses.sorted { $0.date > $1.date }
+        return .success(Array(sorted.prefix(limit)))
+    }
+
+    func update(_ expense: Expense) -> Result<Void, ServiceError> {
         updateCalled = true
+        return .success(())
     }
 
-    func delete(_ expense: Expense) {
+    func delete(_ expense: Expense) -> Result<Void, ServiceError> {
         deleteCalled = true
         lastDeletedExpense = expense
         expenses.removeAll { $0.id == expense.id }
+        return .success(())
     }
 
     func totalExpenses(forYear year: Int) -> Decimal {
-        return fetch(byYear: year).reduce(Decimal.zero) { $0 + $1.amount }
+        return fetchByYearOrEmpty(year).reduce(Decimal.zero) { $0 + $1.amount }
     }
 
     func totalDeductible(forYear year: Int) -> Decimal {
-        return fetch(byYear: year).filter { $0.isDeductible }.reduce(Decimal.zero) { $0 + $1.amount }
+        return fetchByYearOrEmpty(year).filter { $0.isDeductible }.reduce(Decimal.zero) { $0 + $1.amount }
     }
 
     func expensesByCategory(forYear year: Int) -> [ExpenseCategory: Decimal] {
         var result: [ExpenseCategory: Decimal] = [:]
-        for expense in fetch(byYear: year) {
+        for expense in fetchByYearOrEmpty(year) {
             result[expense.category, default: .zero] += expense.amount
         }
         return result

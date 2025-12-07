@@ -293,7 +293,7 @@ final class TaxesViewModel {
 
     private func loadIncomeData() throws {
         let assignmentService = try serviceContainer.getAssignmentService()
-        let assignments = assignmentService.fetch(byYear: selectedYear)
+        let assignments = assignmentService.fetchByYearOrEmpty(selectedYear)
 
         // Calculate YTD taxable income
         var totalGross: Decimal = 0
@@ -312,13 +312,13 @@ final class TaxesViewModel {
 
         // Load deductions
         let expenseService = try serviceContainer.getExpenseService()
-        let expenses = expenseService.fetch(byYear: selectedYear)
+        let expenses = expenseService.fetchByYearOrEmpty(selectedYear)
         let expenseDeductions = expenses
             .filter { $0.isDeductible }
             .reduce(Decimal(0)) { $0 + $1.amount }
 
         let mileageService = try serviceContainer.getMileageService()
-        let trips = mileageService.fetch(byYear: selectedYear)
+        let trips = mileageService.fetchByYearOrEmpty(selectedYear)
         let mileageDeductions = trips.reduce(Decimal(0)) { $0 + $1.deductionAmount }
 
         ytdDeductions = expenseDeductions + mileageDeductions

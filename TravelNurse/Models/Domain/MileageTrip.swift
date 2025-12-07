@@ -94,15 +94,12 @@ public final class MileageTrip {
 
     /// Formatted deduction amount
     public var deductionFormatted: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: deductionAmount as NSNumber) ?? "$0.00"
+        TNFormatters.currency(deductionAmount)
     }
 
     /// Formatted distance
     public var distanceFormatted: String {
-        String(format: "%.1f mi", distanceMiles)
+        TNFormatters.miles(distanceMiles)
     }
 
     /// Trip duration
