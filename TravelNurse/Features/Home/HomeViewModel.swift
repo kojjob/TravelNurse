@@ -67,6 +67,9 @@ final class HomeViewModel {
     /// Year-to-date deductions (expenses + mileage)
     private(set) var ytdDeductions: Decimal = 0
 
+    /// Total miles tracked this year
+    private(set) var totalMiles: Double = 0
+
     /// Estimated quarterly tax due
     private(set) var estimatedTaxDue: Decimal = 0
 
@@ -93,13 +96,13 @@ final class HomeViewModel {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
         case 5..<12:
-            return "Good Morning"
+            return "Good morning,"
         case 12..<17:
-            return "Good Afternoon"
+            return "Good afternoon,"
         case 17..<21:
-            return "Good Evening"
+            return "Good evening,"
         default:
-            return "Good Night"
+            return "Good night,"
         }
     }
 
@@ -404,6 +407,9 @@ final class HomeViewModel {
         let mileageService = try serviceContainer.getMileageService()
         let trips = mileageService.fetchByYearOrEmpty(year)
         let totalMileage = trips.reduce(Decimal(0)) { $0 + $1.deductionAmount }
+
+        // Calculate total miles
+        totalMiles = trips.reduce(0.0) { $0 + $1.distanceMiles }
 
         ytdDeductions = totalExpenses + totalMileage
     }
