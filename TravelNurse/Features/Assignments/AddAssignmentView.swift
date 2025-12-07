@@ -47,8 +47,11 @@ struct AddAssignmentView: View {
                 // Basic Info Section
                 Section("Basic Information") {
                     TextField("Facility Name", text: $facilityName)
+                        .foregroundColor(.primary)
                     TextField("Staffing Agency", text: $agencyName)
+                        .foregroundColor(.primary)
                     TextField("Unit/Department (Optional)", text: $unitName)
+                        .foregroundColor(.primary)
                 }
 
                 // Contract Dates Section
@@ -89,7 +92,9 @@ struct AddAssignmentView: View {
                 // Location Section
                 Section("Location") {
                     TextField("Street Address", text: $street1)
+                        .foregroundColor(.primary)
                     TextField("City", text: $city)
+                        .foregroundColor(.primary)
 
                     Picker("State", selection: $selectedState) {
                         ForEach(USState.allCases, id: \.self) { state in
@@ -98,6 +103,7 @@ struct AddAssignmentView: View {
                     }
 
                     TextField("ZIP Code", text: $zipCode)
+                        .foregroundColor(.primary)
                         .keyboardType(.numberPad)
 
                     if selectedState.hasNoIncomeTax {
@@ -116,6 +122,7 @@ struct AddAssignmentView: View {
                             Text("Hourly Rate")
                             Spacer()
                             TextField("Rate", value: $hourlyRate, format: .currency(code: "USD"))
+                                .foregroundColor(.primary)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
                                 .frame(width: 100)
@@ -125,6 +132,7 @@ struct AddAssignmentView: View {
                             Text("Housing Stipend/wk")
                             Spacer()
                             TextField("Amount", value: $housingStipend, format: .currency(code: "USD"))
+                                .foregroundColor(.primary)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
                                 .frame(width: 100)
@@ -134,6 +142,7 @@ struct AddAssignmentView: View {
                             Text("M&IE Stipend/wk")
                             Spacer()
                             TextField("Amount", value: $mealsStipend, format: .currency(code: "USD"))
+                                .foregroundColor(.primary)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
                                 .frame(width: 100)
@@ -160,6 +169,7 @@ struct AddAssignmentView: View {
                 // Notes Section
                 Section("Notes") {
                     TextEditor(text: $notes)
+                        .foregroundColor(.primary)
                         .frame(minHeight: 80)
                 }
             }
@@ -305,8 +315,11 @@ struct EditAssignmentView: View {
             Form {
                 Section("Basic Information") {
                     TextField("Facility Name", text: $facilityName)
+                        .foregroundColor(.primary)
                     TextField("Staffing Agency", text: $agencyName)
+                        .foregroundColor(.primary)
                     TextField("Unit/Department", text: $unitName)
+                        .foregroundColor(.primary)
                 }
 
                 Section("Contract Dates") {
@@ -336,6 +349,7 @@ struct EditAssignmentView: View {
 
                 Section("Notes") {
                     TextEditor(text: $notes)
+                        .foregroundColor(.primary)
                         .frame(minHeight: 80)
                 }
             }

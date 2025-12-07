@@ -272,7 +272,7 @@ final class SettingsViewModel {
 
     // MARK: - Initialization
 
-    nonisolated init(serviceContainer: ServiceContainer = .shared) {
+    init(serviceContainer: ServiceContainer = .shared) {
         self.serviceContainer = serviceContainer
     }
 
@@ -466,3 +466,4 @@ extension SettingsViewModel {
         SettingsViewModel()
     }
 }
+

@@ -117,7 +117,7 @@ public final class Assignment {
     }
 
     /// Whether this assignment is in a no-income-tax state
-    public var isInNoTaxState: Bool {
+    @MainActor public var isInNoTaxState: Bool {
         state?.hasNoIncomeTax ?? false
     }
 
@@ -178,3 +178,4 @@ extension Assignment {
         "Variable"
     ]
 }
+

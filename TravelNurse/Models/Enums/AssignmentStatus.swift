@@ -15,10 +15,10 @@ public enum AssignmentStatus: String, CaseIterable, Codable, Identifiable, Hasha
     case cancelled = "cancelled"
     case extended = "extended"
 
-    public var id: String { rawValue }
+    public nonisolated var id: String { rawValue }
 
     /// Human-readable display name
-    public var displayName: String {
+    public nonisolated var displayName: String {
         switch self {
         case .upcoming: return "Upcoming"
         case .active: return "Active"
@@ -40,7 +40,7 @@ public enum AssignmentStatus: String, CaseIterable, Codable, Identifiable, Hasha
     }
 
     /// SF Symbol icon name
-    public var iconName: String {
+    public nonisolated var iconName: String {
         switch self {
         case .upcoming: return "calendar.badge.clock"
         case .active: return "checkmark.circle.fill"
@@ -51,12 +51,13 @@ public enum AssignmentStatus: String, CaseIterable, Codable, Identifiable, Hasha
     }
 
     /// Whether this status indicates the assignment is currently in progress
-    public var isInProgress: Bool {
+    public nonisolated var isInProgress: Bool {
         self == .active || self == .extended
     }
 
     /// Whether this status indicates the assignment has ended
-    public var hasEnded: Bool {
+    public nonisolated var hasEnded: Bool {
         self == .completed || self == .cancelled
     }
 }
+
