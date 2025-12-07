@@ -186,35 +186,50 @@ struct ExpenseListView: View {
     // MARK: - Empty State
 
     private var emptyStateView: some View {
-        VStack(spacing: TNSpacing.md) {
-            Image(systemName: "creditcard")
-                .font(.system(size: 48))
-                .foregroundStyle(TNColors.textTertiary)
+        VStack(spacing: TNSpacing.lg) {
+            Spacer()
+
+            ZStack {
+                Circle()
+                    .fill(TNColors.primary.opacity(0.1))
+                    .frame(width: 120, height: 120)
+
+                Image(systemName: "creditcard.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(TNColors.primary)
+            }
+            .padding(.bottom, TNSpacing.md)
 
             Text("No Expenses Yet")
-                .font(TNTypography.headlineMedium)
+                .font(.title2)
+                .fontWeight(.bold)
                 .foregroundStyle(TNColors.textPrimary)
 
             Text("Start tracking your tax-deductible expenses to maximize your refund.")
-                .font(TNTypography.bodyMedium)
+                .font(.body)
                 .foregroundStyle(TNColors.textSecondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, TNSpacing.lg)
+                .padding(.horizontal, TNSpacing.xl)
 
             Button {
                 showingAddSheet = true
             } label: {
-                Text("Add First Expense")
-                    .font(TNTypography.buttonMedium)
+                HStack {
+                    Image(systemName: "plus")
+                    Text("Add Your First Expense")
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.horizontal, TNSpacing.xl)
+                .padding(.vertical, TNSpacing.md)
+                .background(TNColors.primary)
+                .clipShape(Capsule())
+                .shadow(color: TNColors.primary.opacity(0.3), radius: 8, x: 0, y: 4)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(TNColors.primary)
+            .padding(.top, TNSpacing.md)
+
+            Spacer()
         }
-        .frame(maxWidth: .infinity)
-        .padding(TNSpacing.xl)
-        .background(TNColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
     }
 
     // MARK: - Loading View

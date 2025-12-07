@@ -378,22 +378,47 @@ struct MileageTrackerView: View {
 
     @ViewBuilder
     private var emptyTripsCard: some View {
-        VStack(spacing: TNSpacing.sm) {
-            Image(systemName: "car.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(TNColors.textTertiary)
+        VStack(spacing: TNSpacing.lg) {
+            ZStack {
+                Circle()
+                    .fill(TNColors.accent.opacity(0.1))
+                    .frame(width: 100, height: 100)
+
+                Image(systemName: "car.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(TNColors.accent)
+            }
+            .padding(.bottom, TNSpacing.sm)
 
             Text("No Trips Yet")
-                .font(TNTypography.headlineSmall)
-                .foregroundStyle(TNColors.textSecondary)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundStyle(TNColors.textPrimary)
 
             Text("Start tracking your work-related mileage to maximize your tax deductions.")
-                .font(TNTypography.bodySmall)
-                .foregroundStyle(TNColors.textTertiary)
+                .font(.body)
+                .foregroundStyle(TNColors.textSecondary)
                 .multilineTextAlignment(.center)
+                .padding(.horizontal, TNSpacing.md)
+
+            Button {
+                showManualEntrySheet = true
+            } label: {
+                HStack {
+                    Image(systemName: "plus")
+                    Text("Log Your First Trip")
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(.white)
+                .padding(.horizontal, TNSpacing.lg)
+                .padding(.vertical, TNSpacing.sm)
+                .background(TNColors.accent)
+                .clipShape(Capsule())
+                .shadow(color: TNColors.accent.opacity(0.3), radius: 6, x: 0, y: 3)
+            }
         }
         .frame(maxWidth: .infinity)
-        .padding(TNSpacing.lg)
+        .padding(TNSpacing.xl)
         .background(TNColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
         .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
