@@ -12,40 +12,42 @@ import SwiftData
 struct AssignmentListView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
     @State private var viewModel = AssignmentViewModel()
+    
+    // Animation state for the mesh gradient
+    @State private var animateGradient = false
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading {
-                    loadingView
-                } else if viewModel.assignments.isEmpty {
-                    emptyStateView
-                } else {
-                    assignmentListContent
-                }
-            }
-            .background(TNColors.background)
-            .navigationTitle("Assignments")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        viewModel.showingAddSheet = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 22))
-                            .foregroundStyle(TNColors.primary)
+            ZStack {
+                // Mesh Gradient Background
+                meshGradientBackground
+                
+                Group {
+                    if viewModel.isLoading {
+                        loadingView
+                    } else if viewModel.assignments.isEmpty {
+                        emptyStateView
+                    } else {
+                        assignmentListContent
                     }
                 }
             }
+            .navigationTitle("Assignments")
+            .navigationBarHidden(true) // Using custom header
             .refreshable {
                 viewModel.refresh()
             }
             .onAppear {
                 viewModel.loadAssignments()
+                withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
+                    animateGradient.toggle()
+                }
             }
             .sheet(isPresented: $viewModel.showingAddSheet) {
                 AddAssignmentView { newAssignment in
+                    HapticManager.success()
                     viewModel.addAssignment(newAssignment)
                     viewModel.refresh()
                 }
@@ -54,15 +56,55 @@ struct AssignmentListView: View {
                 AssignmentDetailView(
                     assignment: assignment,
                     onUpdate: { updatedAssignment in
+                        HapticManager.success()
                         viewModel.updateAssignment(updatedAssignment)
                         viewModel.refresh()
                     },
                     onDelete: {
+                        HapticManager.error()
                         viewModel.deleteAssignment(assignment)
                         viewModel.refresh()
                     }
                 )
             }
+        }
+    }
+
+    // MARK: - Mesh Gradient Background
+
+    private var meshGradientBackground: some View {
+        ZStack {
+            // Base Color
+            (colorScheme == .dark ? Color(hex: "0F172A") : Color.white)
+                .ignoresSafeArea()
+            
+            // Animated Blobs
+            GeometryReader { geo in
+                ZStack {
+                    // Top Left
+                    Circle()
+                        .fill(colorScheme == .dark ? Color(hex: "818CF8").opacity(0.4) : Color(hex: "A78BFA").opacity(0.3))
+                        .frame(width: 400, height: 400)
+                        .blur(radius: 100)
+                        .offset(x: animateGradient ? -100 : -50, y: animateGradient ? -100 : -150)
+                    
+                    // Top Right
+                    Circle()
+                        .fill(colorScheme == .dark ? Color(hex: "38BDF8").opacity(0.3) : Color(hex: "60A5FA").opacity(0.2))
+                        .frame(width: 350, height: 350)
+                        .blur(radius: 80)
+                        .offset(x: animateGradient ? 150 : 200, y: animateGradient ? -50 : -100)
+                    
+                    // Center/Bottom
+                    Circle()
+                        .fill(colorScheme == .dark ? Color(hex: "FB923C").opacity(0.2) : Color(hex: "F472B6").opacity(0.2))
+                        .frame(width: 300, height: 300)
+                        .blur(radius: 90)
+                        .offset(x: animateGradient ? 50 : -50, y: animateGradient ? 200 : 250)
+                }
+                .frame(width: geo.size.width, height: geo.size.height)
+            }
+            .ignoresSafeArea()
         }
     }
 
@@ -72,8 +114,9 @@ struct AssignmentListView: View {
         VStack {
             ProgressView()
                 .scaleEffect(1.5)
+                .tint(TNColors.primary)
             Text("Loading assignments...")
-                .font(TNTypography.bodyMedium)
+                .font(.subheadline)
                 .foregroundStyle(TNColors.textSecondary)
                 .padding(.top, TNSpacing.md)
         }
@@ -86,16 +129,24 @@ struct AssignmentListView: View {
         VStack(spacing: TNSpacing.lg) {
             Spacer()
 
-            Image(systemName: "briefcase")
-                .font(.system(size: 64))
-                .foregroundStyle(TNColors.textTertiary)
+            ZStack {
+                Circle()
+                    .fill(TNColors.primary.opacity(0.1))
+                    .frame(width: 120, height: 120)
+                
+                Image(systemName: "briefcase.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(TNColors.primary)
+            }
+            .padding(.bottom, TNSpacing.md)
 
             Text("No Assignments Yet")
-                .font(TNTypography.headlineMedium)
+                .font(.title2)
+                .fontWeight(.bold)
                 .foregroundStyle(TNColors.textPrimary)
 
             Text("Start tracking your travel nursing assignments to manage your contracts and monitor compliance.")
-                .font(TNTypography.bodyMedium)
+                .font(.body)
                 .foregroundStyle(TNColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, TNSpacing.xl)
@@ -103,11 +154,19 @@ struct AssignmentListView: View {
             Button {
                 viewModel.showingAddSheet = true
             } label: {
-                Label("Add Your First Assignment", systemImage: "plus")
-                    .font(TNTypography.buttonMedium)
+                HStack {
+                    Image(systemName: "plus")
+                    Text("Add Your First Assignment")
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.horizontal, TNSpacing.xl)
+                .padding(.vertical, TNSpacing.md)
+                .background(TNColors.primary)
+                .clipShape(Capsule())
+                .shadow(color: TNColors.primary.opacity(0.3), radius: 8, x: 0, y: 4)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(TNColors.primary)
+            .padding(.top, TNSpacing.md)
 
             Spacer()
         }
@@ -117,12 +176,16 @@ struct AssignmentListView: View {
 
     private var assignmentListContent: some View {
         VStack(spacing: 0) {
+            // Custom Header
+            headerView
+            
             // Filter bar
             filterBar
+                .padding(.bottom, TNSpacing.sm)
 
             // Assignment list grouped by year
             ScrollView {
-                LazyVStack(spacing: TNSpacing.md, pinnedViews: [.sectionHeaders]) {
+                LazyVStack(spacing: 20, pinnedViews: [.sectionHeaders]) {
                     ForEach(viewModel.assignmentYears, id: \.self) { year in
                         Section {
                             ForEach(viewModel.assignments(forYear: year)) { assignment in
@@ -131,38 +194,86 @@ struct AssignmentListView: View {
                                         viewModel.selectAssignment(assignment)
                                     }
                             }
+                            .onDelete { indexSet in
+                                HapticManager.error()
+                                let yearAssignments = viewModel.assignments(forYear: year)
+                                for index in indexSet {
+                                    if index < yearAssignments.count {
+                                        let assignmentToDelete = yearAssignments[index]
+                                        viewModel.deleteAssignment(assignmentToDelete)
+                                    }
+                                }
+                                viewModel.refresh()
+                            }
                         } header: {
                             yearHeader(for: year)
                         }
                     }
                 }
                 .padding(TNSpacing.md)
+                .padding(.bottom, 80) // Space for FAB if needed or bottom safe area
             }
         }
+    }
+    
+    // MARK: - Custom Header
+    
+    private var headerView: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(Date(), format: .dateTime.weekday(.wide).month().day())
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(TNColors.textSecondary)
+                    .textCase(.uppercase)
+                
+                Text("Assignments")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundStyle(TNColors.textPrimary)
+            }
+            
+            Spacer()
+            
+            Button {
+                viewModel.showingAddSheet = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .background(TNColors.primary)
+                    .clipShape(Circle())
+                    .shadow(color: TNColors.primary.opacity(0.3), radius: 4, x: 0, y: 2)
+            }
+        }
+        .padding(.horizontal, TNSpacing.md)
+        .padding(.top, TNSpacing.md)
+        .padding(.bottom, TNSpacing.sm)
+        .background(.ultraThinMaterial) // Glass effect
     }
 
     // MARK: - Filter Bar
 
     private var filterBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: TNSpacing.sm) {
+            HStack(spacing: 12) {
                 ForEach(AssignmentFilterStatus.allCases) { filter in
                     FilterChip(
                         title: filter.rawValue,
                         isSelected: viewModel.filterStatus == filter,
                         count: countForFilter(filter)
                     ) {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             viewModel.filterStatus = filter
                         }
                     }
                 }
             }
             .padding(.horizontal, TNSpacing.md)
-            .padding(.vertical, TNSpacing.sm)
+            .padding(.vertical, 8)
         }
-        .background(TNColors.surface)
-        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
     }
 
     // MARK: - Year Header
@@ -170,18 +281,34 @@ struct AssignmentListView: View {
     private func yearHeader(for year: Int) -> some View {
         HStack {
             Text(String(year))
-                .font(TNTypography.headlineSmall)
+                .font(.title3)
+                .fontWeight(.bold)
                 .foregroundStyle(TNColors.textPrimary)
 
             Spacer()
 
             Text("\(viewModel.assignments(forYear: year).count) assignments")
-                .font(TNTypography.caption)
+                .font(.caption)
+                .fontWeight(.medium)
                 .foregroundStyle(TNColors.textSecondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
         }
-        .padding(.vertical, TNSpacing.sm)
+        .padding(.vertical, 8)
         .padding(.horizontal, TNSpacing.xs)
-        .background(TNColors.background)
+        .background(
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .mask(
+                    LinearGradient(stops: [
+                        .init(color: .black, location: 0),
+                        .init(color: .black, location: 0.8),
+                        .init(color: .clear, location: 1)
+                    ], startPoint: .top, endPoint: .bottom)
+                )
+        )
     }
 
     // MARK: - Helpers
@@ -209,35 +336,58 @@ struct FilterChip: View {
     let isSelected: Bool
     let count: Int?
     let action: () -> Void
+    
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: TNSpacing.xxs) {
+            HStack(spacing: 6) {
                 Text(title)
-                    .font(TNTypography.labelMedium)
+                    .font(.subheadline)
+                    .fontWeight(isSelected ? .semibold : .medium)
 
                 if let count = count {
                     Text("\(count)")
-                        .font(TNTypography.labelSmall)
+                        .font(.caption2)
+                        .fontWeight(.bold)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(isSelected ? .white.opacity(0.2) : TNColors.primary.opacity(0.1))
+                        .background(isSelected ? .white.opacity(0.25) : TNColors.textSecondary.opacity(0.1))
                         .clipShape(Capsule())
                 }
             }
-            .foregroundStyle(isSelected ? .white : TNColors.textPrimary)
-            .padding(.horizontal, TNSpacing.md)
-            .padding(.vertical, TNSpacing.sm)
-            .background(isSelected ? TNColors.primary : TNColors.surface)
+            .foregroundStyle(isSelected ? .white : TNColors.textSecondary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                ZStack {
+                    if isSelected {
+                        LinearGradient(
+                            colors: [Color(hex: "818CF8"), Color(hex: "38BDF8")], // Vibrant Purple/Blue
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    } else {
+                        Rectangle().fill(.ultraThinMaterial)
+                    }
+                }
+            )
             .clipShape(Capsule())
+            .shadow(
+                color: isSelected ? Color(hex: "818CF8").opacity(0.3) : Color.black.opacity(0.05),
+                radius: isSelected ? 8 : 2,
+                x: 0,
+                y: isSelected ? 4 : 1
+            )
             .overlay {
                 if !isSelected {
                     Capsule()
-                        .stroke(TNColors.border, lineWidth: 1)
+                        .stroke(colorScheme == .dark ? .white.opacity(0.1) : .black.opacity(0.05), lineWidth: 1)
                 }
             }
         }
-        .buttonStyle(.plain)
+        .scaleEffect(isSelected ? 1.05 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
     }
 }
 

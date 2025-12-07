@@ -101,6 +101,19 @@ final class ReportsViewModel {
         formatCurrency(netIncome)
     }
 
+    /// Estimated federal tax liability (rough estimate at 22% bracket)
+    var estimatedTax: Decimal {
+        // Simplified estimate: 22% federal bracket for travel nurse income
+        // This is a rough estimate - actual tax will depend on many factors
+        let taxableIncome = netIncome
+        guard taxableIncome > 0 else { return 0 }
+        return taxableIncome * Decimal(0.22)
+    }
+
+    var formattedEstimatedTax: String {
+        formatCurrency(estimatedTax)
+    }
+
     // MARK: - Dependencies
 
     private var assignmentService: AssignmentServiceProtocol? {

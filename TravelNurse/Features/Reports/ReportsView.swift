@@ -3,6 +3,7 @@
 //  TravelNurse
 //
 //  Tax reports view with annual summaries and state breakdowns
+//  Bold, proportional design with visual hierarchy
 //
 
 import SwiftUI
@@ -14,6 +15,7 @@ struct ReportsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = ReportsViewModel()
     @State private var selectedYear: Int = Calendar.current.component(.year, from: Date())
+    @State private var showingExportSheet = false
 
     private var availableYears: [Int] {
         let currentYear = Calendar.current.component(.year, from: Date())
@@ -23,28 +25,50 @@ struct ReportsView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: TNSpacing.lg) {
-                    // Year Selector
+                VStack(spacing: TNSpacing.xxl) {
+                    // Year Selector - Prominent pill design
                     yearSelectorSection
 
-                    // Summary Cards
-                    summaryCardsSection
+                    // Hero Income Card - Bold gradient design
+                    heroIncomeSection
 
-                    // State Tax Breakdown
-                    stateTaxSection
+                    // Metrics Grid - Proportional 2x2 layout
+                    metricsGridSection
 
-                    // Quick Actions
-                    quickActionsSection
+                    // State Earnings - Enhanced breakdown
+                    stateEarningsSection
+
+                    // Export Actions - Bold action cards
+                    exportActionsSection
                 }
-                .padding(TNSpacing.md)
+                .padding(.horizontal, TNSpacing.lg)
+                .padding(.bottom, TNSpacing.xxxl)
             }
             .background(TNColors.background)
             .navigationTitle("Reports")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingExportSheet = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(TNColors.primary)
+                    }
+                }
+            }
             .onAppear {
                 viewModel.loadData(for: selectedYear)
             }
             .onChange(of: selectedYear) { _, newYear in
-                viewModel.loadData(for: newYear)
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    viewModel.loadData(for: newYear)
+                }
+            }
+            .sheet(isPresented: $showingExportSheet) {
+                ExportOptionsSheet(viewModel: viewModel)
+                    .presentationDetents([.large])
             }
         }
     }
@@ -61,130 +85,288 @@ struct ReportsView: View {
                         }
                     } label: {
                         Text(String(year))
-                            .font(TNTypography.labelMedium)
-                            .fontWeight(selectedYear == year ? .semibold : .medium)
+                            .font(TNTypography.titleMedium)
+                            .fontWeight(selectedYear == year ? .bold : .medium)
                             .foregroundStyle(selectedYear == year ? .white : TNColors.textSecondary)
-                            .padding(.horizontal, TNSpacing.lg)
-                            .padding(.vertical, TNSpacing.sm)
-                            .background(selectedYear == year ? TNColors.primary : TNColors.surface)
-                            .clipShape(Capsule())
-                            .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+                            .padding(.horizontal, TNSpacing.xl)
+                            .padding(.vertical, TNSpacing.md)
+                            .background {
+                                if selectedYear == year {
+                                    Capsule()
+                                        .fill(TNColors.primaryGradient)
+                                        .shadow(color: TNColors.primary.opacity(0.3), radius: 8, y: 4)
+                                } else {
+                                    Capsule()
+                                        .fill(TNColors.surface)
+                                        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+                                }
+                            }
                     }
                     .buttonStyle(.plain)
                 }
             }
+            .padding(.vertical, TNSpacing.xs)
         }
     }
 
-    // MARK: - Summary Cards Section
+    // MARK: - Hero Income Section
 
-    private var summaryCardsSection: some View {
-        VStack(spacing: TNSpacing.md) {
-            // Total Income Card
-            ReportSummaryCard(
-                title: "Total Income",
-                value: viewModel.formattedTotalIncome,
-                subtitle: "Gross earnings for \(selectedYear)",
-                icon: "dollarsign.circle.fill",
-                color: TNColors.success,
-                isLarge: true
-            )
+    private var heroIncomeSection: some View {
+        VStack(spacing: TNSpacing.lg) {
+            // Main income card with gradient
+            ZStack {
+                // Background gradient
+                RoundedRectangle(cornerRadius: TNSpacing.radiusXL)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(hex: "10B981"),
+                                Color(hex: "059669")
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: TNColors.success.opacity(0.3), radius: 16, y: 8)
 
-            HStack(spacing: TNSpacing.md) {
-                // Total Expenses
-                ReportSummaryCard(
+                // Pattern overlay
+                GeometryReader { geometry in
+                    Path { path in
+                        let width = geometry.size.width
+                        let height = geometry.size.height
+                        path.move(to: CGPoint(x: width * 0.6, y: 0))
+                        path.addCurve(
+                            to: CGPoint(x: width, y: height * 0.6),
+                            control1: CGPoint(x: width * 0.8, y: height * 0.2),
+                            control2: CGPoint(x: width, y: height * 0.4)
+                        )
+                        path.addLine(to: CGPoint(x: width, y: height))
+                        path.addLine(to: CGPoint(x: width * 0.8, y: height))
+                        path.addCurve(
+                            to: CGPoint(x: width * 0.6, y: 0),
+                            control1: CGPoint(x: width * 0.7, y: height * 0.5),
+                            control2: CGPoint(x: width * 0.65, y: height * 0.1)
+                        )
+                    }
+                    .fill(Color.white.opacity(0.1))
+                }
+
+                // Content
+                VStack(spacing: TNSpacing.md) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: TNSpacing.xxs) {
+                            Text("TOTAL INCOME")
+                                .font(TNTypography.overline)
+                                .fontWeight(.bold)
+                                .tracking(TNTypography.extraWideTracking)
+                                .foregroundStyle(.white.opacity(0.8))
+
+                            Text(String(selectedYear))
+                                .font(TNTypography.caption)
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(viewModel.formattedTotalIncome)
+                            .font(.system(size: 44, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+
+                        Spacer()
+                    }
+
+                    HStack {
+                        Label {
+                            Text("Gross earnings")
+                                .font(TNTypography.bodySmall)
+                        } icon: {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 14))
+                        }
+                        .foregroundStyle(.white.opacity(0.9))
+
+                        Spacer()
+
+                        // Trend indicator
+                        HStack(spacing: TNSpacing.xxs) {
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 12, weight: .bold))
+                            Text("YTD")
+                                .font(TNTypography.labelSmall)
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, TNSpacing.sm)
+                        .padding(.vertical, TNSpacing.xs)
+                        .background(.white.opacity(0.2))
+                        .clipShape(Capsule())
+                    }
+                }
+                .padding(TNSpacing.xl)
+            }
+            .frame(height: 200)
+        }
+    }
+
+    // MARK: - Metrics Grid Section
+
+    private var metricsGridSection: some View {
+        VStack(alignment: .leading, spacing: TNSpacing.md) {
+            Text("Financial Overview")
+                .font(TNTypography.headlineMedium)
+                .fontWeight(.bold)
+                .foregroundStyle(TNColors.textPrimary)
+
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: TNSpacing.md),
+                GridItem(.flexible(), spacing: TNSpacing.md)
+            ], spacing: TNSpacing.md) {
+
+                // Expenses Card
+                BoldMetricCard(
                     title: "Expenses",
                     value: viewModel.formattedTotalExpenses,
-                    subtitle: "Tax deductible",
+                    subtitle: "Tax Deductible",
                     icon: "creditcard.fill",
-                    color: TNColors.primary
+                    iconColor: TNColors.primary,
+                    backgroundColor: TNColors.primary.opacity(0.1)
                 )
 
-                // Mileage Deduction
-                ReportSummaryCard(
+                // Mileage Card
+                BoldMetricCard(
                     title: "Mileage",
                     value: viewModel.formattedMileageDeduction,
-                    subtitle: "\(String(format: "%.0f", viewModel.totalMiles)) miles",
+                    subtitle: String(format: "%.0f mi", viewModel.totalMiles),
                     icon: "car.fill",
-                    color: TNColors.accent
+                    iconColor: TNColors.accent,
+                    backgroundColor: TNColors.accent.opacity(0.1)
+                )
+
+                // Net Income Card
+                BoldMetricCard(
+                    title: "Net Income",
+                    value: viewModel.formattedNetIncome,
+                    subtitle: "After Deductions",
+                    icon: "banknote.fill",
+                    iconColor: TNColors.success,
+                    backgroundColor: TNColors.success.opacity(0.1)
+                )
+
+                // Tax Estimate Card
+                BoldMetricCard(
+                    title: "Est. Tax",
+                    value: viewModel.formattedEstimatedTax,
+                    subtitle: "Federal + State",
+                    icon: "building.columns.fill",
+                    iconColor: TNColors.warning,
+                    backgroundColor: TNColors.warning.opacity(0.1)
                 )
             }
         }
     }
 
-    // MARK: - State Tax Section
+    // MARK: - State Earnings Section
 
-    private var stateTaxSection: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.sm) {
-            Text("State Tax Breakdown")
-                .font(TNTypography.headlineMedium)
-                .foregroundStyle(TNColors.textPrimary)
+    private var stateEarningsSection: some View {
+        VStack(alignment: .leading, spacing: TNSpacing.md) {
+            HStack {
+                Text("State Breakdown")
+                    .font(TNTypography.headlineMedium)
+                    .fontWeight(.bold)
+                    .foregroundStyle(TNColors.textPrimary)
+
+                Spacer()
+
+                if !viewModel.stateBreakdowns.isEmpty {
+                    Text("\(viewModel.stateBreakdowns.count) states")
+                        .font(TNTypography.labelMedium)
+                        .foregroundStyle(TNColors.textSecondary)
+                }
+            }
 
             if viewModel.stateBreakdowns.isEmpty {
                 emptyStateBreakdown
             } else {
-                VStack(spacing: TNSpacing.xs) {
+                VStack(spacing: TNSpacing.sm) {
                     ForEach(viewModel.stateBreakdowns, id: \.state) { breakdown in
-                        StateBreakdownRow(breakdown: breakdown)
+                        BoldStateRow(
+                            breakdown: breakdown,
+                            maxEarnings: viewModel.stateBreakdowns.map(\.earnings).max() ?? 1
+                        )
                     }
                 }
-                .padding(TNSpacing.md)
+                .padding(TNSpacing.lg)
                 .background(TNColors.surface)
-                .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-                .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+                .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusLG))
+                .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
             }
         }
     }
 
     private var emptyStateBreakdown: some View {
-        VStack(spacing: TNSpacing.sm) {
-            Image(systemName: "map")
-                .font(.system(size: 32))
-                .foregroundStyle(TNColors.textTertiary)
+        VStack(spacing: TNSpacing.lg) {
+            ZStack {
+                Circle()
+                    .fill(TNColors.primary.opacity(0.1))
+                    .frame(width: 80, height: 80)
 
-            Text("No State Data")
-                .font(TNTypography.titleMedium)
-                .foregroundStyle(TNColors.textSecondary)
+                Image(systemName: "map.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(TNColors.primary)
+            }
 
-            Text("Complete assignments to see state-by-state earnings")
-                .font(TNTypography.caption)
-                .foregroundStyle(TNColors.textTertiary)
-                .multilineTextAlignment(.center)
+            VStack(spacing: TNSpacing.xs) {
+                Text("No State Data Yet")
+                    .font(TNTypography.titleLarge)
+                    .fontWeight(.bold)
+                    .foregroundStyle(TNColors.textPrimary)
+
+                Text("Complete assignments to see your\nearnings by state")
+                    .font(TNTypography.bodyMedium)
+                    .foregroundStyle(TNColors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
         }
         .frame(maxWidth: .infinity)
-        .padding(TNSpacing.xl)
+        .padding(.vertical, TNSpacing.xxxl)
         .background(TNColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusLG))
+        .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
     }
 
-    // MARK: - Quick Actions Section
+    // MARK: - Export Actions Section
 
-    private var quickActionsSection: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.sm) {
-            Text("Export Options")
+    private var exportActionsSection: some View {
+        VStack(alignment: .leading, spacing: TNSpacing.md) {
+            Text("Quick Actions")
                 .font(TNTypography.headlineMedium)
+                .fontWeight(.bold)
                 .foregroundStyle(TNColors.textPrimary)
 
-            VStack(spacing: TNSpacing.sm) {
-                ReportActionButton(
-                    title: "Export to CSV",
-                    subtitle: "Download spreadsheet format",
-                    icon: "tablecells",
+            HStack(spacing: TNSpacing.md) {
+                BoldActionButton(
+                    title: "CSV",
+                    icon: "tablecells.fill",
+                    color: TNColors.primary,
                     action: { viewModel.exportToCSV(year: selectedYear) }
                 )
 
-                ReportActionButton(
-                    title: "Generate PDF Report",
-                    subtitle: "Complete tax summary document",
-                    icon: "doc.text.fill",
+                BoldActionButton(
+                    title: "PDF",
+                    icon: "doc.richtext.fill",
+                    color: TNColors.accent,
                     action: { viewModel.generatePDFReport(year: selectedYear) }
                 )
 
-                ReportActionButton(
-                    title: "Share with Accountant",
-                    subtitle: "Email or share via other apps",
-                    icon: "square.and.arrow.up",
+                BoldActionButton(
+                    title: "Share",
+                    icon: "square.and.arrow.up.fill",
+                    color: TNColors.success,
                     action: { viewModel.shareReport(year: selectedYear) }
                 )
             }
@@ -192,33 +374,39 @@ struct ReportsView: View {
     }
 }
 
-// MARK: - Report Summary Card
+// MARK: - Bold Metric Card
 
-struct ReportSummaryCard: View {
+struct BoldMetricCard: View {
     let title: String
     let value: String
     let subtitle: String
     let icon: String
-    let color: Color
-    var isLarge: Bool = false
+    let iconColor: Color
+    let backgroundColor: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.sm) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: isLarge ? 24 : 18))
-                    .foregroundStyle(color)
+        VStack(alignment: .leading, spacing: TNSpacing.md) {
+            // Icon with colored background
+            ZStack {
+                RoundedRectangle(cornerRadius: TNSpacing.radiusSM)
+                    .fill(backgroundColor)
+                    .frame(width: 44, height: 44)
 
-                Spacer()
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(iconColor)
             }
 
             VStack(alignment: .leading, spacing: TNSpacing.xxs) {
                 Text(value)
-                    .font(isLarge ? TNTypography.displayMedium : TNTypography.titleLarge)
-                    .foregroundStyle(color)
+                    .font(TNTypography.moneyMedium)
+                    .foregroundStyle(TNColors.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
 
                 Text(title)
                     .font(TNTypography.titleSmall)
+                    .fontWeight(.semibold)
                     .foregroundStyle(TNColors.textPrimary)
 
                 Text(subtitle)
@@ -227,90 +415,112 @@ struct ReportSummaryCard: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(TNSpacing.md)
+        .padding(TNSpacing.lg)
         .background(TNColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusLG))
+        .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
     }
 }
 
-// MARK: - State Breakdown Row
+// MARK: - Bold State Row
 
-struct StateBreakdownRow: View {
+struct BoldStateRow: View {
     let breakdown: StateBreakdown
+    let maxEarnings: Decimal
+
+    private var progress: CGFloat {
+        guard maxEarnings > 0 else { return 0 }
+        return CGFloat(truncating: (breakdown.earnings / maxEarnings) as NSNumber)
+    }
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: TNSpacing.xxs) {
-                Text(breakdown.state.displayName)
-                    .font(TNTypography.titleSmall)
-                    .foregroundStyle(TNColors.textPrimary)
+        VStack(spacing: TNSpacing.sm) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: TNSpacing.xxs) {
+                    Text(breakdown.state.displayName)
+                        .font(TNTypography.titleMedium)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(TNColors.textPrimary)
 
-                Text("\(breakdown.weeksWorked) weeks worked")
-                    .font(TNTypography.caption)
-                    .foregroundStyle(TNColors.textSecondary)
+                    HStack(spacing: TNSpacing.sm) {
+                        Label("\(breakdown.weeksWorked)w", systemImage: "calendar")
+                            .font(TNTypography.caption)
+                            .foregroundStyle(TNColors.textSecondary)
+
+                        if breakdown.hasStateTax {
+                            Label("Tax", systemImage: "exclamationmark.triangle.fill")
+                                .font(TNTypography.caption)
+                                .foregroundStyle(TNColors.warning)
+                        } else {
+                            Label("No tax", systemImage: "checkmark.circle.fill")
+                                .font(TNTypography.caption)
+                                .foregroundStyle(TNColors.success)
+                        }
+                    }
+                }
+
+                Spacer()
+
+                Text(breakdown.formattedEarnings)
+                    .font(TNTypography.moneySmall)
+                    .foregroundStyle(TNColors.success)
             }
 
-            Spacer()
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(TNColors.border)
+                        .frame(height: 6)
 
-            VStack(alignment: .trailing, spacing: TNSpacing.xxs) {
-                Text(breakdown.formattedEarnings)
-                    .font(TNTypography.titleSmall)
-                    .foregroundStyle(TNColors.success)
-
-                HStack(spacing: TNSpacing.xxs) {
-                    Circle()
-                        .fill(breakdown.hasStateTax ? TNColors.warning : TNColors.success)
-                        .frame(width: 6, height: 6)
-
-                    Text(breakdown.hasStateTax ? "State tax applies" : "No state tax")
-                        .font(TNTypography.caption)
-                        .foregroundStyle(breakdown.hasStateTax ? TNColors.warning : TNColors.success)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [TNColors.primary, TNColors.accent],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: geometry.size.width * progress, height: 6)
                 }
             }
+            .frame(height: 6)
         }
         .padding(.vertical, TNSpacing.xs)
     }
 }
 
-// MARK: - Report Action Button
+// MARK: - Bold Action Button
 
-struct ReportActionButton: View {
+struct BoldActionButton: View {
     let title: String
-    let subtitle: String
     let icon: String
+    let color: Color
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: TNSpacing.md) {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                    .foregroundStyle(TNColors.primary)
-                    .frame(width: 40, height: 40)
-                    .background(TNColors.primary.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusSM))
+            VStack(spacing: TNSpacing.sm) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.15))
+                        .frame(width: 56, height: 56)
 
-                VStack(alignment: .leading, spacing: TNSpacing.xxs) {
-                    Text(title)
-                        .font(TNTypography.titleSmall)
-                        .foregroundStyle(TNColors.textPrimary)
-
-                    Text(subtitle)
-                        .font(TNTypography.caption)
-                        .foregroundStyle(TNColors.textSecondary)
+                    Image(systemName: icon)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(color)
                 }
 
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(TNColors.textTertiary)
+                Text(title)
+                    .font(TNTypography.labelMedium)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(TNColors.textPrimary)
             }
-            .padding(TNSpacing.md)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, TNSpacing.lg)
             .background(TNColors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-            .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusLG))
+            .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
         }
         .buttonStyle(.plain)
     }
@@ -318,11 +528,13 @@ struct ReportActionButton: View {
 
 // MARK: - Preview
 
-#Preview {
-    ReportsView()
-        .modelContainer(for: [
-            Assignment.self,
-            Expense.self,
-            MileageTrip.self
-        ], inMemory: true)
+struct ReportsView_Previews: PreviewProvider {
+    static var previews: some View {
+        ReportsView()
+            .modelContainer(for: [
+                Assignment.self,
+                Expense.self,
+                MileageTrip.self
+            ], inMemory: true)
+    }
 }
