@@ -55,11 +55,7 @@ struct StateBreakdown: Identifiable {
     let hasStateTax: Bool
 
     var formattedEarnings: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: earnings as NSDecimalNumber) ?? "$0"
+        TNFormatters.currencyWhole(earnings)
     }
 }
 
@@ -259,7 +255,7 @@ final class ReportsViewModel {
     // MARK: - Private Methods
 
     private func calculateIncome(from startDate: Date, to endDate: Date) {
-        let assignments = assignmentService?.fetchAll() ?? []
+        let assignments = assignmentService?.fetchAllOrEmpty() ?? []
 
         totalIncome = assignments
             .filter { assignment in
@@ -280,7 +276,7 @@ final class ReportsViewModel {
     }
 
     private func calculateExpenses(from startDate: Date, to endDate: Date) {
-        let expenses = expenseService?.fetchAll() ?? []
+        let expenses = expenseService?.fetchAllOrEmpty() ?? []
 
         totalExpenses = expenses
             .filter { $0.date >= startDate && $0.date <= endDate && $0.isDeductible }
@@ -290,7 +286,7 @@ final class ReportsViewModel {
     }
 
     private func calculateMileage(from startDate: Date, to endDate: Date) {
-        let trips = mileageService?.fetchAll() ?? []
+        let trips = mileageService?.fetchAllOrEmpty() ?? []
 
         let filteredTrips = trips.filter { $0.startTime >= startDate && $0.startTime <= endDate }
 
@@ -304,7 +300,7 @@ final class ReportsViewModel {
     }
 
     private func calculateStateBreakdowns(from startDate: Date, to endDate: Date) {
-        let assignments = assignmentService?.fetchAll() ?? []
+        let assignments = assignmentService?.fetchAllOrEmpty() ?? []
 
         // Group assignments by state
         var stateData: [USState: (earnings: Decimal, weeks: Int)] = [:]
@@ -343,10 +339,6 @@ final class ReportsViewModel {
     }
 
     private func formatCurrency(_ value: Decimal) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: value as NSDecimalNumber) ?? "$0"
+        TNFormatters.currencyWhole(value)
     }
 }

@@ -117,16 +117,7 @@ struct ReportsView: View {
             ZStack {
                 // Background gradient
                 RoundedRectangle(cornerRadius: TNSpacing.radiusXL)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(hex: "10B981"),
-                                Color(hex: "059669")
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(TNColors.successGradient)
                     .shadow(color: TNColors.success.opacity(0.3), radius: 16, y: 8)
 
                 // Pattern overlay

@@ -49,7 +49,7 @@ public enum ComplianceLevel: String, CaseIterable, Codable, Identifiable, Hashab
     public var color: Color {
         switch self {
         case .excellent: return TNColors.success
-        case .good: return Color(hex: "84CC16") // Lime green
+        case .good: return TNColors.lime
         case .atRisk: return TNColors.warning
         case .nonCompliant: return TNColors.error
         case .unknown: return TNColors.textTertiaryLight

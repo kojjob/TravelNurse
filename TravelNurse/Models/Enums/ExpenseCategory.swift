@@ -144,9 +144,9 @@ public enum ExpenseCategory: String, CaseIterable, Codable, Identifiable, Hashab
         case .licensure, .certifications, .continuingEducation, .professionalDues, .uniformsScrubs, .medicalEquipment, .liability:
             return TNColors.accent
         case .cellPhone, .internet, .computer, .software:
-            return Color(hex: "6366F1")
+            return TNColors.indigo
         case .meals, .groceries:
-            return Color(hex: "F97316")
+            return TNColors.orange
         case .taxHomeMortgage, .taxHomeRent, .taxHomeUtilities, .taxHomeMaintenance:
             return TNColors.success
         default:

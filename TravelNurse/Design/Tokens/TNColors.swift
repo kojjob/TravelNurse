@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// TravelNurse Design System - Color Tokens
-/// Provides semantic colors that adapt to light/dark mode
+/// Provides semantic colors that adapt to light/dark mode programmatically
 public enum TNColors {
 
     // MARK: - Brand Colors
@@ -39,30 +40,58 @@ public enum TNColors {
     /// Info state color
     public static let info = Color(hex: "3B82F6")
 
+    // MARK: - Category Colors
+
+    /// Indigo - Used for technology category
+    public static let indigo = Color(hex: "6366F1")
+
+    /// Orange - Used for meals/food category
+    public static let orange = Color(hex: "F97316")
+
+    /// Lime - Used for "good" status (between success and warning)
+    public static let lime = Color(hex: "84CC16")
+
+    /// Teal - Used for dashboard accent elements
+    public static let teal = Color(hex: "00A3A3")
+
     // MARK: - Surface Colors (Light/Dark Adaptive)
 
     /// Main background color
-    public static let background = Color("Background", bundle: nil)
+    public static let background = Color(uiColor: UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "111827") : UIColor.white
+    })
 
     /// Card/Surface background
-    public static let surface = Color("Surface", bundle: nil)
+    public static let surface = Color(uiColor: UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "1F2937") : UIColor(hex: "FFFFFF")
+    })
 
     /// Elevated surface (cards, modals)
-    public static let surfaceElevated = Color("SurfaceElevated", bundle: nil)
+    public static let surfaceElevated = Color(uiColor: UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "374151") : UIColor(hex: "FFFFFF")
+    })
 
     /// Border/Divider color
-    public static let border = Color("Border", bundle: nil)
+    public static let border = Color(uiColor: UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "374151") : UIColor(hex: "E5E7EB")
+    })
 
     // MARK: - Text Colors
 
     /// Primary text color
-    public static let textPrimary = Color("TextPrimary", bundle: nil)
+    public static let textPrimary = Color(uiColor: UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "F9FAFB") : UIColor(hex: "111827")
+    })
 
     /// Secondary text color
-    public static let textSecondary = Color("TextSecondary", bundle: nil)
+    public static let textSecondary = Color(uiColor: UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "9CA3AF") : UIColor(hex: "6B7280")
+    })
 
     /// Tertiary/muted text color
-    public static let textTertiary = Color("TextTertiary", bundle: nil)
+    public static let textTertiary = Color(uiColor: UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "6B7280") : UIColor(hex: "9CA3AF")
+    })
 
     /// Inverse text (on dark backgrounds)
     public static let textInverse = Color.white
@@ -136,40 +165,68 @@ extension Color {
 
 extension TNColors {
     /// Light mode background fallback
-    static let backgroundLight = Color(hex: "FAFBFC")
+    public static let backgroundLight = Color(hex: "FAFBFC")
 
     /// Dark mode background fallback
-    static let backgroundDark = Color(hex: "111827")
+    public static let backgroundDark = Color(hex: "111827")
 
     /// Light mode surface fallback
-    static let surfaceLight = Color(hex: "FFFFFF")
+    public static let surfaceLight = Color(hex: "FFFFFF")
 
     /// Dark mode surface fallback
-    static let surfaceDark = Color(hex: "1F2937")
+    public static let surfaceDark = Color(hex: "1F2937")
 
     /// Light mode border fallback
-    static let borderLight = Color(hex: "E5E7EB")
+    public static let borderLight = Color(hex: "E5E7EB")
 
     /// Dark mode border fallback
-    static let borderDark = Color(hex: "374151")
+    public static let borderDark = Color(hex: "374151")
 
     /// Light mode primary text fallback
-    static let textPrimaryLight = Color(hex: "111827")
+    public static let textPrimaryLight = Color(hex: "111827")
 
     /// Dark mode primary text fallback
-    static let textPrimaryDark = Color(hex: "F9FAFB")
+    public static let textPrimaryDark = Color(hex: "F9FAFB")
 
     /// Light mode secondary text fallback
-    static let textSecondaryLight = Color(hex: "6B7280")
+    public static let textSecondaryLight = Color(hex: "6B7280")
 
     /// Dark mode secondary text fallback
-    static let textSecondaryDark = Color(hex: "9CA3AF")
+    public static let textSecondaryDark = Color(hex: "9CA3AF")
 
     /// Light mode tertiary text fallback
-    static let textTertiaryLight = Color(hex: "9CA3AF")
+    public static let textTertiaryLight = Color(hex: "9CA3AF")
 
     /// Dark mode tertiary text fallback
-    static let textTertiaryDark = Color(hex: "6B7280")
+    public static let textTertiaryDark = Color(hex: "6B7280")
+}
+
+// MARK: - UIColor Extension for Hex Support
+
+extension UIColor {
+    convenience init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+
+        self.init(
+            red: CGFloat(r) / 255,
+            green: CGFloat(g) / 255,
+            blue: CGFloat(b) / 255,
+            alpha: CGFloat(a) / 255
+        )
+    }
 }
 
 // MARK: - Environment-Aware Color Provider

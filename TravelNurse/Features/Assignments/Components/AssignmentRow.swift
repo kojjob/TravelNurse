@@ -4,12 +4,15 @@
 //
 //  Row component for displaying assignment in a list
 //
+//  Updated for Image-Inspired Redesign: Glassmorphism & Adaptive Colors
+//
 
 import SwiftUI
 
 /// Row displaying assignment summary information
 struct AssignmentRow: View {
     let assignment: Assignment
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(spacing: TNSpacing.md) {
@@ -66,9 +69,13 @@ struct AssignmentRow: View {
             }
         }
         .padding(TNSpacing.md)
-        .background(TNColors.surface)
+        .background(Material.ultraThin) // Glassmorphic background
         .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+        .overlay(
+            RoundedRectangle(cornerRadius: TNSpacing.radiusMD)
+                .stroke(colorScheme == .dark ? .white.opacity(0.1) : .black.opacity(0.05), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
     }
 
     // MARK: - Status Indicator
@@ -106,15 +113,19 @@ struct AssignmentStatusBadge: View {
 // MARK: - Preview
 
 #Preview {
-    VStack(spacing: TNSpacing.md) {
-        AssignmentRow(assignment: .preview)
+    ZStack {
+        // Preview background to show glass effect
+        Color.blue.opacity(0.2).ignoresSafeArea()
+        
+        VStack(spacing: TNSpacing.md) {
+            AssignmentRow(assignment: .preview)
 
-        AssignmentRow(assignment: .previewCompleted)
+            AssignmentRow(assignment: .previewCompleted)
 
-        AssignmentRow(assignment: .previewUpcoming)
+            AssignmentRow(assignment: .previewUpcoming)
+        }
+        .padding()
     }
-    .padding()
-    .background(TNColors.background)
 }
 
 // MARK: - Preview Helpers

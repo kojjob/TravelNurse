@@ -33,9 +33,9 @@ enum LogoColorMode {
     var iconColors: (primary: Color, accent: Color, text: Color) {
         switch self {
         case .colored:
-            return (Color(hex: "0066FF"), Color(hex: "00C896"), Color(hex: "111827"))
+            return (TNColors.primary, TNColors.secondary, TNColors.textPrimaryLight)
         case .monochrome:
-            return (Color(hex: "374151"), Color(hex: "6B7280"), Color(hex: "374151"))
+            return (TNColors.borderDark, TNColors.textSecondaryLight, TNColors.borderDark)
         case .white:
             return (.white, .white.opacity(0.9), .white)
         }
@@ -268,7 +268,7 @@ struct LogoIconMark: View {
         LogoView(style: .horizontal, colorMode: .monochrome, height: 48)
 
         ZStack {
-            Color(hex: "0066FF")
+            TNColors.primary
             LogoView(style: .horizontal, colorMode: .white, height: 48)
         }
         .frame(height: 100)

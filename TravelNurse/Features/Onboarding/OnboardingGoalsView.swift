@@ -78,11 +78,11 @@ struct OnboardingGoalsView: View {
         VStack(spacing: 12) {
             Text("How can we help?")
                 .font(.system(size: 28, weight: .bold))
-                .foregroundColor(Color(hex: "1A1A2E"))
+                .foregroundColor(TNColors.textPrimaryLight)
 
             Text("Tell us what you're interested in so we can customize the app for your needs")
                 .font(.system(size: 16, weight: .regular))
-                .foregroundColor(Color(hex: "6B7280"))
+                .foregroundColor(TNColors.textSecondaryLight)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
         }
@@ -126,8 +126,8 @@ struct OnboardingGoalsView: View {
             .frame(height: 56)
             .background(
                 manager.selectedGoals.isEmpty
-                    ? Color(hex: "1A1A2E").opacity(0.5)
-                    : Color(hex: "1A1A2E")
+                    ? TNColors.textPrimaryLight.opacity(0.5)
+                    : TNColors.textPrimaryLight
             )
             .clipShape(RoundedRectangle(cornerRadius: 28))
         }
@@ -176,11 +176,11 @@ struct GoalCard: View {
                 VStack(spacing: 4) {
                     Text(goal.title)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Color(hex: "1A1A2E"))
+                        .foregroundColor(TNColors.textPrimaryLight)
 
                     Text(goal.description)
                         .font(.system(size: 11, weight: .regular))
-                        .foregroundColor(Color(hex: "6B7280"))
+                        .foregroundColor(TNColors.textSecondaryLight)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)

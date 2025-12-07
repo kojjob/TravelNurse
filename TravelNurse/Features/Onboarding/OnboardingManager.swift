@@ -54,12 +54,12 @@ enum OnboardingGoal: String, CaseIterable, Identifiable, Codable {
 
     var iconColor: Color {
         switch self {
-        case .trackAssignments: return Color(hex: "0066FF")
-        case .logExpenses: return Color(hex: "8B5CF6")
-        case .trackMileage: return Color(hex: "F59E0B")
-        case .taxCompliance: return Color(hex: "10B981")
-        case .maximizeDeductions: return Color(hex: "00C896")
-        case .generateReports: return Color(hex: "EF4444")
+        case .trackAssignments: return TNColors.primary
+        case .logExpenses: return TNColors.accent
+        case .trackMileage: return TNColors.warning
+        case .taxCompliance: return TNColors.success
+        case .maximizeDeductions: return TNColors.secondary
+        case .generateReports: return TNColors.error
         }
     }
 }

@@ -12,10 +12,10 @@ struct LaunchLogoView: View {
     @State private var isAnimating = false
     @State private var showTagline = false
 
-    // Brand colors
-    private let primaryBlue = Color(hex: "0066FF")
-    private let darkBlue = Color(hex: "0052CC")
-    private let accentGreen = Color(hex: "00C896")
+    // Brand colors from design tokens
+    private let primaryBlue = TNColors.primary
+    private let darkBlue = TNColors.primaryDark
+    private let accentGreen = TNColors.secondary
 
     var body: some View {
         ZStack {
@@ -109,7 +109,7 @@ struct LaunchLogoView: View {
         VStack(spacing: 4) {
             Text("TravelNurse")
                 .font(.system(size: 36, weight: .bold, design: .rounded))
-                .foregroundColor(Color(hex: "111827"))
+                .foregroundColor(TNColors.textPrimaryLight)
                 .opacity(isAnimating ? 1 : 0)
                 .offset(y: isAnimating ? 0 : 20)
 
@@ -126,7 +126,7 @@ struct LaunchLogoView: View {
     private var taglineSection: some View {
         Text("Protecting your finances, wherever you go")
             .font(.system(size: 15, weight: .medium, design: .rounded))
-            .foregroundColor(Color(hex: "6B7280"))
+            .foregroundColor(TNColors.textSecondaryLight)
             .multilineTextAlignment(.center)
             .opacity(showTagline ? 1 : 0)
             .offset(y: showTagline ? 0 : 10)
@@ -139,8 +139,8 @@ struct LaunchLogoDarkView: View {
     @State private var isAnimating = false
     @State private var showTagline = false
 
-    private let primaryBlue = Color(hex: "0066FF")
-    private let accentGreen = Color(hex: "00C896")
+    private let primaryBlue = TNColors.primary
+    private let accentGreen = TNColors.secondary
 
     var body: some View {
         ZStack {
@@ -220,12 +220,12 @@ struct LaunchLogoDarkView: View {
 
 // MARK: - Minimal Launch Screen (for LaunchScreen.storyboard replacement)
 struct MinimalLaunchView: View {
-    private let primaryBlue = Color(hex: "0066FF")
-    private let accentGreen = Color(hex: "00C896")
+    private let primaryBlue = TNColors.primary
+    private let accentGreen = TNColors.secondary
 
     var body: some View {
         ZStack {
-            Color(hex: "FAFBFC")
+            TNColors.backgroundLight
                 .ignoresSafeArea()
 
             LogoIconMark(size: 100, primaryColor: primaryBlue, accentColor: accentGreen)

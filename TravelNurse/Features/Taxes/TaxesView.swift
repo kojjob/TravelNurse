@@ -16,32 +16,79 @@ struct TaxesView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: TNSpacing.lg) {
-                    // Year Selector
-                    yearSelector
-
-                    // Tax Summary Card
+            List {
+                // Summary Section
+                Section {
                     taxSummaryCard
-
-                    // Payment Progress
-                    paymentProgressSection
-
-                    // Quarterly Payments
-                    quarterlyPaymentsSection
-
-                    // Tax Breakdown
-                    taxBreakdownSection
-
-                    // Income Summary
-                    incomeSummarySection
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                 }
-                .padding(.horizontal, TNSpacing.md)
-                .padding(.bottom, TNSpacing.xl)
+
+                // Payment Progress
+                Section {
+                    paymentProgressSection
+                } header: {
+                    Text("Progress")
+                }
+
+                // Quarterly Payments
+                Section {
+                    ForEach(viewModel.quarterlyTaxes) { quarter in
+                        QuarterlyPaymentRow(quarter: quarter)
+                    }
+                } header: {
+                    Text("Quarterly Payments")
+                }
+
+                // Tax Breakdown
+                Section {
+                    taxBreakdownSection
+                } header: {
+                    Text("Breakdown")
+                }
+
+                // Income Summary
+                Section {
+                    incomeSummarySection
+                } header: {
+                    Text("Income Summary")
+                }
             }
-            .background(TNColors.background)
+            .listStyle(.insetGrouped)
             .navigationTitle("Taxes")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        ForEach(viewModel.availableYears, id: \.self) { year in
+                            Button {
+                                Task {
+                                    await viewModel.selectYear(year)
+                                }
+                            } label: {
+                                if year == viewModel.selectedYear {
+                                    Label(String(year), systemImage: "checkmark")
+                                } else {
+                                    Text(String(year))
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(String(viewModel.selectedYear))
+                            Image(systemName: "chevron.down")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                        }
+                        .font(TNTypography.labelMedium)
+                        .foregroundColor(TNColors.primary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(TNColors.primary.opacity(0.1))
+                        .clipShape(Capsule())
+                    }
+                }
+            }
             .refreshable {
                 await viewModel.refresh()
             }
@@ -56,339 +103,268 @@ struct TaxesView: View {
         }
     }
 
-    // MARK: - Year Selector
-
-    private var yearSelector: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: TNSpacing.sm) {
-                ForEach(viewModel.availableYears, id: \.self) { year in
-                    Button {
-                        Task {
-                            await viewModel.selectYear(year)
-                        }
-                    } label: {
-                        Text(String(year))
-                            .font(TNTypography.labelMedium)
-                            .foregroundColor(year == viewModel.selectedYear ? .white : TNColors.textPrimary)
-                            .padding(.horizontal, TNSpacing.md)
-                            .padding(.vertical, TNSpacing.sm)
-                            .background(
-                                year == viewModel.selectedYear
-                                    ? TNColors.primary
-                                    : TNColors.surface
-                            )
-                            .clipShape(Capsule())
-                            .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.vertical, TNSpacing.xs)
-        }
-    }
+    // MARK: - Tax Summary Card
 
     // MARK: - Tax Summary Card
 
     private var taxSummaryCard: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.md) {
-            HStack {
-                Text("\(viewModel.selectedYear) Estimated Tax")
-                    .font(TNTypography.bodyMedium)
-                    .foregroundColor(.white.opacity(0.9))
-
-                Spacer()
-
-                if let days = viewModel.daysUntilNextPayment {
-                    HStack(spacing: TNSpacing.xs) {
-                        Image(systemName: "clock.fill")
-                            .font(.system(size: 12))
-                        Text("\(days) days")
-                            .font(TNTypography.caption)
-                    }
-                    .foregroundColor(.white.opacity(0.8))
-                    .padding(.horizontal, TNSpacing.sm)
-                    .padding(.vertical, TNSpacing.xxs)
-                    .background(Color.white.opacity(0.2))
-                    .clipShape(Capsule())
+        ZStack {
+            // Background with decorative elements
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(hex: "1E293B"), // Slate 800
+                        Color(hex: "334155"), // Slate 700
+                        Color(hex: "0F172A")  // Slate 900
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                
+                // Decorative circles
+                GeometryReader { geo in
+                    Circle()
+                        .fill(Color(hex: "38BDF8").opacity(0.15)) // Sky 400
+                        .frame(width: 200, height: 200)
+                        .offset(x: -50, y: -50)
+                        .blur(radius: 30)
+                    
+                    Circle()
+                        .fill(Color(hex: "818CF8").opacity(0.15)) // Indigo 400
+                        .frame(width: 150, height: 150)
+                        .offset(x: geo.size.width - 80, y: geo.size.height - 80)
+                        .blur(radius: 25)
                 }
             }
-
-            Text(viewModel.formattedTotalEstimatedTax)
-                .font(.system(size: 44, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-
-            // Progress bar
-            VStack(alignment: .leading, spacing: TNSpacing.xs) {
-                HStack {
-                    Text("Paid: \(viewModel.formattedTotalPaidTax)")
-                        .font(TNTypography.caption)
-                        .foregroundColor(.white.opacity(0.8))
+            
+            // Content
+            VStack(alignment: .leading, spacing: 20) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("ESTIMATED TAX")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white.opacity(0.7))
+                            .tracking(1)
+                        
+                        Text(viewModel.formattedTotalEstimatedTax)
+                            .font(.system(.largeTitle, design: .rounded))
+                            .fontWeight(.black)
+                            .foregroundColor(.white)
+                            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 2)
+                    }
 
                     Spacer()
 
-                    Text("Remaining: \(viewModel.formattedRemainingTax)")
-                        .font(TNTypography.caption)
-                        .foregroundColor(.white.opacity(0.8))
-                }
-
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.white.opacity(0.3))
-                            .frame(height: 8)
-
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.white)
-                            .frame(width: geometry.size.width * viewModel.paymentProgress, height: 8)
+                    if let days = viewModel.daysUntilNextPayment {
+                        VStack(alignment: .trailing, spacing: 4) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "hourglass")
+                                    .symbolRenderingMode(.hierarchical)
+                                Text("\(days)")
+                                    .fontWeight(.bold)
+                            }
+                            .font(.callout)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+                            
+                            Text("days left")
+                                .font(.caption2)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
                     }
                 }
-                .frame(height: 8)
+
+                // Progress Section
+                VStack(spacing: 12) {
+                    // Custom Progress Bar
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.black.opacity(0.2))
+                                .frame(height: 8)
+
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.white, .white.opacity(0.8)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: geometry.size.width * viewModel.paymentProgress, height: 8)
+                                .shadow(color: Color.white.opacity(0.5), radius: 4, x: 0, y: 0)
+                        }
+                    }
+                    .frame(height: 8)
+                    
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("PAID")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white.opacity(0.6))
+                            Text(viewModel.formattedTotalPaidTax)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
+                        
+                        Spacer()
+                        
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("REMAINING")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white.opacity(0.6))
+                            Text(viewModel.formattedRemainingTax)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
             }
-
-            // Quick Stats
-            HStack(spacing: TNSpacing.md) {
-                quickStatPill(
-                    title: "Quarterly",
-                    value: viewModel.quarterlyTaxes.first?.formattedEstimatedAmount ?? "$0"
-                )
-
-                quickStatPill(
-                    title: "Next Due",
-                    value: viewModel.nextDueQuarter?.formattedDueDate ?? "N/A"
-                )
-            }
+            .padding(24)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(TNSpacing.lg)
-        .background(
-            LinearGradient(
-                colors: [TNColors.accent, Color(hex: "6D28D9")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusLG))
-    }
-
-    private func quickStatPill(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: TNSpacing.xxs) {
-            Text(title)
-                .font(TNTypography.caption)
-                .foregroundColor(.white.opacity(0.7))
-
-            Text(value)
-                .font(TNTypography.titleSmall)
-                .foregroundColor(.white)
-        }
-        .padding(.horizontal, TNSpacing.md)
-        .padding(.vertical, TNSpacing.sm)
-        .background(Color.white.opacity(0.15))
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusSM))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: Color(hex: "0F172A").opacity(0.25), radius: 15, x: 0, y: 10)
+        .padding(.vertical, 8)
     }
 
     // MARK: - Payment Progress Section
 
     private var paymentProgressSection: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.sm) {
-            Text("PAYMENT PROGRESS")
-                .font(TNTypography.caption)
-                .foregroundColor(TNColors.textSecondary)
-                .tracking(0.5)
-
-            HStack(spacing: TNSpacing.sm) {
-                // Paid quarters count
-                progressCard(
-                    icon: "checkmark.circle.fill",
-                    iconColor: TNColors.success,
-                    title: "Paid",
-                    value: "\(viewModel.quarterlyTaxes.filter { $0.isPaid }.count)/4"
-                )
-
-                // Pending quarters count
-                progressCard(
-                    icon: "clock.fill",
-                    iconColor: TNColors.warning,
-                    title: "Pending",
-                    value: "\(viewModel.quarterlyTaxes.filter { !$0.isPaid }.count)"
-                )
-
-                // Payment percentage
-                progressCard(
-                    icon: "percent",
-                    iconColor: TNColors.primary,
-                    title: "Progress",
-                    value: "\(Int(viewModel.paymentProgress * 100))%"
-                )
-            }
+        HStack(spacing: 0) {
+            progressStat(
+                title: "Paid",
+                value: "\(viewModel.quarterlyTaxes.filter { $0.isPaid }.count)/4",
+                color: TNColors.success
+            )
+            
+            Divider()
+                .padding(.vertical, 8)
+            
+            progressStat(
+                title: "Pending",
+                value: "\(viewModel.quarterlyTaxes.filter { !$0.isPaid }.count)",
+                color: TNColors.warning
+            )
+            
+            Divider()
+                .padding(.vertical, 8)
+            
+            progressStat(
+                title: "Progress",
+                value: "\(Int(viewModel.paymentProgress * 100))%",
+                color: TNColors.primary
+            )
         }
+        .listRowInsets(EdgeInsets())
     }
-
-    private func progressCard(icon: String, iconColor: Color, title: String, value: String) -> some View {
-        VStack(spacing: TNSpacing.sm) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(iconColor)
-
+    
+    private func progressStat(title: String, value: String, color: Color) -> some View {
+        VStack(spacing: 4) {
             Text(value)
-                .font(TNTypography.titleMedium)
-                .foregroundColor(TNColors.textPrimary)
-
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(color)
             Text(title)
-                .font(TNTypography.caption)
+                .font(.caption2)
                 .foregroundColor(TNColors.textSecondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(TNSpacing.md)
-        .background(TNColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-        .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
-    }
-
-    // MARK: - Quarterly Payments Section
-
-    private var quarterlyPaymentsSection: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.sm) {
-            Text("QUARTERLY PAYMENTS")
-                .font(TNTypography.caption)
-                .foregroundColor(TNColors.textSecondary)
-                .tracking(0.5)
-
-            VStack(spacing: 0) {
-                ForEach(viewModel.quarterlyTaxes) { quarter in
-                    QuarterlyPaymentRow(quarter: quarter)
-
-                    if quarter.id != viewModel.quarterlyTaxes.last?.id {
-                        Divider()
-                            .padding(.leading, 52)
-                    }
-                }
-            }
-            .background(TNColors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-            .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
-        }
+        .padding(.vertical, 12)
     }
 
     // MARK: - Tax Breakdown Section
 
     private var taxBreakdownSection: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.sm) {
-            Text("TAX BREAKDOWN")
-                .font(TNTypography.caption)
-                .foregroundColor(TNColors.textSecondary)
-                .tracking(0.5)
-
-            VStack(spacing: TNSpacing.md) {
-                // Breakdown chart
-                HStack(spacing: 2) {
+        VStack(spacing: 16) {
+            // Visual Bar
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
                     ForEach(viewModel.taxBreakdown) { item in
                         Rectangle()
                             .fill(item.color)
-                            .frame(height: 12)
-                            .frame(maxWidth: .infinity)
-                            .scaleEffect(x: item.percentage, anchor: .leading)
+                            .frame(width: geometry.size.width * item.percentage)
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-
-                // Legend
+            }
+            .frame(height: 16)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            
+            // Legend
+            VStack(spacing: 12) {
                 ForEach(viewModel.taxBreakdown) { item in
                     HStack {
                         Circle()
                             .fill(item.color)
-                            .frame(width: 12, height: 12)
-
+                            .frame(width: 8, height: 8)
+                        
                         Text(item.category)
-                            .font(TNTypography.bodyMedium)
+                            .font(.subheadline)
                             .foregroundColor(TNColors.textPrimary)
-
+                        
                         Spacer()
-
+                        
                         Text(item.formattedAmount)
-                            .font(TNTypography.titleSmall)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
                             .foregroundColor(TNColors.textPrimary)
-
-                        Text("(\(Int(item.percentage * 100))%)")
-                            .font(TNTypography.caption)
-                            .foregroundColor(TNColors.textSecondary)
                     }
                 }
             }
-            .padding(TNSpacing.md)
-            .background(TNColors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-            .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
         }
+        .padding(.vertical, 4)
     }
 
     // MARK: - Income Summary Section
 
     private var incomeSummarySection: some View {
-        VStack(alignment: .leading, spacing: TNSpacing.sm) {
-            Text("INCOME SUMMARY")
-                .font(TNTypography.caption)
-                .foregroundColor(TNColors.textSecondary)
-                .tracking(0.5)
-
-            VStack(spacing: 0) {
-                incomeSummaryRow(
-                    title: "Taxable Income",
-                    value: viewModel.formattedYTDTaxableIncome,
-                    icon: "dollarsign.circle.fill",
-                    iconColor: TNColors.success
-                )
-
-                Divider()
-                    .padding(.leading, 52)
-
-                incomeSummaryRow(
-                    title: "Total Deductions",
-                    value: viewModel.formattedYTDDeductions,
-                    icon: "minus.circle.fill",
-                    iconColor: TNColors.error
-                )
-
-                Divider()
-                    .padding(.leading, 52)
-
-                incomeSummaryRow(
-                    title: "Effective Tax Rate",
-                    value: String(format: "%.1f%%", viewModel.ytdTaxableIncome > 0
-                        ? (viewModel.totalEstimatedTax as NSDecimalNumber).doubleValue / (viewModel.ytdTaxableIncome as NSDecimalNumber).doubleValue * 100
-                        : 0),
-                    icon: "percent",
-                    iconColor: TNColors.primary
-                )
-            }
-            .background(TNColors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
-            .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
-        }
-    }
-
-    private func incomeSummaryRow(title: String, value: String, icon: String, iconColor: Color) -> some View {
-        HStack(spacing: TNSpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(iconColor.opacity(0.1))
-                    .frame(width: 40, height: 40)
-
-                Image(systemName: icon)
-                    .font(.system(size: 18))
-                    .foregroundColor(iconColor)
+        Group {
+            LabeledContent {
+                Text(viewModel.formattedYTDTaxableIncome)
+                    .foregroundColor(TNColors.textPrimary)
+            } label: {
+                Label {
+                    Text("Taxable Income")
+                } icon: {
+                    Image(systemName: "dollarsign.circle.fill")
+                        .foregroundColor(TNColors.success)
+                }
             }
 
-            Text(title)
-                .font(TNTypography.bodyMedium)
-                .foregroundColor(TNColors.textPrimary)
+            LabeledContent {
+                Text(viewModel.formattedYTDDeductions)
+                    .foregroundColor(TNColors.textPrimary)
+            } label: {
+                Label {
+                    Text("Total Deductions")
+                } icon: {
+                    Image(systemName: "minus.circle.fill")
+                        .foregroundColor(TNColors.error)
+                }
+            }
 
-            Spacer()
-
-            Text(value)
-                .font(TNTypography.titleMedium)
-                .foregroundColor(TNColors.textPrimary)
+            LabeledContent {
+                Text(String(format: "%.1f%%", viewModel.ytdTaxableIncome > 0
+                    ? (viewModel.totalEstimatedTax as NSDecimalNumber).doubleValue / (viewModel.ytdTaxableIncome as NSDecimalNumber).doubleValue * 100
+                    : 0))
+                    .foregroundColor(TNColors.textPrimary)
+            } label: {
+                Label {
+                    Text("Effective Tax Rate")
+                } icon: {
+                    Image(systemName: "percent")
+                        .foregroundColor(TNColors.primary)
+                }
+            }
         }
-        .padding(TNSpacing.md)
     }
 }
 
@@ -398,55 +374,46 @@ struct QuarterlyPaymentRow: View {
     let quarter: QuarterlyTax
 
     var body: some View {
-        HStack(spacing: TNSpacing.md) {
-            // Status Icon
-            ZStack {
-                Circle()
-                    .fill(quarter.status.color.opacity(0.1))
-                    .frame(width: 40, height: 40)
+        HStack(spacing: 12) {
+            Image(systemName: quarter.status.iconName)
+                .font(.title3)
+                .foregroundColor(quarter.status.color)
+                .frame(width: 32)
 
-                Image(systemName: quarter.status.iconName)
-                    .font(.system(size: 18))
-                    .foregroundColor(quarter.status.color)
-            }
-
-            // Quarter Info
-            VStack(alignment: .leading, spacing: TNSpacing.xxs) {
-                HStack(spacing: TNSpacing.xs) {
-                    Text(quarter.quarter)
-                        .font(TNTypography.titleMedium)
-                        .foregroundColor(TNColors.textPrimary)
-
-                    Text(String(quarter.year))
-                        .font(TNTypography.caption)
-                        .foregroundColor(TNColors.textSecondary)
-                }
-
-                Text("Due: \(quarter.formattedDueDate)")
-                    .font(TNTypography.caption)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(quarter.quarter)
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .foregroundColor(TNColors.textPrimary)
+                
+                Text(quarter.formattedDueDate)
+                    .font(.caption)
                     .foregroundColor(TNColors.textSecondary)
             }
 
             Spacer()
 
-            // Amount and Status
-            VStack(alignment: .trailing, spacing: TNSpacing.xxs) {
+            VStack(alignment: .trailing, spacing: 2) {
                 Text(quarter.formattedEstimatedAmount)
-                    .font(TNTypography.titleMedium)
+                    .font(.body)
+                    .fontWeight(.medium)
                     .foregroundColor(TNColors.textPrimary)
-
+                
                 Text(quarter.status.displayName)
-                    .font(TNTypography.caption)
-                    .foregroundColor(quarter.status.color)
-                    .padding(.horizontal, TNSpacing.sm)
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(quarter.status.color.opacity(0.1))
+                    .foregroundColor(quarter.status.color)
                     .clipShape(Capsule())
             }
         }
-        .padding(TNSpacing.md)
+        .padding(.vertical, 4)
     }
 }
+
+
 
 // MARK: - Preview
 

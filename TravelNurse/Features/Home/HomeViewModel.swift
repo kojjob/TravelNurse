@@ -376,7 +376,7 @@ final class HomeViewModel {
 
     private func loadCurrentAssignment() throws {
         let service = try serviceContainer.getAssignmentService()
-        currentAssignment = service.fetchCurrentAssignment()
+        currentAssignment = service.fetchCurrentAssignmentOrNil()
     }
 
     private func loadYTDData() throws {
@@ -384,7 +384,7 @@ final class HomeViewModel {
 
         // Load assignments for current year
         let assignmentService = try serviceContainer.getAssignmentService()
-        let assignments = assignmentService.fetch(byYear: year)
+        let assignments = assignmentService.fetchByYearOrEmpty(year)
 
         // Calculate YTD income from assignments
         ytdIncome = assignments.reduce(Decimal(0)) { total, assignment in
@@ -395,14 +395,14 @@ final class HomeViewModel {
 
         // Load expenses for current year
         let expenseService = try serviceContainer.getExpenseService()
-        let expenses = expenseService.fetch(byYear: year)
+        let expenses = expenseService.fetchByYearOrEmpty(year)
         let totalExpenses = expenses
             .filter { $0.isDeductible }
             .reduce(Decimal(0)) { $0 + $1.amount }
 
         // Load mileage for current year
         let mileageService = try serviceContainer.getMileageService()
-        let trips = mileageService.fetch(byYear: year)
+        let trips = mileageService.fetchByYearOrEmpty(year)
         let totalMileage = trips.reduce(Decimal(0)) { $0 + $1.deductionAmount }
 
         ytdDeductions = totalExpenses + totalMileage
@@ -423,7 +423,7 @@ final class HomeViewModel {
     private func loadStatesWorked() throws {
         let year = currentYear
         let service = try serviceContainer.getAssignmentService()
-        let assignments = service.fetch(byYear: year)
+        let assignments = service.fetchByYearOrEmpty(year)
 
         // Group income by state
         var stateIncome: [USState: Decimal] = [:]
@@ -447,7 +447,7 @@ final class HomeViewModel {
 
         // Load recent expenses
         let expenseService = try serviceContainer.getExpenseService()
-        let recentExpenses = expenseService.fetchRecent(limit: 3)
+        let recentExpenses = expenseService.fetchRecentOrEmpty(limit: 3)
 
         for expense in recentExpenses {
             activities.append(RecentActivity(
@@ -463,7 +463,7 @@ final class HomeViewModel {
 
         // Load recent mileage trips
         let mileageService = try serviceContainer.getMileageService()
-        let recentTrips = mileageService.fetchRecent(limit: 2)
+        let recentTrips = mileageService.fetchRecentOrEmpty(limit: 2)
 
         for trip in recentTrips {
             activities.append(RecentActivity(

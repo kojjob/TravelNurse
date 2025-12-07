@@ -129,7 +129,7 @@ final class DashboardViewModel {
     private func loadAssignmentData(year: Int) {
         guard let service = assignmentService else { return }
 
-        currentAssignment = service.fetchCurrentAssignment()
+        currentAssignment = service.fetchCurrentAssignmentOrNil()
         totalYTDEarnings = service.totalEarnings(forYear: year)
 
         if let assignment = currentAssignment {
@@ -161,7 +161,7 @@ final class DashboardViewModel {
     private func loadExpenseData(year: Int) {
         guard let service = expenseService else { return }
 
-        recentExpenses = service.fetchRecent(limit: 5)
+        recentExpenses = service.fetchRecentOrEmpty(limit: 5)
         totalYTDExpenses = service.totalDeductible(forYear: year)
     }
 }

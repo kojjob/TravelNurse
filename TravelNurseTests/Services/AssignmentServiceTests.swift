@@ -100,7 +100,7 @@ final class AssignmentServiceTests: XCTestCase {
         createTestAssignment(facilityName: "Hospital C")
 
         // When
-        let assignments = sut.fetchAll()
+        let assignments = sut.fetchAllOrEmpty()
 
         // Then
         XCTAssertEqual(assignments.count, 3)
@@ -109,7 +109,7 @@ final class AssignmentServiceTests: XCTestCase {
     @MainActor
     func test_fetchAll_returnsEmptyArrayWhenNoAssignments() {
         // When
-        let assignments = sut.fetchAll()
+        let assignments = sut.fetchAllOrEmpty()
 
         // Then
         XCTAssertTrue(assignments.isEmpty)
@@ -123,7 +123,7 @@ final class AssignmentServiceTests: XCTestCase {
         createTestAssignment(facilityName: "Other Hospital")
 
         // When
-        let result = sut.fetch(byId: targetId)
+        let result = try sut.fetch(byId: targetId).get()
 
         // Then
         XCTAssertNotNil(result)
@@ -131,12 +131,12 @@ final class AssignmentServiceTests: XCTestCase {
     }
 
     @MainActor
-    func test_fetchById_returnsNilForInvalidId() {
+    func test_fetchById_returnsNilForInvalidId() throws {
         // Given
         createTestAssignment(facilityName: "Some Hospital")
 
         // When
-        let result = sut.fetch(byId: UUID())
+        let result = try sut.fetch(byId: UUID()).get()
 
         // Then
         XCTAssertNil(result)
@@ -152,7 +152,7 @@ final class AssignmentServiceTests: XCTestCase {
         createTestAssignment(facilityName: "Upcoming Hospital", status: .upcoming)
 
         // When
-        let activeAssignments = sut.fetch(byStatus: .active)
+        let activeAssignments = try sut.fetch(byStatus: .active).get()
 
         // Then
         XCTAssertEqual(activeAssignments.count, 1)
@@ -167,7 +167,7 @@ final class AssignmentServiceTests: XCTestCase {
         createTestAssignment(facilityName: "Future Hospital", status: .upcoming)
 
         // When
-        let result = sut.fetchCurrentAssignment()
+        let result = sut.fetchCurrentAssignmentOrNil()
 
         // Then
         XCTAssertNotNil(result)
@@ -187,7 +187,7 @@ final class AssignmentServiceTests: XCTestCase {
         createTestAssignment(facilityName: "Last Year", startDate: lastYearDate)
 
         // When
-        let thisYearAssignments = sut.fetch(byYear: thisYear)
+        let thisYearAssignments = sut.fetchByYearOrEmpty(thisYear)
 
         // Then
         XCTAssertEqual(thisYearAssignments.count, 1)
@@ -203,10 +203,10 @@ final class AssignmentServiceTests: XCTestCase {
 
         // When
         assignment.facilityName = "Updated Name"
-        sut.update(assignment)
+        sut.updateQuietly(assignment)
 
         // Then
-        let fetched = sut.fetch(byId: assignment.id)
+        let fetched = try sut.fetch(byId: assignment.id).get()
         XCTAssertEqual(fetched?.facilityName, "Updated Name")
     }
 
@@ -234,14 +234,15 @@ final class AssignmentServiceTests: XCTestCase {
         // Given
         let assignment = createTestAssignment(facilityName: "To Delete")
         let id = assignment.id
-        XCTAssertEqual(sut.fetchAll().count, 1)
+        XCTAssertEqual(sut.fetchAllOrEmpty().count, 1)
 
         // When
-        sut.delete(assignment)
+        sut.deleteQuietly(assignment)
 
         // Then
-        XCTAssertEqual(sut.fetchAll().count, 0)
-        XCTAssertNil(sut.fetch(byId: id))
+        XCTAssertEqual(sut.fetchAllOrEmpty().count, 0)
+        let fetched = try sut.fetch(byId: id).get()
+        XCTAssertNil(fetched)
     }
 
     // MARK: - Statistics Tests
