@@ -99,20 +99,6 @@ struct MainTabView: View {
     }
 }
 
-
-struct ExpensesPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "Coming Soon",
-                systemImage: "creditcard.fill",
-                description: Text("Expense tracking will be available in the next update.")
-            )
-            .navigationTitle("Expenses")
-        }
-    }
-}
-
 #Preview {
     MainTabView()
         .modelContainer(for: [
