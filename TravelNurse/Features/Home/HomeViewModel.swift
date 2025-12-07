@@ -324,7 +324,7 @@ final class HomeViewModel {
 
     // MARK: - Initialization
 
-    nonisolated init(serviceContainer: ServiceContainer = .shared) {
+    init(serviceContainer: ServiceContainer = .shared) {
         self.serviceContainer = serviceContainer
     }
 
@@ -507,3 +507,4 @@ extension HomeViewModel {
         return viewModel
     }
 }
+

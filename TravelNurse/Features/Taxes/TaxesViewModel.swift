@@ -221,8 +221,13 @@ final class TaxesViewModel {
 
     // MARK: - Initialization
 
-    nonisolated init(serviceContainer: ServiceContainer = .shared) {
+    nonisolated init(serviceContainer: ServiceContainer) {
         self.serviceContainer = serviceContainer
+    }
+
+    @MainActor
+    convenience init() {
+        self.init(serviceContainer: .shared)
     }
 
     // MARK: - Actions
@@ -443,3 +448,4 @@ extension TaxesViewModel {
         TaxesViewModel()
     }
 }
+
