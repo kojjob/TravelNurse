@@ -132,18 +132,21 @@ final class AssignmentViewModel {
     func addAssignment(_ assignment: Assignment) {
         guard let service = service else { return }
         service.createQuietly(assignment)
+        loadAssignments()
     }
 
     /// Update an existing assignment
     func updateAssignment(_ assignment: Assignment) {
         guard let service = service else { return }
         service.updateQuietly(assignment)
+        loadAssignments()
     }
 
     /// Delete an assignment
     func deleteAssignment(_ assignment: Assignment) {
         guard let service = service else { return }
         service.deleteQuietly(assignment)
+        loadAssignments()
     }
 
     /// Select an assignment for viewing/editing
