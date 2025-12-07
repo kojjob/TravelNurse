@@ -68,17 +68,17 @@ public final class Expense {
     }
 
     /// Formatted amount string
-    public var amountFormatted: String {
+    @MainActor public var amountFormatted: String {
         TNFormatters.currency(amount)
     }
 
     /// Formatted date string
-    public var dateFormatted: String {
+    @MainActor public var dateFormatted: String {
         TNFormatters.date(date)
     }
 
     /// Short description for lists
-    public var shortDescription: String {
+    @MainActor public var shortDescription: String {
         if let merchant = merchantName, !merchant.isEmpty {
             return merchant
         }
@@ -185,3 +185,4 @@ extension Expense {
         ]
     }
 }
+
