@@ -46,6 +46,7 @@ enum ExportFormat: String, CaseIterable, Identifiable {
         }
     }
 }
+
 /// Data model for state-by-state earnings breakdown
 struct StateBreakdown: Identifiable {
     var id: String { state.rawValue }

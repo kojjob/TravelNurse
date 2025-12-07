@@ -291,3 +291,18 @@ extension TaxHomeViewModel {
         return viewModel
     }
 }
+
+// MARK: - Preview Support
+
+extension TaxHomeViewModel {
+    /// Preview instance with sample data
+    static var preview: TaxHomeViewModel {
+        let viewModel = TaxHomeViewModel()
+        // Create a sample compliance for preview
+        let sampleCompliance = TaxHomeCompliance(taxYear: Calendar.current.component(.year, from: Date()))
+        sampleCompliance.daysAtTaxHome = 45
+        sampleCompliance.lastTaxHomeVisit = Calendar.current.date(byAdding: .day, value: -15, to: Date())
+        viewModel.compliance = sampleCompliance
+        return viewModel
+    }
+}

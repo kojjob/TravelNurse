@@ -161,7 +161,7 @@ struct AddExpenseSheet: View {
 
 // MARK: - Simple Category Picker Sheet
 
-struct SimpleCategoryPickerSheet: View {
+private struct SimpleCategoryPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedCategory: ExpenseCategory
 
