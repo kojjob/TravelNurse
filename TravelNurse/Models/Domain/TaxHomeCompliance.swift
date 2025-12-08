@@ -242,7 +242,7 @@ extension TaxHomeCompliance {
 // MARK: - Checklist Item Model
 
 /// Individual compliance checklist item
-public struct ComplianceChecklistItem: Codable, Identifiable, Hashable {
+public struct ComplianceChecklistItem: Codable, Identifiable, Hashable, Sendable {
     public let id: String
     public let title: String
     public let description: String
@@ -253,7 +253,7 @@ public struct ComplianceChecklistItem: Codable, Identifiable, Hashable {
     public var documentPath: String?
     public var lastUpdated: Date?
 
-    public init(
+    public nonisolated init(
         id: String,
         title: String,
         description: String,
@@ -271,7 +271,7 @@ public struct ComplianceChecklistItem: Codable, Identifiable, Hashable {
 }
 
 /// Categories for checklist items
-public enum ChecklistCategory: String, Codable, CaseIterable {
+public enum ChecklistCategory: String, Codable, CaseIterable, Sendable {
     case residence = "Residence"
     case presence = "Physical Presence"
     case ties = "Community Ties"
