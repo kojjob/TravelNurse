@@ -45,17 +45,6 @@ public enum ComplianceLevel: String, CaseIterable, Codable, Identifiable, Hashab
         }
     }
 
-    /// Status color for UI
-    public var color: Color {
-        switch self {
-        case .excellent: return TNColors.success
-        case .good: return TNColors.lime
-        case .atRisk: return TNColors.warning
-        case .nonCompliant: return TNColors.error
-        case .unknown: return TNColors.textTertiaryLight
-        }
-    }
-
     /// SF Symbol icon name
     public var iconName: String {
         switch self {
@@ -108,21 +97,41 @@ public enum ComplianceItemStatus: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    public var color: Color {
-        switch self {
-        case .complete: return TNColors.success
-        case .incomplete: return TNColors.error
-        case .partial: return TNColors.warning
-        case .notApplicable: return TNColors.textTertiaryLight
-        }
-    }
-
     public var iconName: String {
         switch self {
         case .complete: return "checkmark.circle.fill"
         case .incomplete: return "circle"
         case .partial: return "circle.lefthalf.filled"
         case .notApplicable: return "minus.circle.fill"
+        }
+    }
+}
+
+// MARK: - MainActor Isolated UI Properties
+
+@MainActor
+extension ComplianceLevel {
+    /// Status color for UI (MainActor isolated)
+    public var color: Color {
+        switch self {
+        case .excellent: return TNColors.success
+        case .good: return TNColors.lime
+        case .atRisk: return TNColors.warning
+        case .nonCompliant: return TNColors.error
+        case .unknown: return TNColors.textTertiaryLight
+        }
+    }
+}
+
+@MainActor
+extension ComplianceItemStatus {
+    /// Status color for UI (MainActor isolated)
+    public var color: Color {
+        switch self {
+        case .complete: return TNColors.success
+        case .incomplete: return TNColors.error
+        case .partial: return TNColors.warning
+        case .notApplicable: return TNColors.textTertiaryLight
         }
     }
 }
