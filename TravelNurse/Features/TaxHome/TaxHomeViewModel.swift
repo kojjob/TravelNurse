@@ -10,6 +10,7 @@ import SwiftData
 import SwiftUI
 
 /// ViewModel for TaxHomeView managing compliance data and checklist state
+@MainActor
 @Observable
 final class TaxHomeViewModel {
 
@@ -145,9 +146,7 @@ final class TaxHomeViewModel {
         guard let date = lastVisitDate else {
             return "Never"
         }
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
+        return Self.relativeDateFormatter.localizedString(for: date, relativeTo: Date())
     }
 
     var formattedComplianceScore: String {
@@ -185,6 +184,13 @@ final class TaxHomeViewModel {
     // MARK: - Private Properties
 
     private var modelContext: ModelContext?
+
+    /// Cached formatter to avoid recreation on every access
+    private static let relativeDateFormatter: RelativeDateTimeFormatter = {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter
+    }()
 
     // MARK: - Public Methods
 
