@@ -19,6 +19,7 @@ struct HomeView: View {
     @State private var showingReports = false
     @State private var showingDocuments = false
     @State private var showingAssignmentDetail = false
+    @State private var showingCalculator = false
 
     // Animation states
     @State private var cardsAppeared = false
@@ -83,6 +84,9 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingDocuments) {
                 DocumentVaultView()
+            }
+            .sheet(isPresented: $showingCalculator) {
+                StipendCalculatorView()
             }
         }
     }
@@ -315,21 +319,21 @@ struct HomeView: View {
                     }
 
                     QuickActionButton(
+                        title: "Calculator",
+                        icon: "equal.circle.fill",
+                        color: TNColors.warning
+                    ) {
+                        HapticManager.lightImpact()
+                        showingCalculator = true
+                    }
+
+                    QuickActionButton(
                         title: "Tax Home",
                         icon: "house.fill",
                         color: TNColors.success
                     ) {
                         HapticManager.lightImpact()
                         showingTaxHome = true
-                    }
-
-                    QuickActionButton(
-                        title: "Reports",
-                        icon: "chart.bar.fill",
-                        color: TNColors.warning
-                    ) {
-                        HapticManager.lightImpact()
-                        showingReports = true
                     }
                 }
             }
