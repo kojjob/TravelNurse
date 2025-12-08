@@ -12,6 +12,7 @@ import SwiftData
 struct TaxHomeView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel = TaxHomeViewModel()
 
     var body: some View {
@@ -39,6 +40,16 @@ struct TaxHomeView: View {
             .background(TNColors.background)
             .navigationTitle("Tax Home")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 22))
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(TNColors.textSecondary)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.showingRecordVisitSheet = true
