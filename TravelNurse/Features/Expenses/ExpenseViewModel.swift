@@ -184,21 +184,21 @@ final class ExpenseViewModel {
     /// Add a new expense
     func addExpense(_ expense: Expense) {
         guard let service = service else { return }
-        service.create(expense)
+        _ = service.create(expense)
         loadExpenses()
     }
 
     /// Update an existing expense
     func updateExpense(_ expense: Expense) {
         guard let service = service else { return }
-        service.update(expense)
+        _ = service.update(expense)
         loadExpenses()
     }
 
     /// Delete an expense
     func deleteExpense(_ expense: Expense) {
         guard let service = service else { return }
-        service.delete(expense)
+        _ = service.delete(expense)
         loadExpenses()
     }
 

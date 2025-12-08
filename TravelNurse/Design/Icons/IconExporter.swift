@@ -116,13 +116,13 @@ class IconExporter {
             let view = AppIconView(size: pixelSize, variant: variant)
 
             #if os(iOS)
-            let image = await renderToUIImage(view: view, size: pixelSize)
+            let image = renderToUIImage(view: view, size: pixelSize)
             if let pngData = image.pngData() {
                 try pngData.write(to: fileURL)
                 print("📱 Exported: \(filename)")
             }
             #elseif os(macOS)
-            let image = await renderToNSImage(view: view, size: pixelSize)
+            let image = renderToNSImage(view: view, size: pixelSize)
             if let tiffData = image.tiffRepresentation,
                let bitmap = NSBitmapImageRep(data: tiffData),
                let pngData = bitmap.representation(using: .png, properties: [:]) {
@@ -143,12 +143,12 @@ class IconExporter {
         let view = AppIconView(size: size, variant: variant)
 
         #if os(iOS)
-        let image = await renderToUIImage(view: view, size: size)
+        let image = renderToUIImage(view: view, size: size)
         if let pngData = image.pngData() {
             try pngData.write(to: fileURL)
         }
         #elseif os(macOS)
-        let image = await renderToNSImage(view: view, size: size)
+        let image = renderToNSImage(view: view, size: size)
         if let tiffData = image.tiffRepresentation,
            let bitmap = NSBitmapImageRep(data: tiffData),
            let pngData = bitmap.representation(using: .png, properties: [:]) {
