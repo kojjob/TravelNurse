@@ -50,6 +50,7 @@ public protocol NotificationServiceProtocol {
     func cancelNotification(identifier: String) async
     func cancelAllNotifications() async
     func cancelNotifications(ofType type: NotificationType) async
+    func cancelAssignmentNotifications(assignmentId: UUID) async
     func getPendingNotifications() async -> [UNNotificationRequest]
 }
 
@@ -467,6 +468,22 @@ public final class NotificationService: NotificationServiceProtocol {
 
         if !identifiersToRemove.isEmpty {
             notificationCenter.removePendingNotificationRequests(withIdentifiers: identifiersToRemove)
+        }
+    }
+
+    /// Cancel all notifications for a specific assignment
+    public func cancelAssignmentNotifications(assignmentId: UUID) async {
+        let prefix = "assignment_\(assignmentId.uuidString)"
+        let oneYearPrefix = "one_year_\(assignmentId.uuidString)"
+
+        let pending = await getPendingNotifications()
+        let identifiersToRemove = pending
+            .filter { $0.identifier.hasPrefix(prefix) || $0.identifier.hasPrefix(oneYearPrefix) }
+            .map { $0.identifier }
+
+        if !identifiersToRemove.isEmpty {
+            notificationCenter.removePendingNotificationRequests(withIdentifiers: identifiersToRemove)
+            notificationCenter.removeDeliveredNotifications(withIdentifiers: identifiersToRemove)
         }
     }
 

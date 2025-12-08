@@ -104,13 +104,48 @@ final class ReportsViewModel {
         formatCurrency(netIncome)
     }
 
-    /// Estimated federal tax liability (rough estimate at 22% bracket)
+    /// Cached tax calculation result for display and export
+    private var cachedTaxResult: TaxCalculationResult?
+
+    /// Estimated federal + state + self-employment tax liability using real tax brackets
     var estimatedTax: Decimal {
-        // Simplified estimate: 22% federal bracket for travel nurse income
-        // This is a rough estimate - actual tax will depend on many factors
+        // Use TaxCalculationService for accurate progressive bracket calculations
+        if let taxService = ServiceContainer.shared.taxCalculationService {
+            let taxHomeState = getUserTaxHomeState()
+            let result = taxService.calculateTotalTax(
+                grossIncome: totalIncome,
+                deductions: totalExpenses + totalMileageDeduction,
+                state: taxHomeState,
+                isSelfEmployed: true // Travel nurses typically file as self-employed
+            )
+            cachedTaxResult = result
+            return result.totalTax
+        }
+
+        // Fallback to simplified calculation if service unavailable
         let taxableIncome = netIncome
         guard taxableIncome > 0 else { return 0 }
         return taxableIncome * Decimal(0.22)
+    }
+
+    /// Effective tax rate based on calculated taxes
+    var effectiveTaxRate: Double {
+        guard let result = cachedTaxResult else {
+            return totalIncome > 0 ? 0.22 : 0
+        }
+        return result.effectiveTaxRate
+    }
+
+    /// Get user's tax home state, defaulting to Texas (no state tax) if not set
+    private func getUserTaxHomeState() -> USState {
+        // Try to get from compliance service (tax home)
+        if let complianceService = ServiceContainer.shared.complianceService,
+           let taxHome = complianceService.fetchCurrentTaxHome(),
+           let state = taxHome.homeAddress?.state {
+            return state
+        }
+        // Default to Texas (no state income tax) if no tax home is set
+        return .texas
     }
 
     var formattedEstimatedTax: String {
@@ -235,8 +270,17 @@ final class ReportsViewModel {
         csv += "Mileage Deduction,\(totalMileageDeduction)\n"
         csv += "Total Miles,\(totalMiles)\n"
         csv += "Total Deductions,\(totalExpenses + totalMileageDeduction)\n"
-        csv += "Net Income,\(netIncome)\n"
-        csv += "Estimated Tax (22%),\(estimatedTax)\n\n"
+        csv += "Net Income,\(netIncome)\n\n"
+
+        // Tax Breakdown Section
+        csv += "TAX BREAKDOWN\n"
+        csv += "Tax Type,Amount\n"
+        csv += "Federal Income Tax,\(cachedTaxResult?.federalTax ?? 0)\n"
+        csv += "State Income Tax,\(cachedTaxResult?.stateTax ?? 0)\n"
+        csv += "Self-Employment Tax,\(cachedTaxResult?.selfEmploymentTax ?? 0)\n"
+        csv += "Total Estimated Tax,\(estimatedTax)\n"
+        csv += "Effective Tax Rate,\(String(format: "%.1f%%", effectiveTaxRate * 100))\n"
+        csv += "Marginal Tax Rate,\(cachedTaxResult?.marginalTaxRate ?? 0)\n\n"
 
         // State Breakdown Section
         csv += "STATE BREAKDOWN\n"
@@ -342,7 +386,11 @@ final class ReportsViewModel {
                 "totalDeductions": "\(totalExpenses + totalMileageDeduction)",
                 "netIncome": "\(netIncome)",
                 "estimatedTax": "\(estimatedTax)",
-                "effectiveTaxRate": "22%"
+                "federalTax": "\(cachedTaxResult?.federalTax ?? 0)",
+                "stateTax": "\(cachedTaxResult?.stateTax ?? 0)",
+                "selfEmploymentTax": "\(cachedTaxResult?.selfEmploymentTax ?? 0)",
+                "effectiveTaxRate": String(format: "%.1f%%", effectiveTaxRate * 100),
+                "marginalTaxRate": "\(cachedTaxResult?.marginalTaxRate ?? 0)"
             ],
             "stateBreakdowns": stateBreakdowns.map { breakdown in
                 [
