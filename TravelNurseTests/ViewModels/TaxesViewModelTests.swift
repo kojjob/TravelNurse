@@ -350,4 +350,94 @@ final class TaxesViewModelTests: XCTestCase {
         // Then
         XCTAssertFalse(tax.formattedDueDate.isEmpty)
     }
+
+    // MARK: - Chart Segments Tests
+
+    @MainActor
+    func test_chartSegments_initiallyEmpty() {
+        // Initial state with no tax breakdown
+        XCTAssertTrue(sut.chartSegments.isEmpty)
+    }
+
+    @MainActor
+    func test_chartSegments_matchesTaxBreakdownCount() {
+        // The number of chart segments should equal the number of tax breakdown items
+        XCTAssertEqual(sut.chartSegments.count, sut.taxBreakdown.count)
+    }
+
+    @MainActor
+    func test_formattedEffectiveTaxRate_initiallyZero() {
+        // With no income, effective rate should be 0%
+        let rate = sut.formattedEffectiveTaxRate
+        XCTAssertEqual(rate, "0%")
+    }
+
+    @MainActor
+    func test_formattedEffectiveTaxRate_containsPercentSign() {
+        let rate = sut.formattedEffectiveTaxRate
+        XCTAssertTrue(rate.contains("%"))
+    }
+}
+
+// MARK: - ChartSegment Tests
+
+final class ChartSegmentTests: XCTestCase {
+
+    func test_chartSegment_formattedValue_containsDollarSign() {
+        // Given
+        let segment = ChartSegment(
+            label: "Federal",
+            value: 10000,
+            color: TNColors.primary,
+            percentage: 0.5
+        )
+
+        // Then
+        XCTAssertTrue(segment.formattedValue.contains("$"))
+    }
+
+    func test_chartSegment_formattedPercentage_containsPercentSign() {
+        // Given
+        let segment = ChartSegment(
+            label: "Federal",
+            value: 10000,
+            color: TNColors.primary,
+            percentage: 0.5
+        )
+
+        // Then
+        XCTAssertTrue(segment.formattedPercentage.contains("%"))
+    }
+
+    func test_chartSegment_formattedPercentage_displaysCorrectValue() {
+        // Given
+        let segment = ChartSegment(
+            label: "Federal",
+            value: 10000,
+            color: TNColors.primary,
+            percentage: 0.45 // 45%
+        )
+
+        // Then
+        XCTAssertEqual(segment.formattedPercentage, "45.0%")
+    }
+
+    func test_chartSegment_uniqueId() {
+        // Given
+        let segment1 = ChartSegment(
+            label: "Federal",
+            value: 10000,
+            color: TNColors.primary,
+            percentage: 0.5
+        )
+        let segment2 = ChartSegment(
+            label: "Federal",
+            value: 10000,
+            color: TNColors.primary,
+            percentage: 0.5
+        )
+
+        // Then - Each segment should have a unique ID
+        XCTAssertNotEqual(segment1.id, segment2.id)
+    }
 }

@@ -13,6 +13,7 @@ struct TaxesView: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = TaxesViewModel()
+    @State private var showingQuarterlyPayments = false
 
     var body: some View {
         NavigationStack {
@@ -35,6 +36,18 @@ struct TaxesView: View {
                 Section {
                     ForEach(viewModel.quarterlyTaxes) { quarter in
                         QuarterlyPaymentRow(quarter: quarter)
+                    }
+
+                    Button {
+                        showingQuarterlyPayments = true
+                    } label: {
+                        HStack {
+                            Label("Manage Payments", systemImage: "calendar.badge.clock")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(TNColors.textSecondary)
+                        }
                     }
                 } header: {
                     Text("Quarterly Payments")
@@ -99,6 +112,9 @@ struct TaxesView: View {
                 Button("OK") { viewModel.dismissError() }
             } message: {
                 Text(viewModel.errorMessage ?? "An error occurred")
+            }
+            .sheet(isPresented: $showingQuarterlyPayments) {
+                QuarterlyPaymentsView()
             }
         }
     }
@@ -284,43 +300,36 @@ struct TaxesView: View {
     // MARK: - Tax Breakdown Section
 
     private var taxBreakdownSection: some View {
-        VStack(spacing: 16) {
-            // Visual Bar
-            GeometryReader { geometry in
-                HStack(spacing: 0) {
-                    ForEach(viewModel.taxBreakdown) { item in
-                        Rectangle()
-                            .fill(item.color)
-                            .frame(width: geometry.size.width * item.percentage)
-                    }
+        Group {
+            if viewModel.chartSegments.isEmpty {
+                // Empty state
+                VStack(spacing: TNSpacing.md) {
+                    Image(systemName: "chart.pie")
+                        .font(.system(size: 40))
+                        .foregroundStyle(TNColors.textSecondary.opacity(0.5))
+
+                    Text("No tax data yet")
+                        .font(TNTypography.bodyMedium)
+                        .foregroundStyle(TNColors.textSecondary)
+
+                    Text("Add assignments to see your tax breakdown")
+                        .font(TNTypography.caption)
+                        .foregroundStyle(TNColors.textSecondary.opacity(0.7))
+                        .multilineTextAlignment(.center)
                 }
-            }
-            .frame(height: 16)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            
-            // Legend
-            VStack(spacing: 12) {
-                ForEach(viewModel.taxBreakdown) { item in
-                    HStack {
-                        Circle()
-                            .fill(item.color)
-                            .frame(width: 8, height: 8)
-                        
-                        Text(item.category)
-                            .font(.subheadline)
-                            .foregroundColor(TNColors.textPrimary)
-                        
-                        Spacer()
-                        
-                        Text(item.formattedAmount)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(TNColors.textPrimary)
-                    }
-                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, TNSpacing.xl)
+            } else {
+                // Donut chart visualization
+                TaxBreakdownChart(
+                    segments: viewModel.chartSegments,
+                    totalAmount: viewModel.totalEstimatedTax,
+                    centerTitle: "Total Tax",
+                    centerSubtitle: viewModel.formattedEffectiveTaxRate + " effective"
+                )
+                .padding(.vertical, TNSpacing.sm)
             }
         }
-        .padding(.vertical, 4)
     }
 
     // MARK: - Income Summary Section

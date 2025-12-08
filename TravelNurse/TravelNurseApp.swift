@@ -21,7 +21,9 @@ struct TravelNurseApp: App {
             Income.self,
             MileageTrip.self,
             TaxHomeCompliance.self,
-            Document.self
+            Document.self,
+            QuarterlyPayment.self,
+            RecurringExpense.self
             // Note: Address, PayBreakdown, Receipt are automatically
             // included through @Relationship declarations
         ])
