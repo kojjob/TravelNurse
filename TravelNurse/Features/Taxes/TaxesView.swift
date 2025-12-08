@@ -13,6 +13,7 @@ struct TaxesView: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = TaxesViewModel()
+    @State private var showingQuarterlyPayments = false
 
     var body: some View {
         NavigationStack {
@@ -35,6 +36,18 @@ struct TaxesView: View {
                 Section {
                     ForEach(viewModel.quarterlyTaxes) { quarter in
                         QuarterlyPaymentRow(quarter: quarter)
+                    }
+
+                    Button {
+                        showingQuarterlyPayments = true
+                    } label: {
+                        HStack {
+                            Label("Manage Payments", systemImage: "calendar.badge.clock")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(TNColors.textSecondary)
+                        }
                     }
                 } header: {
                     Text("Quarterly Payments")
@@ -99,6 +112,9 @@ struct TaxesView: View {
                 Button("OK") { viewModel.dismissError() }
             } message: {
                 Text(viewModel.errorMessage ?? "An error occurred")
+            }
+            .sheet(isPresented: $showingQuarterlyPayments) {
+                QuarterlyPaymentsView()
             }
         }
     }
