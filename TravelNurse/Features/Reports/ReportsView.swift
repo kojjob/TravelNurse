@@ -8,6 +8,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 /// Main reports view showing annual tax summaries and state breakdowns
 struct ReportsView: View {
@@ -21,6 +22,30 @@ struct ReportsView: View {
     private var availableYears: [Int] {
         let currentYear = Calendar.current.component(.year, from: Date())
         return Array((currentYear - 4)...currentYear).reversed()
+    }
+
+    /// Share a file via the system share sheet
+    @MainActor
+    private func shareFile(url: URL) async {
+        #if os(iOS)
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
+            return
+        }
+
+        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+
+        // For iPad - present as popover
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = rootViewController.view
+            popover.sourceRect = CGRect(x: rootViewController.view.bounds.midX,
+                                        y: rootViewController.view.bounds.midY,
+                                        width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+
+        rootViewController.present(activityVC, animated: true)
+        #endif
     }
 
     var body: some View {
@@ -355,21 +380,39 @@ struct ReportsView: View {
                     title: "CSV",
                     icon: "tablecells.fill",
                     color: TNColors.primary,
-                    action: { viewModel.exportToCSV(year: selectedYear) }
+                    action: {
+                        Task {
+                            if let url = await viewModel.exportToCSV(year: selectedYear) {
+                                await shareFile(url: url)
+                            }
+                        }
+                    }
                 )
 
                 BoldActionButton(
                     title: "PDF",
                     icon: "doc.richtext.fill",
                     color: TNColors.accent,
-                    action: { viewModel.generatePDFReport(year: selectedYear) }
+                    action: {
+                        Task {
+                            if let url = await viewModel.generatePDFReport(year: selectedYear) {
+                                await shareFile(url: url)
+                            }
+                        }
+                    }
                 )
 
                 BoldActionButton(
                     title: "Share",
                     icon: "square.and.arrow.up.fill",
                     color: TNColors.success,
-                    action: { viewModel.shareReport(year: selectedYear) }
+                    action: {
+                        Task {
+                            if let url = await viewModel.shareReport(year: selectedYear) {
+                                await shareFile(url: url)
+                            }
+                        }
+                    }
                 )
             }
         }

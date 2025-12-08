@@ -140,6 +140,11 @@ final class TaxesViewModel {
     /// YTD deductions
     private(set) var ytdDeductions: Decimal = 0
 
+    /// Calculated tax components from TaxCalculationService
+    private(set) var calculatedFederalTax: Decimal = 0
+    private(set) var calculatedStateTax: Decimal = 0
+    private(set) var calculatedSelfEmploymentTax: Decimal = 0
+
     /// Loading state
     private(set) var isLoading = false
 
@@ -331,20 +336,47 @@ final class TaxesViewModel {
     }
 
     private func calculateTaxEstimates() {
-        // Simplified tax calculation
-        // In production, this would use proper tax brackets
+        // Use TaxCalculationService for accurate progressive bracket calculations
+        guard let taxService = serviceContainer.taxCalculationService else {
+            // Fallback to simplified calculation if service unavailable
+            let federalRate: Decimal = 0.22
+            let federalTax = ytdTaxableIncome * federalRate
+            let selfEmploymentRate: Decimal = 0.153
+            let selfEmploymentTax = ytdTaxableIncome * selfEmploymentRate
+            totalEstimatedTax = federalTax + selfEmploymentTax
+            return
+        }
 
-        // Federal income tax estimate (using simplified brackets)
-        let federalRate: Decimal = 0.22 // 22% bracket for typical travel nurse income
-        let federalTax = ytdTaxableIncome * federalRate
+        // Get user's tax home state for state tax calculation
+        let taxHomeState = getUserTaxHomeState()
 
-        // Self-employment tax (Social Security + Medicare)
-        // 15.3% on net self-employment income
-        let selfEmploymentRate: Decimal = 0.153
-        let selfEmploymentTax = ytdTaxableIncome * selfEmploymentRate
+        // Calculate comprehensive tax using real progressive brackets
+        let taxResult = taxService.calculateTotalTax(
+            grossIncome: ytdTaxableIncome + ytdDeductions, // Pre-deduction income
+            deductions: ytdDeductions,
+            state: taxHomeState,
+            isSelfEmployed: true // Travel nurses typically file as self-employed for stipends
+        )
+
+        // Store component values for breakdown
+        calculatedFederalTax = taxResult.federalTax
+        calculatedStateTax = taxResult.stateTax
+        calculatedSelfEmploymentTax = taxResult.selfEmploymentTax
 
         // Total estimated annual tax
-        totalEstimatedTax = federalTax + selfEmploymentTax
+        totalEstimatedTax = taxResult.totalTax
+    }
+
+    /// Get user's tax home state, defaulting to Texas (no state tax) if not set
+    private func getUserTaxHomeState() -> USState {
+        // Try to get from compliance service (tax home)
+        if let complianceService = serviceContainer.complianceService,
+           let taxHome = complianceService.fetchCurrentTaxHome(),
+           let state = taxHome.homeAddress?.state {
+            return state
+        }
+        // Default to Texas (no state income tax) if no tax home is set
+        return .texas
     }
 
     private func generateQuarterlyTaxes() {
@@ -390,19 +422,21 @@ final class TaxesViewModel {
             return
         }
 
-        // Calculate component amounts
-        let federalRate: Decimal = 0.22
-        let federalTax = ytdTaxableIncome * federalRate
+        // Use calculated values from TaxCalculationService
+        let federalTax = calculatedFederalTax
+        let stateTax = calculatedStateTax
+        let selfEmploymentTax = calculatedSelfEmploymentTax
 
-        let socialSecurityRate: Decimal = 0.124
-        let socialSecurityTax = ytdTaxableIncome * socialSecurityRate
+        // Break down self-employment tax into Social Security (12.4%) and Medicare (2.9%)
+        // Self-employment tax is 15.3% total = 12.4% SS + 2.9% Medicare
+        let ssToPortion: Decimal = 0.124 / 0.153
+        let medicarePortion: Decimal = 0.029 / 0.153
+        let socialSecurityTax = selfEmploymentTax * ssToPortion
+        let medicareTax = selfEmploymentTax * medicarePortion
 
-        let medicareRate: Decimal = 0.029
-        let medicareTax = ytdTaxableIncome * medicareRate
+        let total = federalTax + stateTax + selfEmploymentTax
 
-        let total = federalTax + socialSecurityTax + medicareTax
-
-        taxBreakdown = [
+        var breakdown: [TaxBreakdown] = [
             TaxBreakdown(
                 category: "Federal Income Tax",
                 amount: federalTax,
@@ -422,6 +456,18 @@ final class TaxesViewModel {
                 color: TNColors.secondary
             )
         ]
+
+        // Add state tax if applicable (non-zero)
+        if stateTax > 0 {
+            breakdown.append(TaxBreakdown(
+                category: "State Income Tax",
+                amount: stateTax,
+                percentage: total > 0 ? (stateTax as NSDecimalNumber).doubleValue / (total as NSDecimalNumber).doubleValue : 0,
+                color: TNColors.warning
+            ))
+        }
+
+        taxBreakdown = breakdown
     }
 
     // MARK: - Formatting Helpers

@@ -133,6 +133,45 @@ final class AssignmentViewModel {
         guard let service = service else { return }
         service.createQuietly(assignment)
         loadAssignments()
+
+        // Schedule notifications for the new assignment
+        scheduleAssignmentNotifications(for: assignment)
+    }
+
+    /// Schedule notifications for an assignment (start reminder, end reminder, one-year rule warning)
+    private func scheduleAssignmentNotifications(for assignment: Assignment) {
+        Task {
+            let notificationService = NotificationService.shared
+
+            // Check if notifications are authorized
+            let status = await notificationService.checkAuthorizationStatus()
+            guard status == .authorized else { return }
+
+            // Schedule start and end reminders
+            await notificationService.scheduleAssignmentReminders(
+                assignmentId: assignment.id,
+                facilityName: assignment.facilityName,
+                startDate: assignment.startDate,
+                endDate: assignment.endDate
+            )
+
+            // Check for one-year rule warning
+            // Calculate days that would be worked at this location
+            let daysInAssignment = Calendar.current.dateComponents(
+                [.day],
+                from: assignment.startDate,
+                to: assignment.endDate
+            ).day ?? 0
+
+            // If assignment is long enough to approach the one-year limit, schedule warning
+            if daysInAssignment > 300 {
+                await notificationService.scheduleOneYearRuleWarning(
+                    assignmentId: assignment.id,
+                    facilityName: assignment.facilityName,
+                    daysWorked: daysInAssignment
+                )
+            }
+        }
     }
 
     /// Update an existing assignment
@@ -140,11 +179,29 @@ final class AssignmentViewModel {
         guard let service = service else { return }
         service.updateQuietly(assignment)
         loadAssignments()
+
+        // Reschedule notifications for the updated assignment
+        Task {
+            let notificationService = NotificationService.shared
+
+            // Cancel existing notifications for this assignment
+            await notificationService.cancelAssignmentNotifications(assignmentId: assignment.id)
+
+            // Schedule new notifications with updated dates
+            scheduleAssignmentNotifications(for: assignment)
+        }
     }
 
     /// Delete an assignment
     func deleteAssignment(_ assignment: Assignment) {
         guard let service = service else { return }
+
+        // Cancel notifications before deleting
+        let assignmentId = assignment.id
+        Task {
+            await NotificationService.shared.cancelAssignmentNotifications(assignmentId: assignmentId)
+        }
+
         service.deleteQuietly(assignment)
         loadAssignments()
     }

@@ -104,13 +104,48 @@ final class ReportsViewModel {
         formatCurrency(netIncome)
     }
 
-    /// Estimated federal tax liability (rough estimate at 22% bracket)
+    /// Cached tax calculation result for display and export
+    private var cachedTaxResult: TaxCalculationResult?
+
+    /// Estimated federal + state + self-employment tax liability using real tax brackets
     var estimatedTax: Decimal {
-        // Simplified estimate: 22% federal bracket for travel nurse income
-        // This is a rough estimate - actual tax will depend on many factors
+        // Use TaxCalculationService for accurate progressive bracket calculations
+        if let taxService = ServiceContainer.shared.taxCalculationService {
+            let taxHomeState = getUserTaxHomeState()
+            let result = taxService.calculateTotalTax(
+                grossIncome: totalIncome,
+                deductions: totalExpenses + totalMileageDeduction,
+                state: taxHomeState,
+                isSelfEmployed: true // Travel nurses typically file as self-employed
+            )
+            cachedTaxResult = result
+            return result.totalTax
+        }
+
+        // Fallback to simplified calculation if service unavailable
         let taxableIncome = netIncome
         guard taxableIncome > 0 else { return 0 }
         return taxableIncome * Decimal(0.22)
+    }
+
+    /// Effective tax rate based on calculated taxes
+    var effectiveTaxRate: Double {
+        guard let result = cachedTaxResult else {
+            return totalIncome > 0 ? 0.22 : 0
+        }
+        return result.effectiveTaxRate
+    }
+
+    /// Get user's tax home state, defaulting to Texas (no state tax) if not set
+    private func getUserTaxHomeState() -> USState {
+        // Try to get from compliance service (tax home)
+        if let complianceService = ServiceContainer.shared.complianceService,
+           let taxHome = complianceService.fetchCurrentTaxHome(),
+           let state = taxHome.homeAddress?.state {
+            return state
+        }
+        // Default to Texas (no state income tax) if no tax home is set
+        return .texas
     }
 
     var formattedEstimatedTax: String {
@@ -149,19 +184,37 @@ final class ReportsViewModel {
         isLoading = false
     }
 
-    func exportToCSV(year: Int) {
-        // TODO: Implement CSV export
-        print("Exporting to CSV for year: \(year)")
+    /// Export data to CSV format
+    /// - Parameter year: The tax year to export
+    /// - Returns: URL to the exported CSV file, or nil if export failed
+    func exportToCSV(year: Int) async -> URL? {
+        loadData(for: year)
+        return await exportReport(format: .csv)
     }
 
-    func generatePDFReport(year: Int) {
-        // TODO: Implement PDF generation
-        print("Generating PDF report for year: \(year)")
+    /// Generate PDF report
+    /// - Parameter year: The tax year to generate report for
+    /// - Returns: URL to the generated PDF file, or nil if generation failed
+    func generatePDFReport(year: Int) async -> URL? {
+        loadData(for: year)
+        return await exportReport(format: .pdf)
     }
 
-    func shareReport(year: Int) {
-        // TODO: Implement share functionality
-        print("Sharing report for year: \(year)")
+    /// Export data to JSON format for backup/integration
+    /// - Parameter year: The tax year to export
+    /// - Returns: URL to the exported JSON file, or nil if export failed
+    func exportToJSON(year: Int) async -> URL? {
+        loadData(for: year)
+        return await exportReport(format: .json)
+    }
+
+    /// Share report via system share sheet
+    /// - Parameter year: The tax year to share
+    /// - Returns: URL to share, or nil if preparation failed
+    func shareReport(year: Int) async -> URL? {
+        loadData(for: year)
+        // Default to PDF for sharing as it's most universally viewable
+        return await exportReport(format: .pdf)
     }
 
     /// Export report in the specified format
@@ -206,16 +259,62 @@ final class ReportsViewModel {
     // MARK: - Export Content Generation
 
     private func generateCSVContent() -> String {
-        var csv = "Category,Amount\n"
+        var csv = "TravelNurse Tax Report - \(selectedYear)\n"
+        csv += "Generated: \(ISO8601DateFormatter().string(from: Date()))\n\n"
+
+        // Summary Section
+        csv += "SUMMARY\n"
+        csv += "Category,Amount\n"
         csv += "Total Income,\(totalIncome)\n"
         csv += "Total Expenses,\(totalExpenses)\n"
         csv += "Mileage Deduction,\(totalMileageDeduction)\n"
         csv += "Total Miles,\(totalMiles)\n"
-        csv += "Net Income,\(netIncome)\n"
-        csv += "\nState,Earnings,Weeks Worked,Has State Tax\n"
+        csv += "Total Deductions,\(totalExpenses + totalMileageDeduction)\n"
+        csv += "Net Income,\(netIncome)\n\n"
+
+        // Tax Breakdown Section
+        csv += "TAX BREAKDOWN\n"
+        csv += "Tax Type,Amount\n"
+        csv += "Federal Income Tax,\(cachedTaxResult?.federalTax ?? 0)\n"
+        csv += "State Income Tax,\(cachedTaxResult?.stateTax ?? 0)\n"
+        csv += "Self-Employment Tax,\(cachedTaxResult?.selfEmploymentTax ?? 0)\n"
+        csv += "Total Estimated Tax,\(estimatedTax)\n"
+        csv += "Effective Tax Rate,\(String(format: "%.1f%%", effectiveTaxRate * 100))\n"
+        csv += "Marginal Tax Rate,\(cachedTaxResult?.marginalTaxRate ?? 0)\n\n"
+
+        // State Breakdown Section
+        csv += "STATE BREAKDOWN\n"
+        csv += "State,Earnings,Weeks Worked,Has State Tax\n"
         for breakdown in stateBreakdowns {
             csv += "\(breakdown.state.rawValue),\(breakdown.earnings),\(breakdown.weeksWorked),\(breakdown.hasStateTax)\n"
         }
+
+        // Expense Details Section
+        csv += "\nEXPENSE DETAILS\n"
+        csv += "Date,Category,Amount,Deductible,Notes\n"
+        let expenses = expenseService?.fetchAllOrEmpty() ?? []
+        let yearStart = Calendar.current.date(from: DateComponents(year: selectedYear, month: 1, day: 1))!
+        let yearEnd = Calendar.current.date(from: DateComponents(year: selectedYear, month: 12, day: 31))!
+        let filteredExpenses = expenses.filter { $0.date >= yearStart && $0.date <= yearEnd }
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+
+        for expense in filteredExpenses.sorted(by: { $0.date < $1.date }) {
+            let notes = expense.notes?.replacingOccurrences(of: ",", with: ";") ?? ""
+            csv += "\(dateFormatter.string(from: expense.date)),\(expense.category.displayName),\(expense.amount),\(expense.isDeductible),\"\(notes)\"\n"
+        }
+
+        // Mileage Details Section
+        csv += "\nMILEAGE DETAILS\n"
+        csv += "Date,Distance (miles),Trip Type,Deduction Amount\n"
+        let trips = mileageService?.fetchAllOrEmpty() ?? []
+        let filteredTrips = trips.filter { $0.startTime >= yearStart && $0.startTime <= yearEnd }
+
+        for trip in filteredTrips.sorted(by: { $0.startTime < $1.startTime }) {
+            csv += "\(dateFormatter.string(from: trip.startTime)),\(String(format: "%.1f", trip.distanceMiles)),\(trip.tripType.rawValue),\(trip.deductionAmount)\n"
+        }
+
         return csv
     }
 
@@ -238,24 +337,75 @@ final class ReportsViewModel {
     }
 
     private func generateJSONContent() -> String {
+        let dateFormatter = ISO8601DateFormatter()
+        let yearStart = Calendar.current.date(from: DateComponents(year: selectedYear, month: 1, day: 1))!
+        let yearEnd = Calendar.current.date(from: DateComponents(year: selectedYear, month: 12, day: 31))!
+
+        // Get expense details
+        let expenses = expenseService?.fetchAllOrEmpty() ?? []
+        let filteredExpenses = expenses.filter { $0.date >= yearStart && $0.date <= yearEnd }
+        let expenseData: [[String: Any]] = filteredExpenses.map { expense in
+            [
+                "id": expense.id.uuidString,
+                "date": dateFormatter.string(from: expense.date),
+                "category": expense.category.rawValue,
+                "categoryDisplayName": expense.category.displayName,
+                "amount": "\(expense.amount)",
+                "isDeductible": expense.isDeductible,
+                "notes": expense.notes ?? ""
+            ]
+        }
+
+        // Get mileage details
+        let trips = mileageService?.fetchAllOrEmpty() ?? []
+        let filteredTrips = trips.filter { $0.startTime >= yearStart && $0.startTime <= yearEnd }
+        let mileageData: [[String: Any]] = filteredTrips.map { trip in
+            [
+                "id": trip.id.uuidString,
+                "date": dateFormatter.string(from: trip.startTime),
+                "distanceMiles": trip.distanceMiles,
+                "tripType": trip.tripType.rawValue,
+                "deductionAmount": "\(trip.deductionAmount)",
+                "startLocation": trip.startLocation ?? "",
+                "endLocation": trip.endLocation ?? ""
+            ]
+        }
+
         let data: [String: Any] = [
-            "year": selectedYear,
-            "totalIncome": "\(totalIncome)",
-            "totalExpenses": "\(totalExpenses)",
-            "mileageDeduction": "\(totalMileageDeduction)",
-            "totalMiles": totalMiles,
-            "netIncome": "\(netIncome)",
+            "exportInfo": [
+                "appName": "TravelNurse",
+                "exportDate": dateFormatter.string(from: Date()),
+                "version": "1.0"
+            ],
+            "taxYear": selectedYear,
+            "summary": [
+                "totalIncome": "\(totalIncome)",
+                "totalExpenses": "\(totalExpenses)",
+                "mileageDeduction": "\(totalMileageDeduction)",
+                "totalMiles": totalMiles,
+                "totalDeductions": "\(totalExpenses + totalMileageDeduction)",
+                "netIncome": "\(netIncome)",
+                "estimatedTax": "\(estimatedTax)",
+                "federalTax": "\(cachedTaxResult?.federalTax ?? 0)",
+                "stateTax": "\(cachedTaxResult?.stateTax ?? 0)",
+                "selfEmploymentTax": "\(cachedTaxResult?.selfEmploymentTax ?? 0)",
+                "effectiveTaxRate": String(format: "%.1f%%", effectiveTaxRate * 100),
+                "marginalTaxRate": "\(cachedTaxResult?.marginalTaxRate ?? 0)"
+            ],
             "stateBreakdowns": stateBreakdowns.map { breakdown in
                 [
                     "state": breakdown.state.rawValue,
+                    "stateName": breakdown.state.fullName,
                     "earnings": "\(breakdown.earnings)",
                     "weeksWorked": breakdown.weeksWorked,
                     "hasStateTax": breakdown.hasStateTax
                 ]
-            }
+            },
+            "expenses": expenseData,
+            "mileageTrips": mileageData
         ]
 
-        if let jsonData = try? JSONSerialization.data(withJSONObject: data, options: .prettyPrinted),
+        if let jsonData = try? JSONSerialization.data(withJSONObject: data, options: [.prettyPrinted, .sortedKeys]),
            let jsonString = String(data: jsonData, encoding: .utf8) {
             return jsonString
         }

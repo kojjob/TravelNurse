@@ -331,10 +331,40 @@ final class SettingsViewModel {
         // Load persisted user preferences from UserDefaults
         loadPersistedSettings()
 
+        // Initialize notifications based on saved preferences
+        await initializeNotifications()
+
         // Small delay for UI feedback
         try? await Task.sleep(for: .milliseconds(100))
 
         isLoading = false
+    }
+
+    /// Initialize notifications based on current preferences
+    private func initializeNotifications() async {
+        guard notificationPreferences.pushEnabled else { return }
+
+        let notificationService = NotificationService.shared
+
+        // Check if we have authorization
+        let status = await notificationService.checkAuthorizationStatus()
+        guard status == .authorized else {
+            // If not authorized, disable push in preferences
+            notificationPreferences.pushEnabled = false
+            saveNotificationPreferences()
+            return
+        }
+
+        // Schedule notifications based on preferences
+        let year = Calendar.current.component(.year, from: Date())
+
+        if notificationPreferences.taxDeadlineReminders {
+            await notificationService.scheduleTaxDeadlineReminders(for: year)
+        }
+
+        if notificationPreferences.expenseReminders {
+            await notificationService.scheduleWeeklyExpenseReminder()
+        }
     }
 
     /// Refresh data
@@ -358,6 +388,55 @@ final class SettingsViewModel {
     func toggleNotification(_ keyPath: WritableKeyPath<NotificationPreferences, Bool>) {
         notificationPreferences[keyPath: keyPath].toggle()
         saveNotificationPreferences()
+
+        // Handle notification scheduling based on which toggle changed
+        Task {
+            await updateNotificationSchedule(for: keyPath)
+        }
+    }
+
+    /// Update notification schedule based on preference change
+    private func updateNotificationSchedule(for keyPath: WritableKeyPath<NotificationPreferences, Bool>) async {
+        let notificationService = NotificationService.shared
+
+        // If push notifications were just enabled, request authorization
+        if keyPath == \NotificationPreferences.pushEnabled {
+            if notificationPreferences.pushEnabled {
+                let granted = await notificationService.requestAuthorization()
+                if !granted {
+                    // Revert the toggle if permission wasn't granted
+                    notificationPreferences.pushEnabled = false
+                    saveNotificationPreferences()
+                }
+            } else {
+                // Cancel all notifications if push is disabled
+                await notificationService.cancelAllNotifications()
+            }
+            return
+        }
+
+        // Only proceed if push is enabled
+        guard notificationPreferences.pushEnabled else { return }
+
+        switch keyPath {
+        case \NotificationPreferences.taxDeadlineReminders:
+            if notificationPreferences.taxDeadlineReminders {
+                let year = Calendar.current.component(.year, from: Date())
+                await notificationService.scheduleTaxDeadlineReminders(for: year)
+            } else {
+                await notificationService.cancelNotifications(ofType: .taxDeadline)
+            }
+
+        case \NotificationPreferences.expenseReminders:
+            if notificationPreferences.expenseReminders {
+                await notificationService.scheduleWeeklyExpenseReminder()
+            } else {
+                await notificationService.cancelNotifications(ofType: .expenseReminder)
+            }
+
+        default:
+            break
+        }
     }
 
     /// Toggle privacy setting
