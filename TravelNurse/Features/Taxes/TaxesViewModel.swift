@@ -224,6 +224,25 @@ final class TaxesViewModel {
         }
     }
 
+    /// Convert tax breakdown to chart segments for visualization
+    var chartSegments: [ChartSegment] {
+        taxBreakdown.map { breakdown in
+            ChartSegment(
+                label: breakdown.category,
+                value: breakdown.amount,
+                color: breakdown.color,
+                percentage: breakdown.percentage
+            )
+        }
+    }
+
+    /// Effective tax rate as a formatted string
+    var formattedEffectiveTaxRate: String {
+        guard ytdTaxableIncome > 0 else { return "0%" }
+        let rate = (totalEstimatedTax as NSDecimalNumber).doubleValue / (ytdTaxableIncome as NSDecimalNumber).doubleValue * 100
+        return String(format: "%.1f%%", rate)
+    }
+
     // MARK: - Initialization
 
     nonisolated init(serviceContainer: ServiceContainer) {
