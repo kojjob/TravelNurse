@@ -56,8 +56,8 @@ public final class TaxHomeCompliance {
     /// Checklist items decoded from JSON
     public var checklistItems: [ComplianceChecklistItem] {
         get {
-            guard let data = checklistItemsData else { return ComplianceChecklistItem.defaults }
-            return (try? JSONDecoder().decode([ComplianceChecklistItem].self, from: data)) ?? ComplianceChecklistItem.defaults
+            guard let data = checklistItemsData else { return defaultTaxHomeChecklistItems }
+            return (try? JSONDecoder().decode([ComplianceChecklistItem].self, from: data)) ?? defaultTaxHomeChecklistItems
         }
         set {
             checklistItemsData = try? JSONEncoder().encode(newValue)
@@ -114,7 +114,7 @@ public final class TaxHomeCompliance {
         self.createdAt = Date()
         self.updatedAt = Date()
         // Initialize with default checklist
-        self.checklistItems = ComplianceChecklistItem.defaults
+        self.checklistItems = defaultTaxHomeChecklistItems
     }
 }
 
@@ -163,58 +163,4 @@ extension TaxHomeCompliance {
         lastTaxHomeVisit = date
         recalculateScore()
     }
-}
-
-
-// MARK: - Checklist Item Model
-
-/// Individual compliance checklist item
-public struct ComplianceChecklistItem: Codable, Identifiable, Hashable, Sendable {
-    public let id: String
-    public let title: String
-    public let description: String
-    public let category: ChecklistCategory
-    public let weight: Int
-    public var status: ComplianceItemStatus
-    public var notes: String?
-    public var documentPath: String?
-    public var lastUpdated: Date?
-
-    public nonisolated init(
-        id: String,
-        title: String,
-        description: String,
-        category: ChecklistCategory,
-        weight: Int,
-        status: ComplianceItemStatus = .incomplete
-    ) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.category = category
-        self.weight = weight
-        self.status = status
-    }
-
-    /// Default IRS tax home compliance checklist items
-    /// Using nonisolated computed property to avoid MainActor isolation issues
-    public nonisolated static var defaults: [ComplianceChecklistItem] {
-        [
-            ComplianceChecklistItem(id: "residence-proof", title: "Proof of Residence", description: "Maintain lease or ownership documents at tax home.", category: .residence, weight: 10),
-            ComplianceChecklistItem(id: "mail-forward", title: "Mail Forwarding", description: "Set up mail forwarding to tax home address.", category: .residence, weight: 5),
-            ComplianceChecklistItem(id: "presence-days", title: "Physical Presence", description: "Spend required days at tax home.", category: .presence, weight: 15),
-            ComplianceChecklistItem(id: "community-ties", title: "Community Ties", description: "Maintain local memberships and relationships.", category: .ties, weight: 10),
-            ComplianceChecklistItem(id: "financial-ties", title: "Financial Ties", description: "Keep local bank accounts and financial activities.", category: .financial, weight: 10),
-            ComplianceChecklistItem(id: "documentation", title: "Documentation", description: "Keep receipts and records of travel and lodging.", category: .documentation, weight: 10)
-        ]
-    }
-}
-
-/// Categories for checklist items
-public enum ChecklistCategory: String, Codable, CaseIterable, Sendable {
-    case residence = "Residence"
-    case presence = "Physical Presence"
-    case ties = "Community Ties"
-    case financial = "Financial Ties"
-    case documentation = "Documentation"
 }

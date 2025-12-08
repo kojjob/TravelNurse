@@ -16,7 +16,7 @@ public enum TNFormatters {
     // MARK: - Currency Formatters
 
     /// Currency formatter for USD with decimals (e.g., $1,234.56)
-    private nonisolated(unsafe) static let currencyFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let currencyFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
@@ -26,7 +26,7 @@ public enum TNFormatters {
     }()
 
     /// Currency formatter for USD without decimals (e.g., $1,235)
-    private nonisolated(unsafe) static let currencyWholeFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let currencyWholeFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
@@ -37,7 +37,7 @@ public enum TNFormatters {
 
     /// Currency formatter for compact display (e.g., $1.2K)
     /// Note: NumberFormatter doesn't support compact notation, so we handle it manually
-    private nonisolated(unsafe) static let currencyCompactFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let currencyCompactFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
@@ -48,7 +48,7 @@ public enum TNFormatters {
     // MARK: - Number Formatters
 
     /// Decimal formatter with 2 decimal places
-    private nonisolated(unsafe) static let decimalFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let decimalFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 2
@@ -57,7 +57,7 @@ public enum TNFormatters {
     }()
 
     /// Whole number formatter with grouping
-    private nonisolated(unsafe) static let wholeNumberFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let wholeNumberFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
@@ -66,7 +66,7 @@ public enum TNFormatters {
     }()
 
     /// Percent formatter
-    private nonisolated(unsafe) static let percentFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let percentFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .percent
         formatter.maximumFractionDigits = 1
@@ -77,7 +77,7 @@ public enum TNFormatters {
     // MARK: - Date Formatters
 
     /// Date formatter for display (e.g., Dec 7, 2025)
-    private nonisolated(unsafe) static let dateFormatter: DateFormatter = {
+    nonisolated(unsafe) private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
@@ -85,7 +85,7 @@ public enum TNFormatters {
     }()
 
     /// Date formatter for compact display (e.g., 12/7/25)
-    private nonisolated(unsafe) static let dateCompactFormatter: DateFormatter = {
+    nonisolated(unsafe) private static let dateCompactFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         formatter.timeStyle = .none
@@ -93,7 +93,7 @@ public enum TNFormatters {
     }()
 
     /// Time formatter (e.g., 2:30 PM)
-    private nonisolated(unsafe) static let timeFormatter: DateFormatter = {
+    nonisolated(unsafe) private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .none
         formatter.timeStyle = .short
@@ -101,7 +101,7 @@ public enum TNFormatters {
     }()
 
     /// Date and time formatter
-    private nonisolated(unsafe) static let dateTimeFormatter: DateFormatter = {
+    nonisolated(unsafe) private static let dateTimeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
@@ -109,7 +109,7 @@ public enum TNFormatters {
     }()
 
     /// Month and year formatter (e.g., December 2025)
-    private nonisolated(unsafe) static let monthYearFormatter: DateFormatter = {
+    nonisolated(unsafe) private static let monthYearFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
         return formatter
