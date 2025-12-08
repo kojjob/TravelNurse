@@ -9,7 +9,7 @@ import SwiftUI
 
 /// IRS tax home compliance status levels
 /// Travel nurses must maintain a tax home to deduct travel expenses
-public enum ComplianceLevel: String, CaseIterable, Codable, Identifiable, Hashable {
+public enum ComplianceLevel: String, CaseIterable, Codable, Identifiable, Hashable, Sendable {
     case excellent = "excellent"      // 90-100% compliance
     case good = "good"                // 70-89% compliance
     case atRisk = "at_risk"          // 50-69% compliance
@@ -42,17 +42,6 @@ public enum ComplianceLevel: String, CaseIterable, Codable, Identifiable, Hashab
             return "Your tax home status does not meet IRS requirements. Immediate action needed."
         case .unknown:
             return "Not enough information to determine compliance status."
-        }
-    }
-
-    /// Status color for UI
-    public var color: Color {
-        switch self {
-        case .excellent: return TNColors.success
-        case .good: return TNColors.lime
-        case .atRisk: return TNColors.warning
-        case .nonCompliant: return TNColors.error
-        case .unknown: return TNColors.textTertiaryLight
         }
     }
 
@@ -91,7 +80,7 @@ public enum ComplianceLevel: String, CaseIterable, Codable, Identifiable, Hashab
 }
 
 /// Individual compliance checklist item status
-public enum ComplianceItemStatus: String, CaseIterable, Codable, Identifiable {
+public enum ComplianceItemStatus: String, CaseIterable, Codable, Identifiable, Sendable {
     case complete = "complete"
     case incomplete = "incomplete"
     case partial = "partial"
@@ -108,21 +97,41 @@ public enum ComplianceItemStatus: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    public var color: Color {
-        switch self {
-        case .complete: return TNColors.success
-        case .incomplete: return TNColors.error
-        case .partial: return TNColors.warning
-        case .notApplicable: return TNColors.textTertiaryLight
-        }
-    }
-
     public var iconName: String {
         switch self {
         case .complete: return "checkmark.circle.fill"
         case .incomplete: return "circle"
         case .partial: return "circle.lefthalf.filled"
         case .notApplicable: return "minus.circle.fill"
+        }
+    }
+}
+
+// MARK: - MainActor Isolated UI Properties
+
+@MainActor
+extension ComplianceLevel {
+    /// Status color for UI (MainActor isolated)
+    public var color: Color {
+        switch self {
+        case .excellent: return TNColors.success
+        case .good: return TNColors.lime
+        case .atRisk: return TNColors.warning
+        case .nonCompliant: return TNColors.error
+        case .unknown: return TNColors.textTertiaryLight
+        }
+    }
+}
+
+@MainActor
+extension ComplianceItemStatus {
+    /// Status color for UI (MainActor isolated)
+    public var color: Color {
+        switch self {
+        case .complete: return TNColors.success
+        case .incomplete: return TNColors.error
+        case .partial: return TNColors.warning
+        case .notApplicable: return TNColors.textTertiaryLight
         }
     }
 }

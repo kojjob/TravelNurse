@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// IRS-compliant expense categories for travel nurse deductions
-public enum ExpenseCategory: String, CaseIterable, Codable, Identifiable, Hashable {
+public enum ExpenseCategory: String, CaseIterable, Codable, Identifiable, Hashable, Sendable {
 
     // MARK: - Travel & Transportation
     case mileage = "mileage"

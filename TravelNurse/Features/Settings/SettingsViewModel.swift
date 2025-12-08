@@ -455,7 +455,7 @@ final class SettingsViewModel {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
             return
         }
-        SKStoreReviewController.requestReview(in: windowScene)
+        AppStore.requestReview(in: windowScene)
     }
 }
 

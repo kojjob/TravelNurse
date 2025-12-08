@@ -490,7 +490,7 @@ struct SettingsView: View {
                     icon: "doc.text.fill",
                     iconColor: TNColors.textSecondary
                 ) {
-                    if let url = viewModel.privacyPolicyURL {
+                    if viewModel.privacyPolicyURL != nil {
                         // UIApplication.shared.open(url)
                     }
                 }
