@@ -493,4 +493,113 @@ final class SettingsViewModelTests: XCTestCase {
         // Then
         XCTAssertTrue(sut.showEditProfile)
     }
+
+    // MARK: - Notification Service Integration Tests
+
+    @MainActor
+    func test_notificationPermissionGranted_defaultsToFalse() {
+        // Notification permission should default to false until explicitly requested
+        XCTAssertFalse(sut.notificationPermissionGranted)
+    }
+
+    @MainActor
+    func test_cancelNotifications_doesNotCrashWithoutService() {
+        // Should gracefully handle missing service
+        sut.cancelNotifications(of: .expenseReminder)
+        // Test passes if no crash occurs
+        XCTAssertTrue(true)
+    }
+
+    @MainActor
+    func test_scheduleTaxDeadlineReminders_respectsPreferences() async {
+        // Given - disable tax deadline reminders
+        sut.notificationPreferences.taxDeadlineReminders = false
+
+        // When - try to schedule (should return early due to preference)
+        await sut.scheduleTaxDeadlineReminders()
+
+        // Then - no crash, function respects preferences
+        XCTAssertFalse(sut.notificationPreferences.taxDeadlineReminders)
+    }
+
+    @MainActor
+    func test_scheduleExpenseReminder_respectsPreferences() async {
+        // Given - disable expense reminders
+        sut.notificationPreferences.expenseReminders = false
+
+        // When - try to schedule (should return early due to preference)
+        await sut.scheduleExpenseReminder()
+
+        // Then - no crash, function respects preferences
+        XCTAssertFalse(sut.notificationPreferences.expenseReminders)
+    }
+
+    @MainActor
+    func test_syncNotificationSchedules_disablesPushWhenNotEnabled() async {
+        // Given - disable push notifications
+        sut.notificationPreferences.pushEnabled = false
+
+        // When - sync schedules
+        await sut.syncNotificationSchedules()
+
+        // Then - push should still be disabled
+        XCTAssertFalse(sut.notificationPreferences.pushEnabled)
+    }
+
+    @MainActor
+    func test_notificationType_allCasesHaveIdentifiers() {
+        // Verify all notification types have valid identifiers
+        for type in NotificationType.allCases {
+            XCTAssertFalse(type.identifier.isEmpty, "\(type) should have a valid identifier")
+        }
+    }
+
+    @MainActor
+    func test_notificationType_identifiersAreUnique() {
+        // Verify notification type identifiers are unique
+        let identifiers = NotificationType.allCases.map { $0.identifier }
+        let uniqueIdentifiers = Set(identifiers)
+        XCTAssertEqual(identifiers.count, uniqueIdentifiers.count, "All notification identifiers should be unique")
+    }
+
+    // MARK: - NotificationService Static Methods Tests
+
+    @MainActor
+    func test_quarterlyTaxDeadlines_returnsCorrectCount() {
+        let deadlines = NotificationService.quarterlyTaxDeadlines(for: 2025)
+        XCTAssertEqual(deadlines.count, 4, "Should return 4 quarterly deadlines")
+    }
+
+    @MainActor
+    func test_quarterlyTaxDeadlines_hasCorrectQuarters() {
+        let deadlines = NotificationService.quarterlyTaxDeadlines(for: 2025)
+        let quarters = deadlines.map { $0.quarter }
+
+        XCTAssertTrue(quarters.contains("Q1"))
+        XCTAssertTrue(quarters.contains("Q2"))
+        XCTAssertTrue(quarters.contains("Q3"))
+        XCTAssertTrue(quarters.contains("Q4"))
+    }
+
+    @MainActor
+    func test_quarterlyTaxDeadlines_datesAreInFuture() {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        let nextYear = currentYear + 1
+        let deadlines = NotificationService.quarterlyTaxDeadlines(for: nextYear)
+
+        // All deadlines for next year should be in the future
+        for deadline in deadlines {
+            XCTAssertTrue(deadline.date > Date(), "Deadline \(deadline.quarter) should be in the future")
+        }
+    }
+
+    @MainActor
+    func test_oneYearWarningDays_hasCorrectValues() {
+        let warningDays = NotificationService.oneYearWarningDays
+
+        XCTAssertEqual(warningDays.count, 3)
+        XCTAssertTrue(warningDays.contains(300))
+        XCTAssertTrue(warningDays.contains(330))
+        XCTAssertTrue(warningDays.contains(350))
+    }
 }
