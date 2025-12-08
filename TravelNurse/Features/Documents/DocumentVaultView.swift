@@ -314,7 +314,7 @@ struct DocumentStatCard: View {
 
 // MARK: - Filter Chip
 
-struct FilterChip: View {
+private struct FilterChip: View {
     let title: String
     let icon: String
     let isSelected: Bool
