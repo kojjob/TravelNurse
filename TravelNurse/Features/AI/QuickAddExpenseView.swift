@@ -303,8 +303,8 @@ final class QuickAddExpenseViewModel {
     private(set) var confidence: Double = 0
     private(set) var isDeductible = false
 
-    private let parser = NaturalLanguageParserService()
-    private let categorizer = ExpenseCategorizationService()
+    private let categorizationService = ExpenseCategorizationService()
+    private lazy var parser = NaturalLanguageParserService(categorizationService: categorizationService)
 
     private var parseTask: Task<Void, Never>?
 
@@ -319,6 +319,7 @@ final class QuickAddExpenseViewModel {
         guard !text.isEmpty else {
             parsedExpense = nil
             confidence = 0
+            isDeductible = false
             return
         }
 
@@ -333,18 +334,21 @@ final class QuickAddExpenseViewModel {
                 parsedExpense = result
                 confidence = result.confidence
 
-                // Check if deductible
+                // Check if deductible based on category
                 if let category = result.category {
-                    let prediction = try await categorizer.categorizeExpense(
+                    let prediction = try await categorizationService.categorizeExpense(
                         description: result.description ?? text,
                         merchant: result.merchant,
                         amount: result.amount
                     )
                     isDeductible = prediction.isDeductible
+                } else {
+                    isDeductible = false
                 }
             } catch {
                 parsedExpense = nil
                 confidence = 0
+                isDeductible = false
             }
         }
     }

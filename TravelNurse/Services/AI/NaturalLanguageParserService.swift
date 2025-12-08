@@ -11,14 +11,14 @@ import NaturalLanguage
 /// Service for parsing natural language into structured data
 final class NaturalLanguageParserService: NaturalLanguageParserAI {
 
-    // MARK: - NLP Components
+    // MARK: - Components
 
     private let tagger: NLTagger
-    private let recognizer: NLLanguageRecognizer
+    private let categorizationService: ExpenseCategorizationService
 
-    init() {
-        tagger = NLTagger(tagSchemes: [.tokenType, .lexicalClass, .nameType, .lemma])
-        recognizer = NLLanguageRecognizer()
+    init(categorizationService: ExpenseCategorizationService = ExpenseCategorizationService()) {
+        self.tagger = NLTagger(tagSchemes: [.tokenType, .lexicalClass, .nameType, .lemma])
+        self.categorizationService = categorizationService
     }
 
     // MARK: - Expense Parsing
@@ -33,7 +33,6 @@ final class NaturalLanguageParserService: NaturalLanguageParserAI {
         let description = extractDescription(from: text, excludingMerchant: merchant)
 
         // Determine category based on extracted info
-        let categorizationService = ExpenseCategorizationService()
         let categoryPrediction = try await categorizationService.categorizeExpense(
             description: description ?? normalizedText,
             merchant: merchant,

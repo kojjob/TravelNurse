@@ -240,8 +240,8 @@ struct ChatBubble: View {
             }
 
             VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
-                // Message content
-                Text(try! AttributedString(markdown: message.content, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+                // Message content - safely parse markdown
+                Text(Self.parseMarkdown(message.content))
                     .font(.system(size: 15))
                     .foregroundColor(message.role == .user ? .white : TNColors.textPrimary)
                     .padding(.horizontal, 14)
@@ -263,7 +263,7 @@ struct ChatBubble: View {
                     .font(.system(size: 11))
                     .foregroundColor(TNColors.textTertiary)
             }
-            .frame(maxWidth: UIScreen.main.bounds.width * 0.75, alignment: message.role == .user ? .trailing : .leading)
+            .frame(maxWidth: 280, alignment: message.role == .user ? .trailing : .leading)
 
             if message.role == .user {
                 Spacer(minLength: 0)
@@ -273,16 +273,34 @@ struct ChatBubble: View {
     }
 
     private func formatTime(_ date: Date) -> String {
+        Self.timeFormatter.string(from: date)
+    }
+
+    // MARK: - Static Helpers
+
+    private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
-        return formatter.string(from: date)
+        return formatter
+    }()
+
+    private static func parseMarkdown(_ content: String) -> AttributedString {
+        do {
+            return try AttributedString(
+                markdown: content,
+                options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+            )
+        } catch {
+            // Fallback to plain text if markdown parsing fails
+            return AttributedString(content)
+        }
     }
 }
 
 // MARK: - Typing Indicator
 
 struct TypingIndicator: View {
-    @State private var animationPhase = 0
+    @State private var dotScales: [CGFloat] = [1, 1, 1]
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -301,7 +319,7 @@ struct TypingIndicator: View {
                     Circle()
                         .fill(TNColors.textTertiary)
                         .frame(width: 8, height: 8)
-                        .opacity(animationPhase == index ? 1 : 0.4)
+                        .scaleEffect(dotScales[index])
                 }
             }
             .padding(.horizontal, 16)
@@ -313,8 +331,18 @@ struct TypingIndicator: View {
             Spacer()
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 0.5).repeatForever()) {
-                animationPhase = (animationPhase + 1) % 3
+            animateDots()
+        }
+    }
+
+    private func animateDots() {
+        for index in 0..<3 {
+            withAnimation(
+                .easeInOut(duration: 0.4)
+                .repeatForever(autoreverses: true)
+                .delay(Double(index) * 0.15)
+            ) {
+                dotScales[index] = 1.3
             }
         }
     }

@@ -111,11 +111,9 @@ final class ExpenseCategorizationService: ExpenseCategorizationAI {
 
     // MARK: - NLP Components
 
-    private let tagger: NLTagger
     private let embedder: NLEmbedding?
 
     init() {
-        tagger = NLTagger(tagSchemes: [.tokenType, .lexicalClass, .nameType])
         embedder = NLEmbedding.wordEmbedding(for: .english)
     }
 
