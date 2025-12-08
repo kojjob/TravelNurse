@@ -373,8 +373,8 @@ final class HomeViewModel {
 
     private func loadUserProfile() {
         // TODO: Load from UserProfile service when available
-        // For now, use default
-        userName = "Sarah"
+        // For now, keep the default "Nurse" greeting
+        // The userName property is initialized to "Nurse" by default
     }
 
     private func loadCurrentAssignment() throws {
