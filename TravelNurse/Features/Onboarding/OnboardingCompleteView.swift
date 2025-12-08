@@ -2,7 +2,7 @@
 //  OnboardingCompleteView.swift
 //  TravelNurse
 //
-//  Celebration screen shown after onboarding completion
+//  Enhanced celebration screen with detailed summary
 //
 
 import SwiftUI
@@ -12,14 +12,32 @@ struct OnboardingCompleteView: View {
 
     let userName: String
     let selectedGoalsCount: Int
+    let summary: OnboardingSummary?
     let onGetStarted: () -> Void
 
     // Animation states
     @State private var checkmarkScale: CGFloat = 0
     @State private var checkmarkOpacity: Double = 0
     @State private var textOpacity: Double = 0
+    @State private var detailsOpacity: Double = 0
     @State private var buttonOpacity: Double = 0
     @State private var confettiTriggered = false
+
+    // Backward compatibility initializer
+    init(userName: String, selectedGoalsCount: Int, onGetStarted: @escaping () -> Void) {
+        self.userName = userName
+        self.selectedGoalsCount = selectedGoalsCount
+        self.summary = nil
+        self.onGetStarted = onGetStarted
+    }
+
+    // Enhanced initializer with summary
+    init(userName: String, selectedGoalsCount: Int, summary: OnboardingSummary, onGetStarted: @escaping () -> Void) {
+        self.userName = userName
+        self.selectedGoalsCount = selectedGoalsCount
+        self.summary = summary
+        self.onGetStarted = onGetStarted
+    }
 
     var body: some View {
         ZStack {
@@ -32,38 +50,51 @@ struct OnboardingCompleteView: View {
                     .ignoresSafeArea()
             }
 
-            VStack(spacing: 0) {
-                Spacer()
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    Spacer()
+                        .frame(height: 60)
 
-                // Success checkmark
-                successCheckmark
-                    .scaleEffect(checkmarkScale)
-                    .opacity(checkmarkOpacity)
+                    // Success checkmark
+                    successCheckmark
+                        .scaleEffect(checkmarkScale)
+                        .opacity(checkmarkOpacity)
 
-                Spacer()
-                    .frame(height: 40)
+                    Spacer()
+                        .frame(height: 32)
 
-                // Congratulations text
-                congratulationsSection
-                    .opacity(textOpacity)
+                    // Congratulations text
+                    congratulationsSection
+                        .opacity(textOpacity)
 
-                Spacer()
-                    .frame(height: 24)
+                    Spacer()
+                        .frame(height: 32)
 
-                // Summary cards
-                summarySection
-                    .opacity(textOpacity)
+                    // Profile Summary
+                    if let summary = summary {
+                        profileSummary(summary)
+                            .opacity(detailsOpacity)
 
-                Spacer()
+                        Spacer()
+                            .frame(height: 24)
+                    }
 
-                // Get Started button
-                getStartedButton
-                    .opacity(buttonOpacity)
+                    // Quick Stats cards
+                    quickStatsSection
+                        .opacity(detailsOpacity)
 
-                Spacer()
-                    .frame(height: 40)
+                    Spacer()
+                        .frame(height: 40)
+
+                    // Get Started button
+                    getStartedButton
+                        .opacity(buttonOpacity)
+
+                    Spacer()
+                        .frame(height: 40)
+                }
+                .padding(.horizontal, 24)
             }
-            .padding(.horizontal, 24)
         }
         .onAppear {
             animateEntrance()
@@ -89,7 +120,22 @@ struct OnboardingCompleteView: View {
 
     private var successCheckmark: some View {
         ZStack {
-            // Outer ring
+            // Animated rings
+            ForEach(0..<3, id: \.self) { index in
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [TNColors.secondary.opacity(0.3), TNColors.success.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 2
+                    )
+                    .frame(width: CGFloat(120 + index * 30), height: CGFloat(120 + index * 30))
+                    .opacity(checkmarkOpacity * (1 - Double(index) * 0.3))
+            }
+
+            // Main circle
             Circle()
                 .stroke(
                     LinearGradient(
@@ -99,7 +145,7 @@ struct OnboardingCompleteView: View {
                     ),
                     lineWidth: 4
                 )
-                .frame(width: 120, height: 120)
+                .frame(width: 100, height: 100)
 
             // Inner fill
             Circle()
@@ -110,11 +156,11 @@ struct OnboardingCompleteView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 100, height: 100)
+                .frame(width: 80, height: 80)
 
             // Checkmark
             Image(systemName: "checkmark")
-                .font(.system(size: 48, weight: .bold))
+                .font(.system(size: 40, weight: .bold))
                 .foregroundColor(TNColors.secondary)
         }
     }
@@ -124,10 +170,14 @@ struct OnboardingCompleteView: View {
     private var congratulationsSection: some View {
         VStack(spacing: 12) {
             Text("You're All Set!")
-                .font(.system(size: 28, weight: .bold))
+                .font(.system(size: 32, weight: .bold))
                 .foregroundColor(TNColors.textPrimaryLight)
 
-            Text("Welcome\(userName.isEmpty ? "" : ", \(userName)")! Your TravelNurse companion is ready to help you manage your finances.")
+            Text("Welcome\(userName.isEmpty ? "" : ", \(userName)")!")
+                .font(.system(size: 20, weight: .medium))
+                .foregroundColor(TNColors.textPrimaryLight)
+
+            Text("Your TravelNurse companion is ready to help you maximize your earnings and stay tax-compliant.")
                 .font(.system(size: 16, weight: .regular))
                 .foregroundColor(TNColors.textSecondaryLight)
                 .multilineTextAlignment(.center)
@@ -135,29 +185,90 @@ struct OnboardingCompleteView: View {
         }
     }
 
-    // MARK: - Summary Section
+    // MARK: - Profile Summary
 
-    private var summarySection: some View {
-        HStack(spacing: 16) {
-            SummaryCard(
-                icon: "target",
-                value: "\(selectedGoalsCount)",
-                label: "Goals Set",
-                color: TNColors.primary
-            )
+    private func profileSummary(_ summary: OnboardingSummary) -> some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("Your Setup")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(TNColors.textSecondaryLight)
+                    .textCase(.uppercase)
+                    .tracking(1)
 
-            SummaryCard(
+                Spacer()
+            }
+
+            VStack(spacing: 12) {
+                // Profile Row
+                if !summary.fullName.isEmpty {
+                    SummaryRow(
+                        icon: "person.fill",
+                        color: TNColors.primary,
+                        title: "Profile",
+                        value: summary.fullName,
+                        subtitle: summary.specialty
+                    )
+                }
+
+                // Tax Home Row
+                if let taxHome = summary.taxHomeLocation {
+                    SummaryRow(
+                        icon: "house.fill",
+                        color: TNColors.success,
+                        title: "Tax Home",
+                        value: taxHome,
+                        subtitle: nil
+                    )
+                } else {
+                    SummaryRow(
+                        icon: "house.fill",
+                        color: TNColors.textTertiaryLight,
+                        title: "Tax Home",
+                        value: "Not set",
+                        subtitle: "Set up in Settings"
+                    )
+                }
+
+                // Goals Row
+                SummaryRow(
+                    icon: "target",
+                    color: TNColors.warning,
+                    title: "Goals",
+                    value: "\(summary.goalsCount) selected",
+                    subtitle: nil
+                )
+            }
+            .padding(20)
+            .background(Color.white.opacity(0.9))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .shadow(color: Color.black.opacity(0.05), radius: 15, y: 5)
+        }
+    }
+
+    // MARK: - Quick Stats Section
+
+    private var quickStatsSection: some View {
+        HStack(spacing: 12) {
+            QuickStatCard(
                 icon: "shield.checkered",
-                value: "Secure",
-                label: "Your Data",
+                title: "Secure",
+                subtitle: "Data Storage",
                 color: TNColors.secondary
             )
 
-            SummaryCard(
-                icon: "sparkles",
-                value: "Ready",
-                label: "To Track",
-                color: TNColors.warning
+            QuickStatCard(
+                icon: "bell.badge.fill",
+                title: "Smart",
+                subtitle: "Reminders",
+                color: TNColors.primary
+            )
+
+            QuickStatCard(
+                icon: "chart.line.uptrend.xyaxis",
+                title: "Track",
+                subtitle: "Earnings",
+                color: TNColors.success
             )
         }
     }
@@ -166,16 +277,16 @@ struct OnboardingCompleteView: View {
 
     private var getStartedButton: some View {
         Button(action: onGetStarted) {
-            HStack(spacing: 8) {
-                Text("Get Started")
-                    .font(.system(size: 17, weight: .semibold))
+            HStack(spacing: 12) {
+                Text("Let's Go!")
+                    .font(.system(size: 18, weight: .bold))
 
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 16, weight: .semibold))
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.system(size: 20, weight: .semibold))
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 56)
+            .frame(height: 60)
             .background(
                 LinearGradient(
                     colors: [TNColors.secondary, TNColors.success],
@@ -183,8 +294,8 @@ struct OnboardingCompleteView: View {
                     endPoint: .trailing
                 )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 28))
-            .shadow(color: TNColors.secondary.opacity(0.3), radius: 8, y: 4)
+            .clipShape(RoundedRectangle(cornerRadius: 30))
+            .shadow(color: TNColors.secondary.opacity(0.4), radius: 12, y: 6)
         }
     }
 
@@ -200,7 +311,11 @@ struct OnboardingCompleteView: View {
             textOpacity = 1
         }
 
-        withAnimation(.easeOut(duration: 0.4).delay(0.8)) {
+        withAnimation(.easeOut(duration: 0.5).delay(0.7)) {
+            detailsOpacity = 1
+        }
+
+        withAnimation(.easeOut(duration: 0.4).delay(0.9)) {
             buttonOpacity = 1
         }
 
@@ -211,7 +326,91 @@ struct OnboardingCompleteView: View {
     }
 }
 
-// MARK: - Summary Card
+// MARK: - Summary Row
+
+struct SummaryRow: View {
+    let icon: String
+    let color: Color
+    let title: String
+    let value: String
+    let subtitle: String?
+
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 44, height: 44)
+
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(color)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(TNColors.textTertiaryLight)
+                    .textCase(.uppercase)
+
+                Text(value)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(TNColors.textPrimaryLight)
+
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(TNColors.textSecondaryLight)
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 20))
+                .foregroundColor(color == TNColors.textTertiaryLight ? TNColors.textTertiaryLight : TNColors.success)
+        }
+    }
+}
+
+// MARK: - Quick Stat Card
+
+struct QuickStatCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 44, height: 44)
+
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(color)
+            }
+
+            VStack(spacing: 2) {
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(TNColors.textPrimaryLight)
+
+                Text(subtitle)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(TNColors.textSecondaryLight)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(Color.white.opacity(0.8))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+// MARK: - Summary Card (Legacy)
 
 struct SummaryCard: View {
     let icon: String
@@ -249,9 +448,10 @@ struct ConfettiView: View {
         GeometryReader { geometry in
             ZStack {
                 ForEach(particles) { particle in
-                    Circle()
+                    RoundedRectangle(cornerRadius: particle.isCircle ? particle.size : 2)
                         .fill(particle.color)
-                        .frame(width: particle.size, height: particle.size)
+                        .frame(width: particle.size, height: particle.isCircle ? particle.size : particle.size * 2)
+                        .rotationEffect(.degrees(particle.rotation))
                         .position(particle.position)
                         .opacity(particle.opacity)
                 }
@@ -266,13 +466,14 @@ struct ConfettiView: View {
     private func createParticles(in size: CGSize) {
         let colors: [Color] = [
             TNColors.secondary,
-            Color(hex: "0066FF"),
+            TNColors.primary,
+            TNColors.success,
             Color(hex: "F59E0B"),
             Color(hex: "8B5CF6"),
             Color(hex: "EF4444")
         ]
 
-        particles = (0..<30).map { _ in
+        particles = (0..<50).map { _ in
             ConfettiParticle(
                 id: UUID(),
                 position: CGPoint(
@@ -280,20 +481,23 @@ struct ConfettiView: View {
                     y: -20
                 ),
                 color: colors.randomElement()!,
-                size: CGFloat.random(in: 4...8),
-                opacity: 1.0
+                size: CGFloat.random(in: 4...10),
+                opacity: 1.0,
+                rotation: Double.random(in: 0...360),
+                isCircle: Bool.random()
             )
         }
     }
 
     private func animateParticles() {
         for index in particles.indices {
-            let delay = Double.random(in: 0...0.5)
-            let duration = Double.random(in: 1.5...2.5)
+            let delay = Double.random(in: 0...0.8)
+            let duration = Double.random(in: 2.0...3.5)
 
             withAnimation(.easeIn(duration: duration).delay(delay)) {
-                particles[index].position.y += 800
-                particles[index].position.x += CGFloat.random(in: -50...50)
+                particles[index].position.y += 1000
+                particles[index].position.x += CGFloat.random(in: -100...100)
+                particles[index].rotation += Double.random(in: 180...720)
                 particles[index].opacity = 0
             }
         }
@@ -306,6 +510,8 @@ struct ConfettiParticle: Identifiable {
     let color: Color
     let size: CGFloat
     var opacity: Double
+    var rotation: Double = 0
+    var isCircle: Bool = true
 }
 
 // MARK: - Preview
@@ -314,6 +520,12 @@ struct ConfettiParticle: Identifiable {
     OnboardingCompleteView(
         userName: "Sarah",
         selectedGoalsCount: 4,
+        summary: OnboardingSummary(
+            fullName: "Sarah Johnson",
+            specialty: "ICU",
+            taxHomeLocation: "Houston, TX",
+            goalsCount: 4
+        ),
         onGetStarted: {}
     )
 }
