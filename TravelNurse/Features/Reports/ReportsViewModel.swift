@@ -47,15 +47,22 @@ enum ExportFormat: String, CaseIterable, Identifiable {
     }
 }
 /// Data model for state-by-state earnings breakdown
-struct StateBreakdown: Identifiable {
-    var id: String { state.rawValue }
-    let state: USState
-    let earnings: Decimal
-    let weeksWorked: Int
-    let hasStateTax: Bool
+public struct StateBreakdown: Identifiable {
+    public var id: String { state.rawValue }
+    public let state: USState
+    public let earnings: Decimal
+    public let weeksWorked: Int
+    public let hasStateTax: Bool
 
-    var formattedEarnings: String {
+    public var formattedEarnings: String {
         TNFormatters.currencyWhole(earnings)
+    }
+
+    public init(state: USState, earnings: Decimal, weeksWorked: Int, hasStateTax: Bool) {
+        self.state = state
+        self.earnings = earnings
+        self.weeksWorked = weeksWorked
+        self.hasStateTax = hasStateTax
     }
 }
 
@@ -177,9 +184,12 @@ final class ReportsViewModel {
                 try csvContent.write(to: tempURL, atomically: true, encoding: .utf8)
 
             case .pdf:
-                // For now, generate a simple text file as PDF generation requires more setup
-                let pdfContent = generateTextReportContent()
-                try pdfContent.write(to: tempURL, atomically: true, encoding: .utf8)
+                // Generate professional PDF using PDFExportService
+                let reportData = createTaxReportData()
+                let pdfService = PDFExportService()
+                guard await pdfService.exportTaxReport(from: reportData, to: tempURL) else {
+                    return nil
+                }
 
             case .json:
                 let jsonContent = generateJSONContent()
@@ -250,6 +260,19 @@ final class ReportsViewModel {
             return jsonString
         }
         return "{}"
+    }
+
+    /// Creates TaxReportData for PDF generation from current ViewModel state
+    private func createTaxReportData() -> TaxReportData {
+        TaxReportData(
+            year: selectedYear,
+            userName: "Travel Nurse", // TODO: Get from user profile when available
+            totalIncome: totalIncome,
+            totalExpenses: totalExpenses,
+            mileageDeduction: totalMileageDeduction,
+            totalMiles: totalMiles,
+            stateBreakdowns: stateBreakdowns
+        )
     }
 
     // MARK: - Private Methods

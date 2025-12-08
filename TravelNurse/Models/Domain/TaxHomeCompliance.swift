@@ -165,7 +165,7 @@ extension TaxHomeCompliance {
 
 extension TaxHomeCompliance {
     /// Default IRS tax home compliance checklist items
-    public static let defaultChecklistItems: [ComplianceChecklistItem] = [
+    nonisolated(unsafe) public static let defaultChecklistItems: [ComplianceChecklistItem] = [
         ComplianceChecklistItem(
             id: "maintain_residence",
             title: "Maintain a residence at tax home",
@@ -253,7 +253,7 @@ public struct ComplianceChecklistItem: Codable, Identifiable, Hashable {
     public var documentPath: String?
     public var lastUpdated: Date?
 
-    public init(
+    public nonisolated init(
         id: String,
         title: String,
         description: String,

@@ -79,7 +79,7 @@ public enum ComplianceLevel: String, CaseIterable, Codable, Identifiable, Hashab
     }
 
     /// Get compliance level from a percentage score
-    public static func from(score: Int) -> ComplianceLevel {
+    public nonisolated static func from(score: Int) -> ComplianceLevel {
         switch score {
         case 90...100: return .excellent
         case 70..<90: return .good
