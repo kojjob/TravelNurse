@@ -13,6 +13,7 @@ import SwiftData
 struct ReportsView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel = ReportsViewModel()
     @State private var selectedYear: Int = Calendar.current.component(.year, from: Date())
     @State private var showingExportSheet = false
@@ -48,6 +49,16 @@ struct ReportsView: View {
             .navigationTitle("Reports")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 22))
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(TNColors.textSecondary)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showingExportSheet = true
