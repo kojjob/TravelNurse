@@ -63,6 +63,13 @@ struct HomeView: View {
             }) {
                 AddExpenseSheet()
             }
+            .sheet(isPresented: $showingMileageLog, onDismiss: {
+                Task {
+                    await viewModel.refresh()
+                }
+            }) {
+                MileageTrackerView()
+            }
         }
     }
 

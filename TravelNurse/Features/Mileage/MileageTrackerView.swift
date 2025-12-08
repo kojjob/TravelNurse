@@ -12,6 +12,7 @@ import SwiftData
 struct MileageTrackerView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel = MileageViewModel()
     @State private var showManualEntrySheet = false
 
@@ -38,6 +39,12 @@ struct MileageTrackerView: View {
             .background(TNColors.background)
             .navigationTitle("Mileage")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundStyle(TNColors.primary)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showManualEntrySheet = true

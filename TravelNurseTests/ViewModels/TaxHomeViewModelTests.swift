@@ -405,6 +405,114 @@ final class TaxHomeComplianceTests: XCTestCase {
         XCTAssertTrue(compliance.checklistItems.count >= 0)
     }
 
+    // MARK: - Percentage Calculation Tests (Bug Fix Verification)
+
+    func testChecklistCompletionPercentage_returnsNormalizedValue() {
+        // Given: A compliance with some completed items
+        let compliance = TaxHomeCompliance(taxYear: 2024)
+        modelContext.insert(compliance)
+
+        // The percentage should be normalized (0-1 range for UI calculations)
+        // This is critical for progress bars that use: width * percentage
+        let percentage = compliance.checklistCompletionPercentage
+
+        // Then: Percentage should be between 0 and 1 (not 0 and 100)
+        XCTAssertGreaterThanOrEqual(percentage, 0.0, "Percentage should not be negative")
+        XCTAssertLessThanOrEqual(percentage, 1.0, "Percentage should not exceed 1.0 (it should be normalized)")
+    }
+
+    func testChecklistCompletionPercentage_halfCompleted_returnsFiftyPercent() {
+        // Given: A compliance where we complete half the items
+        let compliance = TaxHomeCompliance(taxYear: 2024)
+        modelContext.insert(compliance)
+
+        var items = compliance.checklistItems
+        let halfCount = items.count / 2
+        for i in 0..<halfCount {
+            items[i].status = .complete
+        }
+        compliance.checklistItems = items
+
+        // When
+        let percentage = compliance.checklistCompletionPercentage
+
+        // Then: Should be approximately 0.5 (not 50)
+        XCTAssertGreaterThan(percentage, 0.0)
+        XCTAssertLessThanOrEqual(percentage, 1.0, "Percentage should be normalized 0-1, not 0-100")
+    }
+
+    func testChecklistCompletionPercentage_allCompleted_returnsOne() {
+        // Given: A compliance with all items completed
+        let compliance = TaxHomeCompliance(taxYear: 2024)
+        modelContext.insert(compliance)
+
+        var items = compliance.checklistItems
+        for i in 0..<items.count {
+            items[i].status = .complete
+        }
+        compliance.checklistItems = items
+
+        // When
+        let percentage = compliance.checklistCompletionPercentage
+
+        // Then: Should be 1.0 (not 100)
+        XCTAssertEqual(percentage, 1.0, accuracy: 0.001, "100% completion should return 1.0")
+    }
+
+    // MARK: - 30-Day Rule Tests (Bug Fix Verification)
+
+    func testDaysUntil30DayReturn_whenLastVisitInFuture_returnsNil() {
+        // Given: A compliance with a future last visit date (invalid data)
+        let compliance = TaxHomeCompliance(taxYear: 2024)
+        modelContext.insert(compliance)
+        compliance.lastTaxHomeVisit = Calendar.current.date(byAdding: .day, value: 5, to: Date())
+
+        // When
+        let daysUntil = compliance.daysUntil30DayReturn
+
+        // Then: Should return nil for invalid future dates, not 30
+        XCTAssertNil(daysUntil, "Future visit dates should return nil, not a positive number")
+    }
+
+    func testDaysUntil30DayReturn_whenVisitedToday_returns30() {
+        // Given: A compliance with visit today
+        let compliance = TaxHomeCompliance(taxYear: 2024)
+        modelContext.insert(compliance)
+        compliance.lastTaxHomeVisit = Date()
+
+        // When
+        let daysUntil = compliance.daysUntil30DayReturn
+
+        // Then
+        XCTAssertEqual(daysUntil, 30)
+    }
+
+    func testDaysUntil30DayReturn_whenVisited15DaysAgo_returns15() {
+        // Given: A compliance with visit 15 days ago
+        let compliance = TaxHomeCompliance(taxYear: 2024)
+        modelContext.insert(compliance)
+        compliance.lastTaxHomeVisit = Calendar.current.date(byAdding: .day, value: -15, to: Date())
+
+        // When
+        let daysUntil = compliance.daysUntil30DayReturn
+
+        // Then
+        XCTAssertEqual(daysUntil, 15)
+    }
+
+    func testDaysUntil30DayReturn_whenOverdue_returnsZero() {
+        // Given: A compliance with visit 35 days ago (overdue)
+        let compliance = TaxHomeCompliance(taxYear: 2024)
+        modelContext.insert(compliance)
+        compliance.lastTaxHomeVisit = Calendar.current.date(byAdding: .day, value: -35, to: Date())
+
+        // When
+        let daysUntil = compliance.daysUntil30DayReturn
+
+        // Then: Should return 0 (clamped), not negative
+        XCTAssertEqual(daysUntil, 0)
+    }
+
     func testCompletedItemsCount_countsCompleteItems() {
         // Given
         let compliance = TaxHomeCompliance(taxYear: 2024)
@@ -429,14 +537,15 @@ final class TaxHomeComplianceTests: XCTestCase {
 @MainActor
 final class ComplianceChecklistItemTests: XCTestCase {
 
-    func testInit_setsDefaultStatus() {
+    func testInit_setsPropertiesCorrectly() {
         // Given
         let item = ComplianceChecklistItem(
             id: "test-id",
             title: "Test Item",
             description: "Test description",
             category: .residence,
-            weight: 1
+            weight: 1,
+            status: .incomplete
         )
 
         // Then
@@ -472,15 +581,16 @@ final class ComplianceChecklistItemTests: XCTestCase {
             title: "Test Item",
             description: "Test description",
             category: .residence,
-            weight: 1
+            weight: 1,
+            status: .incomplete
         )
-        XCTAssertEqual(item.status, .incomplete)
+        XCTAssertEqual(item.status, ComplianceItemStatus.incomplete)
 
         // When
-        item.status = .complete
+        item.status = ComplianceItemStatus.complete
 
         // Then
-        XCTAssertEqual(item.status, .complete)
+        XCTAssertEqual(item.status, ComplianceItemStatus.complete)
     }
 
     func testWeight_affectsScoring() {
@@ -490,7 +600,8 @@ final class ComplianceChecklistItemTests: XCTestCase {
             title: "Low Weight Item",
             description: "Description",
             category: .residence,
-            weight: 1
+            weight: 1,
+            status: .incomplete
         )
 
         let highWeightItem = ComplianceChecklistItem(
@@ -498,7 +609,8 @@ final class ComplianceChecklistItemTests: XCTestCase {
             title: "High Weight Item",
             description: "Description",
             category: .residence,
-            weight: 10
+            weight: 10,
+            status: .incomplete
         )
 
         // Then
@@ -515,7 +627,8 @@ final class ComplianceChecklistItemTests: XCTestCase {
                 title: "Test",
                 description: "Description",
                 category: category,
-                weight: 1
+                weight: 1,
+                status: .incomplete
             )
 
             // Then

@@ -42,6 +42,7 @@ struct OnboardingGoalsView: View {
                     goalsGrid
                         .opacity(cardsOpacity)
                 }
+                .scrollClipDisabled()  // Allow checkmarks to render outside scroll bounds
 
                 Spacer()
 
@@ -104,7 +105,10 @@ struct OnboardingGoalsView: View {
                 )
             }
         }
-        .padding(.vertical, 8)
+        // Padding to accommodate checkmark overflow (8pt offset + 12pt radius = 20pt)
+        .padding(.top, 20)
+        .padding(.trailing, 20)
+        .padding(.bottom, 8)
     }
 
     // MARK: - Continue Button

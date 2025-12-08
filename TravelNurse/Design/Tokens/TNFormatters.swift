@@ -10,12 +10,13 @@ import Foundation
 
 /// TravelNurse Design System - Formatter Tokens
 /// Provides cached, thread-safe formatters for consistent data display
+/// All methods are nonisolated since formatters are thread-safe
 public enum TNFormatters {
 
     // MARK: - Currency Formatters
 
     /// Currency formatter for USD with decimals (e.g., $1,234.56)
-    private static let currencyFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let currencyFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
@@ -25,7 +26,7 @@ public enum TNFormatters {
     }()
 
     /// Currency formatter for USD without decimals (e.g., $1,235)
-    private static let currencyWholeFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let currencyWholeFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
@@ -36,7 +37,7 @@ public enum TNFormatters {
 
     /// Currency formatter for compact display (e.g., $1.2K)
     /// Note: NumberFormatter doesn't support compact notation, so we handle it manually
-    private static let currencyCompactFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let currencyCompactFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
@@ -47,7 +48,7 @@ public enum TNFormatters {
     // MARK: - Number Formatters
 
     /// Decimal formatter with 2 decimal places
-    private static let decimalFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let decimalFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 2
@@ -56,7 +57,7 @@ public enum TNFormatters {
     }()
 
     /// Whole number formatter with grouping
-    private static let wholeNumberFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let wholeNumberFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
@@ -65,7 +66,7 @@ public enum TNFormatters {
     }()
 
     /// Percent formatter
-    private static let percentFormatter: NumberFormatter = {
+    nonisolated(unsafe) private static let percentFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .percent
         formatter.maximumFractionDigits = 1
@@ -76,7 +77,7 @@ public enum TNFormatters {
     // MARK: - Date Formatters
 
     /// Date formatter for display (e.g., Dec 7, 2025)
-    private static let dateFormatter: DateFormatter = {
+    nonisolated(unsafe) private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
@@ -84,7 +85,7 @@ public enum TNFormatters {
     }()
 
     /// Date formatter for compact display (e.g., 12/7/25)
-    private static let dateCompactFormatter: DateFormatter = {
+    nonisolated(unsafe) private static let dateCompactFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         formatter.timeStyle = .none
@@ -92,7 +93,7 @@ public enum TNFormatters {
     }()
 
     /// Time formatter (e.g., 2:30 PM)
-    private static let timeFormatter: DateFormatter = {
+    nonisolated(unsafe) private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .none
         formatter.timeStyle = .short
@@ -100,7 +101,7 @@ public enum TNFormatters {
     }()
 
     /// Date and time formatter
-    private static let dateTimeFormatter: DateFormatter = {
+    nonisolated(unsafe) private static let dateTimeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
@@ -108,7 +109,7 @@ public enum TNFormatters {
     }()
 
     /// Month and year formatter (e.g., December 2025)
-    private static let monthYearFormatter: DateFormatter = {
+    nonisolated(unsafe) private static let monthYearFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
         return formatter
@@ -119,35 +120,35 @@ public enum TNFormatters {
     /// Format Decimal as currency with decimals
     /// - Parameter value: The Decimal value to format
     /// - Returns: Formatted currency string (e.g., "$1,234.56")
-    public static func currency(_ value: Decimal) -> String {
+    public nonisolated static func currency(_ value: Decimal) -> String {
         currencyFormatter.string(from: value as NSDecimalNumber) ?? "$0.00"
     }
 
     /// Format Double as currency with decimals
     /// - Parameter value: The Double value to format
     /// - Returns: Formatted currency string (e.g., "$1,234.56")
-    public static func currency(_ value: Double) -> String {
+    public nonisolated static func currency(_ value: Double) -> String {
         currencyFormatter.string(from: NSNumber(value: value)) ?? "$0.00"
     }
 
     /// Format Decimal as whole currency (no decimals)
     /// - Parameter value: The Decimal value to format
     /// - Returns: Formatted currency string (e.g., "$1,235")
-    public static func currencyWhole(_ value: Decimal) -> String {
+    public nonisolated static func currencyWhole(_ value: Decimal) -> String {
         currencyWholeFormatter.string(from: value as NSDecimalNumber) ?? "$0"
     }
 
     /// Format Double as whole currency (no decimals)
     /// - Parameter value: The Double value to format
     /// - Returns: Formatted currency string (e.g., "$1,235")
-    public static func currencyWhole(_ value: Double) -> String {
+    public nonisolated static func currencyWhole(_ value: Double) -> String {
         currencyWholeFormatter.string(from: NSNumber(value: value)) ?? "$0"
     }
 
     /// Format Decimal as compact currency
     /// - Parameter value: The Decimal value to format
     /// - Returns: Formatted currency string (e.g., "$1.2K")
-    public static func currencyCompact(_ value: Decimal) -> String {
+    public nonisolated static func currencyCompact(_ value: Decimal) -> String {
         let doubleValue = NSDecimalNumber(decimal: value).doubleValue
         return formatCompactCurrency(doubleValue)
     }
@@ -155,12 +156,12 @@ public enum TNFormatters {
     /// Format Double as compact currency
     /// - Parameter value: The Double value to format
     /// - Returns: Formatted currency string (e.g., "$1.2K")
-    public static func currencyCompact(_ value: Double) -> String {
+    public nonisolated static func currencyCompact(_ value: Double) -> String {
         formatCompactCurrency(value)
     }
 
     /// Helper to format currency with compact notation (K, M, B)
-    private static func formatCompactCurrency(_ value: Double) -> String {
+    private nonisolated static func formatCompactCurrency(_ value: Double) -> String {
         let absValue = abs(value)
         let sign = value < 0 ? "-" : ""
 
@@ -181,28 +182,28 @@ public enum TNFormatters {
     /// Format Double with decimals
     /// - Parameter value: The Double value to format
     /// - Returns: Formatted decimal string (e.g., "1,234.56")
-    public static func decimal(_ value: Double) -> String {
+    public nonisolated static func decimal(_ value: Double) -> String {
         decimalFormatter.string(from: NSNumber(value: value)) ?? "0"
     }
 
     /// Format as whole number with grouping
     /// - Parameter value: The value to format
     /// - Returns: Formatted whole number string (e.g., "1,234")
-    public static func wholeNumber(_ value: Int) -> String {
+    public nonisolated static func wholeNumber(_ value: Int) -> String {
         wholeNumberFormatter.string(from: NSNumber(value: value)) ?? "0"
     }
 
     /// Format as whole number with grouping
     /// - Parameter value: The value to format
     /// - Returns: Formatted whole number string (e.g., "1,234")
-    public static func wholeNumber(_ value: Double) -> String {
+    public nonisolated static func wholeNumber(_ value: Double) -> String {
         wholeNumberFormatter.string(from: NSNumber(value: value)) ?? "0"
     }
 
     /// Format as percentage
     /// - Parameter value: The value to format (0.0 to 1.0)
     /// - Returns: Formatted percent string (e.g., "75%")
-    public static func percent(_ value: Double) -> String {
+    public nonisolated static func percent(_ value: Double) -> String {
         percentFormatter.string(from: NSNumber(value: value)) ?? "0%"
     }
 
@@ -211,35 +212,35 @@ public enum TNFormatters {
     /// Format date for display
     /// - Parameter date: The Date to format
     /// - Returns: Formatted date string (e.g., "Dec 7, 2025")
-    public static func date(_ date: Date) -> String {
+    public nonisolated static func date(_ date: Date) -> String {
         dateFormatter.string(from: date)
     }
 
     /// Format date for compact display
     /// - Parameter date: The Date to format
     /// - Returns: Formatted date string (e.g., "12/7/25")
-    public static func dateCompact(_ date: Date) -> String {
+    public nonisolated static func dateCompact(_ date: Date) -> String {
         dateCompactFormatter.string(from: date)
     }
 
     /// Format time for display
     /// - Parameter date: The Date to format
     /// - Returns: Formatted time string (e.g., "2:30 PM")
-    public static func time(_ date: Date) -> String {
+    public nonisolated static func time(_ date: Date) -> String {
         timeFormatter.string(from: date)
     }
 
     /// Format date and time for display
     /// - Parameter date: The Date to format
     /// - Returns: Formatted date/time string (e.g., "Dec 7, 2025 at 2:30 PM")
-    public static func dateTime(_ date: Date) -> String {
+    public nonisolated static func dateTime(_ date: Date) -> String {
         dateTimeFormatter.string(from: date)
     }
 
     /// Format month and year
     /// - Parameter date: The Date to format
     /// - Returns: Formatted month/year string (e.g., "December 2025")
-    public static func monthYear(_ date: Date) -> String {
+    public nonisolated static func monthYear(_ date: Date) -> String {
         monthYearFormatter.string(from: date)
     }
 
@@ -248,7 +249,7 @@ public enum TNFormatters {
     /// Format miles with unit
     /// - Parameter miles: The distance in miles
     /// - Returns: Formatted miles string (e.g., "123.4 mi")
-    public static func miles(_ miles: Double) -> String {
+    public nonisolated static func miles(_ miles: Double) -> String {
         let formatted = decimalFormatter.string(from: NSNumber(value: miles)) ?? "0"
         return "\(formatted) mi"
     }
@@ -256,7 +257,7 @@ public enum TNFormatters {
     /// Format miles as whole number with unit
     /// - Parameter miles: The distance in miles
     /// - Returns: Formatted miles string (e.g., "123 mi")
-    public static func milesWhole(_ miles: Double) -> String {
+    public nonisolated static func milesWhole(_ miles: Double) -> String {
         "\(Int(miles)) mi"
     }
 }
