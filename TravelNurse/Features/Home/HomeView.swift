@@ -17,6 +17,7 @@ struct HomeView: View {
     @State private var showingMileageLog = false
     @State private var showingTaxHome = false
     @State private var showingReports = false
+    @State private var showingDocuments = false
     @State private var showingAssignmentDetail = false
 
     // Animation states
@@ -79,6 +80,9 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingReports) {
                 ReportsView()
+            }
+            .sheet(isPresented: $showingDocuments) {
+                DocumentVaultView()
             }
         }
     }
@@ -281,41 +285,52 @@ struct HomeView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(TNColors.textPrimary)
 
-            HStack(spacing: 12) {
-                QuickActionButton(
-                    title: "Add Expense",
-                    icon: "plus.circle.fill",
-                    color: TNColors.accent
-                ) {
-                    HapticManager.lightImpact()
-                    showingAddExpense = true
-                }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    QuickActionButton(
+                        title: "Add Expense",
+                        icon: "plus.circle.fill",
+                        color: TNColors.accent
+                    ) {
+                        HapticManager.lightImpact()
+                        showingAddExpense = true
+                    }
 
-                QuickActionButton(
-                    title: "Log Mileage",
-                    icon: "car.fill",
-                    color: TNColors.info
-                ) {
-                    HapticManager.lightImpact()
-                    showingMileageLog = true
-                }
+                    QuickActionButton(
+                        title: "Log Mileage",
+                        icon: "car.fill",
+                        color: TNColors.info
+                    ) {
+                        HapticManager.lightImpact()
+                        showingMileageLog = true
+                    }
 
-                QuickActionButton(
-                    title: "Tax Home",
-                    icon: "house.fill",
-                    color: TNColors.success
-                ) {
-                    HapticManager.lightImpact()
-                    showingTaxHome = true
-                }
+                    QuickActionButton(
+                        title: "Documents",
+                        icon: "doc.fill",
+                        color: TNColors.secondary
+                    ) {
+                        HapticManager.lightImpact()
+                        showingDocuments = true
+                    }
 
-                QuickActionButton(
-                    title: "Reports",
-                    icon: "chart.bar.fill",
-                    color: TNColors.warning
-                ) {
-                    HapticManager.lightImpact()
-                    showingReports = true
+                    QuickActionButton(
+                        title: "Tax Home",
+                        icon: "house.fill",
+                        color: TNColors.success
+                    ) {
+                        HapticManager.lightImpact()
+                        showingTaxHome = true
+                    }
+
+                    QuickActionButton(
+                        title: "Reports",
+                        icon: "chart.bar.fill",
+                        color: TNColors.warning
+                    ) {
+                        HapticManager.lightImpact()
+                        showingReports = true
+                    }
                 }
             }
         }
@@ -510,6 +525,7 @@ struct ActivityRow: View {
             Assignment.self,
             UserProfile.self,
             Expense.self,
-            MileageTrip.self
+            MileageTrip.self,
+            Document.self
         ], inMemory: true)
 }

@@ -2,7 +2,7 @@
 //  OnboardingContainerView.swift
 //  TravelNurse
 //
-//  Main container that orchestrates the onboarding flow
+//  Enhanced container that orchestrates the onboarding flow
 //
 
 import SwiftUI
@@ -27,8 +27,8 @@ struct OnboardingContainerView: View {
                             manager.continueAnonymously()
                         },
                         onAlreadyMember: {
-                            // Navigate to sign in
-                            manager.currentPage = .signIn
+                            // Skip to goals for returning users
+                            manager.skipToGoals()
                         }
                     )
                     .transition(.asymmetric(
@@ -36,15 +36,33 @@ struct OnboardingContainerView: View {
                         removal: .move(edge: .leading)
                     ))
 
-                case .signIn:
-                    OnboardingSignInView(
+                case .profile:
+                    ProfileSetupView(
                         manager: manager,
-                        onComplete: {
-                            // Sign in successful, go to goals
-                            manager.currentPage = .goals
+                        onContinue: {
+                            manager.nextPage()
                         },
                         onSkip: {
-                            manager.continueAnonymously()
+                            manager.firstName = "Traveler"
+                            manager.skipToPage(.taxHome)
+                        }
+                    )
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing),
+                        removal: .move(edge: .leading)
+                    ))
+
+                case .taxHome:
+                    TaxHomeSetupView(
+                        manager: manager,
+                        onContinue: {
+                            manager.nextPage()
+                        },
+                        onSkip: {
+                            manager.taxHomeState = nil
+                            manager.taxHomeCity = ""
+                            manager.taxHomeZipCode = ""
+                            manager.nextPage()
                         }
                     )
                     .transition(.asymmetric(
@@ -66,8 +84,9 @@ struct OnboardingContainerView: View {
 
                 case .complete:
                     OnboardingCompleteView(
-                        userName: manager.userName,
+                        userName: manager.fullName,
                         selectedGoalsCount: manager.selectedGoals.count,
+                        summary: manager.summary,
                         onGetStarted: {
                             completeOnboarding()
                         }
@@ -99,8 +118,15 @@ struct OnboardingContainerView: View {
                 VStack {
                     Spacer()
 
-                    progressIndicators
-                        .padding(.bottom, 16)
+                    VStack(spacing: 8) {
+                        // Progress bar
+                        progressBar
+
+                        // Step indicator
+                        stepIndicator
+                    }
+                    .padding(.bottom, 16)
+                    .padding(.horizontal, 24)
                 }
             }
         }
@@ -124,29 +150,43 @@ struct OnboardingContainerView: View {
         }
     }
 
-    // MARK: - Progress Indicators
+    // MARK: - Progress Bar
 
-    private var progressIndicators: some View {
-        HStack(spacing: 8) {
-            ForEach(0..<3, id: \.self) { index in
+    private var progressBar: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Background track
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.white.opacity(0.3))
+                    .frame(height: 6)
+
+                // Progress fill
                 RoundedRectangle(cornerRadius: 4)
                     .fill(
-                        index <= currentProgressIndex
-                            ? TNColors.textPrimaryLight
-                            : TNColors.textPrimaryLight.opacity(0.2)
+                        LinearGradient(
+                            colors: [TNColors.primary, TNColors.secondary],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                    .frame(width: index == currentProgressIndex ? 24 : 8, height: 8)
-                    .animation(.easeInOut(duration: 0.3), value: currentProgressIndex)
+                    .frame(width: geometry.size.width * manager.progressPercentage, height: 6)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: manager.progressPercentage)
             }
         }
+        .frame(height: 6)
     }
 
-    private var currentProgressIndex: Int {
-        switch manager.currentPage {
-        case .welcome: return 0
-        case .signIn: return 1
-        case .goals: return 2
-        case .complete: return 2
+    // MARK: - Step Indicator
+
+    private var stepIndicator: some View {
+        HStack(spacing: 4) {
+            Text("Step \(manager.currentPage.rawValue + 1)")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(TNColors.textPrimaryLight.opacity(0.8))
+
+            Text("of \(OnboardingPage.allCases.count)")
+                .font(.system(size: 12, weight: .regular))
+                .foregroundColor(TNColors.textSecondaryLight.opacity(0.7))
         }
     }
 
