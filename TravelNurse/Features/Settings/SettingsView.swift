@@ -13,6 +13,8 @@ struct SettingsView: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = SettingsViewModel()
+    @State private var subscriptionManager = SubscriptionManager.shared
+    @State private var showPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -50,6 +52,9 @@ struct SettingsView: View {
                 EditTaxHomeSheet(address: viewModel.taxHomeAddress) { updatedAddress in
                     viewModel.updateTaxHomeAddress(updatedAddress)
                 }
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
             }
             .confirmationDialog(
                 "Export Your Data",
@@ -147,6 +152,9 @@ struct SettingsView: View {
 
     private var settingsSections: some View {
         VStack(spacing: TNSpacing.lg) {
+            // Subscription Section
+            subscriptionSection
+
             // Tax Home Section
             taxHomeSection
 
@@ -167,6 +175,128 @@ struct SettingsView: View {
 
             // Danger Zone
             dangerZoneSection
+        }
+    }
+
+    // MARK: - Subscription Section
+
+    private var subscriptionSection: some View {
+        VStack(alignment: .leading, spacing: TNSpacing.sm) {
+            sectionHeader(title: "SUBSCRIPTION", icon: "star.fill", color: TNColors.warning)
+
+            VStack(spacing: 0) {
+                Button {
+                    if subscriptionManager.isPremium {
+                        // Open subscription management
+                        if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
+                            UIApplication.shared.open(url)
+                        }
+                    } else {
+                        showPaywall = true
+                    }
+                } label: {
+                    HStack(spacing: TNSpacing.md) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: subscriptionManager.isPremium
+                                            ? [TNColors.warning, TNColors.accent]
+                                            : [TNColors.textSecondary.opacity(0.3), TNColors.textSecondary.opacity(0.2)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 44, height: 44)
+
+                            Image(systemName: subscriptionManager.isPremium ? "crown.fill" : "lock.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.white)
+                        }
+
+                        VStack(alignment: .leading, spacing: TNSpacing.xxs) {
+                            HStack(spacing: TNSpacing.xs) {
+                                Text(subscriptionManager.isPremium ? "Premium" : "Free Plan")
+                                    .font(TNTypography.bodyMedium)
+                                    .foregroundColor(TNColors.textPrimary)
+
+                                if subscriptionManager.isPremium {
+                                    Text("ACTIVE")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(TNColors.success)
+                                        .clipShape(Capsule())
+                                }
+                            }
+
+                            Text(subscriptionManager.isPremium
+                                 ? "Manage your subscription"
+                                 : "Upgrade for AI features & unlimited storage")
+                                .font(TNTypography.caption)
+                                .foregroundColor(TNColors.textSecondary)
+                        }
+
+                        Spacer()
+
+                        if !subscriptionManager.isPremium {
+                            Text("Upgrade")
+                                .font(TNTypography.labelMedium)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, TNSpacing.sm)
+                                .padding(.vertical, TNSpacing.xs)
+                                .background(TNColors.primary)
+                                .clipShape(Capsule())
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(TNColors.textTertiary)
+                        }
+                    }
+                    .padding(TNSpacing.md)
+                }
+                .buttonStyle(.plain)
+
+                if !subscriptionManager.isPremium {
+                    Divider().padding(.leading, 68)
+
+                    Button {
+                        Task {
+                            await subscriptionManager.restorePurchases()
+                        }
+                    } label: {
+                        HStack(spacing: TNSpacing.md) {
+                            ZStack {
+                                Circle()
+                                    .fill(TNColors.primary.opacity(0.1))
+                                    .frame(width: 40, height: 40)
+
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(TNColors.primary)
+                            }
+
+                            Text("Restore Purchases")
+                                .font(TNTypography.bodyMedium)
+                                .foregroundColor(TNColors.textPrimary)
+
+                            Spacer()
+
+                            if subscriptionManager.isLoading {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            }
+                        }
+                        .padding(TNSpacing.md)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(subscriptionManager.isLoading)
+                }
+            }
+            .background(TNColors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: TNSpacing.radiusMD))
+            .shadow(color: TNColors.cardShadow, radius: 2, x: 0, y: 1)
         }
     }
 

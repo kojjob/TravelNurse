@@ -41,7 +41,13 @@ struct DocumentVaultView: View {
 struct DocumentVaultContent: View {
 
     @Bindable var viewModel: DocumentVaultViewModel
+    @State private var subscriptionManager = SubscriptionManager.shared
     @State private var showSortMenu = false
+    @State private var showPaywall = false
+
+    private var canAddDocuments: Bool {
+        subscriptionManager.isPremium || viewModel.totalDocuments < subscriptionManager.documentLimit
+    }
 
     var body: some View {
         ZStack {
@@ -61,25 +67,43 @@ struct DocumentVaultContent: View {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
                     Button {
-                        viewModel.showAddDocument = true
+                        if canAddDocuments {
+                            viewModel.showAddDocument = true
+                        } else {
+                            showPaywall = true
+                        }
                     } label: {
                         Label("Add Manually", systemImage: "plus")
                     }
 
                     Button {
-                        viewModel.showDocumentPicker = true
+                        if canAddDocuments {
+                            viewModel.showDocumentPicker = true
+                        } else {
+                            showPaywall = true
+                        }
                     } label: {
                         Label("Import File", systemImage: "doc.badge.plus")
                     }
 
                     Button {
-                        viewModel.showCamera = true
+                        if canAddDocuments {
+                            viewModel.showCamera = true
+                        } else {
+                            showPaywall = true
+                        }
                     } label: {
                         Label("Scan Document", systemImage: "camera.fill")
                     }
                 } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                        if !canAddDocuments {
+                            Image(systemName: "lock.fill")
+                                .font(.caption)
+                        }
+                    }
                 }
             }
 
@@ -134,6 +158,9 @@ struct DocumentVaultContent: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
     }
 
     // MARK: - Empty State
@@ -173,27 +200,32 @@ struct DocumentVaultContent: View {
 
     private var statsSection: some View {
         Section {
-            HStack(spacing: 12) {
-                StatCard(
-                    title: "Total",
-                    value: "\(viewModel.totalDocuments)",
-                    icon: "doc.fill",
-                    color: TNColors.primary
-                )
+            VStack(spacing: 12) {
+                // Document limit warning for free users
+                DocumentLimitWarning(currentCount: viewModel.totalDocuments)
 
-                StatCard(
-                    title: "Tax Home",
-                    value: "\(viewModel.taxHomeProofCount)",
-                    icon: "house.fill",
-                    color: TNColors.success
-                )
+                HStack(spacing: 12) {
+                    DocumentStatCard(
+                        title: "Total",
+                        value: "\(viewModel.totalDocuments)",
+                        icon: "doc.fill",
+                        color: TNColors.primary
+                    )
 
-                StatCard(
-                    title: "Expiring",
-                    value: "\(viewModel.expiringCount)",
-                    icon: "exclamationmark.triangle.fill",
-                    color: viewModel.expiringCount > 0 ? TNColors.warning : TNColors.textSecondaryLight
-                )
+                    DocumentStatCard(
+                        title: "Tax Home",
+                        value: "\(viewModel.taxHomeProofCount)",
+                        icon: "house.fill",
+                        color: TNColors.success
+                    )
+
+                    DocumentStatCard(
+                        title: "Expiring",
+                        value: "\(viewModel.expiringCount)",
+                        icon: "exclamationmark.triangle.fill",
+                        color: viewModel.expiringCount > 0 ? TNColors.warning : TNColors.textSecondaryLight
+                    )
+                }
             }
             .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
             .listRowBackground(Color.clear)
@@ -250,9 +282,9 @@ struct DocumentVaultContent: View {
     }
 }
 
-// MARK: - Stat Card
+// MARK: - Document Stat Card
 
-struct StatCard: View {
+struct DocumentStatCard: View {
     let title: String
     let value: String
     let icon: String
