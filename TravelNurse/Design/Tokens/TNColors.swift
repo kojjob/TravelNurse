@@ -55,43 +55,60 @@ public enum TNColors {
     public static let teal = Color(hex: "00A3A3")
 
     // MARK: - Surface Colors (Light/Dark Adaptive)
+    // NOTE: Using computed properties (var) instead of stored (let) ensures
+    // SwiftUI re-evaluates the trait collection on each access, enabling
+    // proper dark mode reactivity.
 
     /// Main background color
-    public static let background = Color(uiColor: UIColor { traitCollection in
-        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "111827") : UIColor.white
-    })
+    public static var background: Color {
+        Color(uiColor: UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "111827") : UIColor.white
+        })
+    }
 
     /// Card/Surface background
-    public static let surface = Color(uiColor: UIColor { traitCollection in
-        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "1F2937") : UIColor(hex: "FFFFFF")
-    })
+    public static var surface: Color {
+        Color(uiColor: UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "1F2937") : UIColor(hex: "FFFFFF")
+        })
+    }
 
     /// Elevated surface (cards, modals)
-    public static let surfaceElevated = Color(uiColor: UIColor { traitCollection in
-        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "374151") : UIColor(hex: "FFFFFF")
-    })
+    public static var surfaceElevated: Color {
+        Color(uiColor: UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "374151") : UIColor(hex: "FFFFFF")
+        })
+    }
 
     /// Border/Divider color
-    public static let border = Color(uiColor: UIColor { traitCollection in
-        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "374151") : UIColor(hex: "E5E7EB")
-    })
+    public static var border: Color {
+        Color(uiColor: UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "374151") : UIColor(hex: "E5E7EB")
+        })
+    }
 
     // MARK: - Text Colors
 
     /// Primary text color
-    public static let textPrimary = Color(uiColor: UIColor { traitCollection in
-        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "F9FAFB") : UIColor(hex: "111827")
-    })
+    public static var textPrimary: Color {
+        Color(uiColor: UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "F9FAFB") : UIColor(hex: "111827")
+        })
+    }
 
     /// Secondary text color
-    public static let textSecondary = Color(uiColor: UIColor { traitCollection in
-        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "9CA3AF") : UIColor(hex: "6B7280")
-    })
+    public static var textSecondary: Color {
+        Color(uiColor: UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "9CA3AF") : UIColor(hex: "6B7280")
+        })
+    }
 
     /// Tertiary/muted text color
-    public static let textTertiary = Color(uiColor: UIColor { traitCollection in
-        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "6B7280") : UIColor(hex: "9CA3AF")
-    })
+    public static var textTertiary: Color {
+        Color(uiColor: UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "6B7280") : UIColor(hex: "9CA3AF")
+        })
+    }
 
     /// Inverse text (on dark backgrounds)
     public static let textInverse = Color.white
@@ -121,7 +138,7 @@ public enum TNColors {
     )
 
     /// Card background (alias for surface)
-    public static let cardBackground = surface
+    public static var cardBackground: Color { surface }
 
     /// Card shadow color
     public static let cardShadow = Color.black.opacity(0.08)
