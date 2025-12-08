@@ -15,7 +15,7 @@ public enum TNFormatters {
     // MARK: - Currency Formatters
 
     /// Currency formatter for USD with decimals (e.g., $1,234.56)
-    private static let currencyFormatter: NumberFormatter = {
+    private nonisolated(unsafe) static let currencyFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
@@ -47,7 +47,7 @@ public enum TNFormatters {
     // MARK: - Number Formatters
 
     /// Decimal formatter with 2 decimal places
-    private static let decimalFormatter: NumberFormatter = {
+    private nonisolated(unsafe) static let decimalFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 2
@@ -76,7 +76,7 @@ public enum TNFormatters {
     // MARK: - Date Formatters
 
     /// Date formatter for display (e.g., Dec 7, 2025)
-    private static let dateFormatter: DateFormatter = {
+    private nonisolated(unsafe) static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
@@ -119,7 +119,7 @@ public enum TNFormatters {
     /// Format Decimal as currency with decimals
     /// - Parameter value: The Decimal value to format
     /// - Returns: Formatted currency string (e.g., "$1,234.56")
-    public static func currency(_ value: Decimal) -> String {
+    public nonisolated static func currency(_ value: Decimal) -> String {
         currencyFormatter.string(from: value as NSDecimalNumber) ?? "$0.00"
     }
 
@@ -211,7 +211,7 @@ public enum TNFormatters {
     /// Format date for display
     /// - Parameter date: The Date to format
     /// - Returns: Formatted date string (e.g., "Dec 7, 2025")
-    public static func date(_ date: Date) -> String {
+    public nonisolated static func date(_ date: Date) -> String {
         dateFormatter.string(from: date)
     }
 
@@ -248,7 +248,7 @@ public enum TNFormatters {
     /// Format miles with unit
     /// - Parameter miles: The distance in miles
     /// - Returns: Formatted miles string (e.g., "123.4 mi")
-    public static func miles(_ miles: Double) -> String {
+    public nonisolated static func miles(_ miles: Double) -> String {
         let formatted = decimalFormatter.string(from: NSNumber(value: miles)) ?? "0"
         return "\(formatted) mi"
     }

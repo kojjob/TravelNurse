@@ -59,7 +59,7 @@ public enum ExpenseCategory: String, CaseIterable, Codable, Identifiable, Hashab
     public var id: String { rawValue }
 
     /// Human-readable display name
-    public var displayName: String {
+    public nonisolated var displayName: String {
         switch self {
         case .mileage: return "Mileage"
         case .gasoline: return "Gasoline"

@@ -45,7 +45,7 @@ public enum IncomeType: String, Codable, CaseIterable, Identifiable {
     }
 
     /// Whether this income type is typically taxable
-    public var defaultTaxable: Bool {
+    nonisolated public var defaultTaxable: Bool {
         switch self {
         case .bonus, .signOnBonus, .completionBonus, .referralBonus, .overtime, .holidayPay, .other:
             return true

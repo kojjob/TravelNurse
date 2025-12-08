@@ -165,9 +165,9 @@ final class SettingsViewModel {
 
     // MARK: - UserDefaults Keys
 
-    private nonisolated(unsafe) static let notificationPreferencesKey = "settings.notificationPreferences"
-    private nonisolated(unsafe) static let privacySettingsKey = "settings.privacySettings"
-    private nonisolated(unsafe) static let appearanceModeKey = "settings.appearanceMode"
+    private static let notificationPreferencesKey = "settings.notificationPreferences"
+    private static let privacySettingsKey = "settings.privacySettings"
+    private static let appearanceModeKey = "settings.appearanceMode"
 
     // MARK: - State
 

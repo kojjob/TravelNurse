@@ -65,9 +65,12 @@ public final class TaxHomeCompliance {
     }
 
     /// Days until 30-day return required (IRS rule)
+    /// Returns nil if no visit recorded or if last visit is in the future (invalid state)
     public var daysUntil30DayReturn: Int? {
         guard let lastVisit = lastTaxHomeVisit else { return nil }
         let daysSinceVisit = Calendar.current.dateComponents([.day], from: lastVisit, to: Date()).day ?? 0
+        // Future dates are invalid - return nil
+        guard daysSinceVisit >= 0 else { return nil }
         return max(0, 30 - daysSinceVisit)
     }
 
@@ -93,10 +96,11 @@ public final class TaxHomeCompliance {
         checklistItems.count
     }
 
-    /// Checklist completion percentage
+    /// Checklist completion percentage (normalized 0.0 to 1.0)
+    /// Use this value directly for progress bars and multiply by 100 for display
     public var checklistCompletionPercentage: Double {
         guard totalItemsCount > 0 else { return 0 }
-        return Double(completedItemsCount) / Double(totalItemsCount) * 100
+        return Double(completedItemsCount) / Double(totalItemsCount)
     }
 
     // MARK: - Initializer
@@ -242,7 +246,7 @@ extension TaxHomeCompliance {
 // MARK: - Checklist Item Model
 
 /// Individual compliance checklist item
-public struct ComplianceChecklistItem: Codable, Identifiable, Hashable {
+public struct ComplianceChecklistItem: Codable, Identifiable, Hashable, Sendable {
     public let id: String
     public let title: String
     public let description: String
@@ -253,7 +257,7 @@ public struct ComplianceChecklistItem: Codable, Identifiable, Hashable {
     public var documentPath: String?
     public var lastUpdated: Date?
 
-    public init(
+    public nonisolated init(
         id: String,
         title: String,
         description: String,
