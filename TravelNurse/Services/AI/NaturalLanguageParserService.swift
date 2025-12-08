@@ -11,6 +11,11 @@ import NaturalLanguage
 /// Service for parsing natural language into structured data
 final class NaturalLanguageParserService: NaturalLanguageParserAI {
 
+    // MARK: - Constants
+
+    /// Maximum input length to prevent DoS from extremely large inputs
+    private static let maxInputLength = 1000
+
     // MARK: - Components
 
     private let tagger: NLTagger
@@ -24,13 +29,15 @@ final class NaturalLanguageParserService: NaturalLanguageParserAI {
     // MARK: - Expense Parsing
 
     func parseExpenseFromText(_ text: String) async throws -> ParsedExpenseIntent {
-        let normalizedText = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        // Limit input length to prevent DoS
+        let truncatedText = String(text.prefix(Self.maxInputLength))
+        let normalizedText = truncatedText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
-        // Extract components
-        let amount = extractAmount(from: text)
-        let merchant = extractMerchant(from: text)
-        let date = extractDate(from: text)
-        let description = extractDescription(from: text, excludingMerchant: merchant)
+        // Extract components from truncated text
+        let amount = extractAmount(from: truncatedText)
+        let merchant = extractMerchant(from: truncatedText)
+        let date = extractDate(from: truncatedText)
+        let description = extractDescription(from: truncatedText, excludingMerchant: merchant)
 
         // Determine category based on extracted info
         let categoryPrediction = try await categorizationService.categorizeExpense(
@@ -60,19 +67,21 @@ final class NaturalLanguageParserService: NaturalLanguageParserAI {
     // MARK: - Mileage Parsing
 
     func parseMileageFromText(_ text: String) async throws -> ParsedMileageIntent {
-        let normalizedText = text.lowercased()
+        // Limit input length to prevent DoS
+        let truncatedText = String(text.prefix(Self.maxInputLength))
+        let normalizedText = truncatedText.lowercased()
 
         // Extract miles
         let miles = extractMiles(from: normalizedText)
 
         // Extract locations
-        let (startLocation, endLocation) = extractLocations(from: text)
+        let (startLocation, endLocation) = extractLocations(from: truncatedText)
 
         // Extract purpose
         let purpose = extractTripPurpose(from: normalizedText)
 
         // Extract date
-        let date = extractDate(from: text)
+        let date = extractDate(from: truncatedText)
 
         // Calculate confidence
         var confidence = 0.0

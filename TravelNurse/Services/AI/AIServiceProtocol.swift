@@ -42,7 +42,7 @@ protocol TaxAssistantAI {
 // MARK: - Data Models
 
 /// Input for expense categorization
-struct ExpenseInput: Identifiable {
+struct ExpenseInput: Identifiable, Sendable {
     let id: UUID
     let description: String
     let merchant: String?
@@ -51,7 +51,7 @@ struct ExpenseInput: Identifiable {
 }
 
 /// Prediction result for expense category
-struct ExpenseCategoryPrediction: Identifiable {
+struct ExpenseCategoryPrediction: Identifiable, Sendable {
     let id: UUID
     let category: ExpenseCategory
     let confidence: Double
@@ -77,7 +77,7 @@ struct ExpenseCategoryPrediction: Identifiable {
 }
 
 /// Parsed expense intent from natural language
-struct ParsedExpenseIntent {
+struct ParsedExpenseIntent: Sendable {
     let amount: Decimal?
     let description: String?
     let merchant: String?
@@ -92,7 +92,7 @@ struct ParsedExpenseIntent {
 }
 
 /// Parsed mileage intent from natural language
-struct ParsedMileageIntent {
+struct ParsedMileageIntent: Sendable {
     let miles: Double?
     let startLocation: String?
     let endLocation: String?
@@ -107,7 +107,7 @@ struct ParsedMileageIntent {
 }
 
 /// Context for tax assistant conversations
-struct TaxAssistantContext {
+struct TaxAssistantContext: Sendable {
     let taxYear: Int
     let taxHomeState: USState?
     let hasMultipleStates: Bool
@@ -116,7 +116,7 @@ struct TaxAssistantContext {
     let currentAssignment: AssignmentSummary?
     let conversationHistory: [ChatMessage]
 
-    struct AssignmentSummary {
+    struct AssignmentSummary: Sendable {
         let facilityName: String
         let state: USState
         let weeklyGross: Decimal
@@ -144,13 +144,13 @@ struct TaxAssistantContext {
 }
 
 /// Chat message for conversation history
-struct ChatMessage: Identifiable, Equatable {
+struct ChatMessage: Identifiable, Equatable, Sendable {
     let id: UUID
     let role: Role
     let content: String
     let timestamp: Date
 
-    enum Role: String, Codable {
+    enum Role: String, Codable, Sendable {
         case user
         case assistant
         case system
@@ -165,7 +165,7 @@ struct ChatMessage: Identifiable, Equatable {
 }
 
 /// Response from tax assistant
-struct TaxAssistantResponse {
+struct TaxAssistantResponse: Sendable {
     let message: String
     let suggestions: [String]
     let relatedTopics: [String]
@@ -188,7 +188,7 @@ struct TaxAssistantResponse {
 }
 
 /// Tax tip suggestion
-struct TaxTip: Identifiable {
+struct TaxTip: Identifiable, Sendable {
     let id: UUID
     let title: String
     let description: String
@@ -196,14 +196,14 @@ struct TaxTip: Identifiable {
     let priority: Priority
     let potentialSavings: Decimal?
 
-    enum TipCategory: String {
+    enum TipCategory: String, Sendable {
         case deduction = "Deduction"
         case compliance = "Compliance"
         case planning = "Planning"
         case warning = "Warning"
     }
 
-    enum Priority: Int, Comparable {
+    enum Priority: Int, Comparable, Sendable {
         case low = 1
         case medium = 2
         case high = 3
@@ -232,7 +232,7 @@ struct TaxTip: Identifiable {
 
 // MARK: - AI Errors
 
-enum AIServiceError: LocalizedError {
+enum AIServiceError: LocalizedError, Sendable {
     case networkError(String)
     case apiKeyMissing
     case rateLimitExceeded

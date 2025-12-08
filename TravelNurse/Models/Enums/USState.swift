@@ -8,7 +8,7 @@
 import Foundation
 
 /// All US states and territories for tax tracking purposes
-public enum USState: String, CaseIterable, Codable, Identifiable, Hashable {
+public enum USState: String, CaseIterable, Codable, Identifiable, Hashable, Sendable {
     case alabama = "AL"
     case alaska = "AK"
     case arizona = "AZ"

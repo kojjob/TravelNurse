@@ -10,6 +10,11 @@ import Foundation
 /// Service providing AI tax assistance for travel nurses
 final class TaxAssistantService: TaxAssistantAI {
 
+    // MARK: - Constants
+
+    /// Maximum message length to prevent DoS from extremely large inputs
+    private static let maxMessageLength = 500
+
     // MARK: - Knowledge Base
 
     private let knowledgeBase: TaxKnowledgeBase
@@ -21,14 +26,16 @@ final class TaxAssistantService: TaxAssistantAI {
     // MARK: - TaxAssistantAI
 
     func sendMessage(_ message: String, context: TaxAssistantContext) async throws -> TaxAssistantResponse {
-        let normalizedMessage = message.lowercased()
+        // Limit input length to prevent DoS
+        let truncatedMessage = String(message.prefix(Self.maxMessageLength))
+        let normalizedMessage = truncatedMessage.lowercased()
 
         // Find matching topics in knowledge base
         let matchedTopics = knowledgeBase.findMatchingTopics(for: normalizedMessage)
 
         if let bestMatch = matchedTopics.first {
             // Build response with context
-            let response = buildResponse(for: bestMatch, context: context, originalMessage: message)
+            let response = buildResponse(for: bestMatch, context: context, originalMessage: truncatedMessage)
             return response
         }
 
