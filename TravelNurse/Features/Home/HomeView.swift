@@ -20,6 +20,8 @@ struct HomeView: View {
     @State private var showingDocuments = false
     @State private var showingAssignmentDetail = false
     @State private var showingCalculator = false
+    @State private var showingTaxAssistant = false
+    @State private var showingQuickAdd = false
 
     // Animation states
     @State private var cardsAppeared = false
@@ -87,6 +89,18 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingCalculator) {
                 StipendCalculatorView()
+            }
+            .sheet(isPresented: $showingTaxAssistant) {
+                TaxAssistantView()
+            }
+            .sheet(isPresented: $showingQuickAdd) {
+                QuickAddExpenseView { parsedExpense in
+                    // Handle the parsed expense
+                    // This would create an actual expense from the parsed data
+                    Task {
+                        await viewModel.refresh()
+                    }
+                }
             }
         }
     }
@@ -334,6 +348,24 @@ struct HomeView: View {
                     ) {
                         HapticManager.lightImpact()
                         showingTaxHome = true
+                    }
+
+                    QuickActionButton(
+                        title: "AI Assistant",
+                        icon: "brain.head.profile",
+                        color: TNColors.primary
+                    ) {
+                        HapticManager.lightImpact()
+                        showingTaxAssistant = true
+                    }
+
+                    QuickActionButton(
+                        title: "Quick Add",
+                        icon: "wand.and.stars",
+                        color: Color(hex: "EC4899")
+                    ) {
+                        HapticManager.lightImpact()
+                        showingQuickAdd = true
                     }
                 }
             }
