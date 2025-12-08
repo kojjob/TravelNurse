@@ -93,11 +93,13 @@ public final class MileageTrip {
     }
 
     /// Formatted deduction amount
+    @MainActor
     public var deductionFormatted: String {
         TNFormatters.currency(deductionAmount)
     }
 
     /// Formatted distance
+    @MainActor
     public var distanceFormatted: String {
         TNFormatters.miles(distanceMiles)
     }

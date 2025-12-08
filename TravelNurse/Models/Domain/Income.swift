@@ -45,7 +45,7 @@ public enum IncomeType: String, Codable, CaseIterable, Identifiable {
     }
 
     /// Whether this income type is typically taxable
-    public var defaultTaxable: Bool {
+    public nonisolated var defaultTaxable: Bool {
         switch self {
         case .bonus, .signOnBonus, .completionBonus, .referralBonus, .overtime, .holidayPay, .other:
             return true
@@ -113,7 +113,7 @@ public final class Income {
 
     // MARK: - Initializer
 
-    public init(
+    @MainActor public init(
         type: IncomeType,
         amount: Decimal,
         date: Date = Date(),
@@ -128,9 +128,14 @@ public final class Income {
         self.date = date
         self.source = source
         self.notes = notes
-        self.isTaxable = isTaxable ?? type.defaultTaxable
+        if let isTaxable = isTaxable {
+            self.isTaxable = isTaxable
+        } else {
+            self.isTaxable = type.defaultTaxable
+        }
         self.assignment = assignment
         self.taxYear = Calendar.current.component(.year, from: date)
         self.createdAt = Date()
     }
 }
+
