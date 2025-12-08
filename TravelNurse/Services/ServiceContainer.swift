@@ -42,6 +42,9 @@ public final class ServiceContainer {
     /// Location tracking service for GPS mileage
     public private(set) var locationService: LocationService?
 
+    /// Push notification service for compliance reminders
+    public private(set) var notificationService: NotificationService?
+
     // MARK: - Initialization
 
     private init() {}
@@ -59,6 +62,9 @@ public final class ServiceContainer {
 
         // Initialize location service (doesn't need model context)
         self.locationService = LocationService()
+
+        // Initialize notification service (doesn't need model context)
+        self.notificationService = NotificationService()
     }
 
     // MARK: - Service Access
@@ -103,6 +109,14 @@ public final class ServiceContainer {
         return service
     }
 
+    /// Get notification service (throws if not configured)
+    public func getNotificationService() throws -> NotificationService {
+        guard let service = notificationService else {
+            throw ServiceContainerError.serviceNotConfigured("NotificationService")
+        }
+        return service
+    }
+
     // MARK: - Testing Support
 
     /// Reset all services (primarily for testing)
@@ -112,6 +126,7 @@ public final class ServiceContainer {
         complianceService = nil
         mileageService = nil
         locationService = nil
+        notificationService = nil
         modelContext = nil
     }
 

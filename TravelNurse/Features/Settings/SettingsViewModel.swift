@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import UIKit
 import StoreKit
+import UserNotifications
 
 /// User profile display data for settings screen
 /// Note: This is separate from the domain UserProfile model to allow
@@ -213,6 +214,10 @@ final class SettingsViewModel {
     // MARK: - Dependencies
 
     private let serviceContainer: ServiceContainer
+    private var notificationService: NotificationService?
+
+    /// Whether notification permission has been granted
+    private(set) var notificationPermissionGranted = false
 
     // MARK: - Computed Properties
 
@@ -274,6 +279,7 @@ final class SettingsViewModel {
 
     init(serviceContainer: ServiceContainer = .shared) {
         self.serviceContainer = serviceContainer
+        self.notificationService = try? serviceContainer.getNotificationService()
     }
 
     // MARK: - Persistence
@@ -358,6 +364,11 @@ final class SettingsViewModel {
     func toggleNotification(_ keyPath: WritableKeyPath<NotificationPreferences, Bool>) {
         notificationPreferences[keyPath: keyPath].toggle()
         saveNotificationPreferences()
+
+        // Sync notification schedules with updated preferences
+        Task {
+            await syncNotificationSchedules()
+        }
     }
 
     /// Toggle privacy setting
@@ -456,6 +467,135 @@ final class SettingsViewModel {
             return
         }
         SKStoreReviewController.requestReview(in: windowScene)
+    }
+
+    // MARK: - Notification Management
+
+    /// Request notification permission from the user
+    func requestNotificationPermission() async {
+        let center = UNUserNotificationCenter.current()
+
+        do {
+            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+            notificationPermissionGranted = granted
+
+            if granted {
+                ServiceLogger.log("Notification permission granted", category: .notification, level: .info)
+            } else {
+                ServiceLogger.log("Notification permission denied", category: .notification, level: .warning)
+            }
+        } catch {
+            ServiceLogger.log("Failed to request notification permission", category: .notification, level: .error, error: error)
+            notificationPermissionGranted = false
+        }
+    }
+
+    /// Check current notification permission status
+    func checkNotificationPermission() async {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+
+        notificationPermissionGranted = settings.authorizationStatus == .authorized
+    }
+
+    /// Schedule a notification based on type
+    func scheduleNotification(type: NotificationType, context: [String: String] = [:], trigger: UNNotificationTrigger?) async {
+        if !notificationPermissionGranted {
+            await requestNotificationPermission()
+        }
+
+        guard notificationPermissionGranted else { return }
+        guard let service = notificationService else { return }
+
+        let content = service.createNotificationContent(for: type, context: context)
+        let request = service.createNotificationRequest(type: type, content: content, trigger: trigger)
+
+        do {
+            let center = UNUserNotificationCenter.current()
+            try await center.add(request)
+            ServiceLogger.log("Scheduled notification: \(type.identifier)", category: .notification, level: .info)
+        } catch {
+            ServiceLogger.log("Failed to schedule notification", category: .notification, level: .error, error: error)
+        }
+    }
+
+    /// Cancel all pending notifications of a specific type
+    func cancelNotifications(of type: NotificationType) {
+        let typeIdentifier = type.identifier
+        let center = UNUserNotificationCenter.current()
+        center.getPendingNotificationRequests { requests in
+            let identifiersToRemove = requests
+                .filter { $0.identifier.hasPrefix(typeIdentifier) }
+                .map { $0.identifier }
+
+            if !identifiersToRemove.isEmpty {
+                center.removePendingNotificationRequests(withIdentifiers: identifiersToRemove)
+                ServiceLogger.log("Cancelled \(identifiersToRemove.count) notifications of type: \(typeIdentifier)", category: .notification, level: .info)
+            }
+        }
+    }
+
+    /// Schedule tax deadline reminders for the current year
+    func scheduleTaxDeadlineReminders() async {
+        guard notificationPreferences.taxDeadlineReminders else { return }
+        guard let service = notificationService else { return }
+
+        let currentYear = Calendar.current.component(.year, from: Date())
+        let deadlines = NotificationService.quarterlyTaxDeadlines(for: currentYear)
+
+        for deadline in deadlines {
+            // Schedule reminder 7 days before each deadline
+            let reminderDate = Calendar.current.date(byAdding: .day, value: -7, to: deadline.date)
+
+            guard let reminderDate = reminderDate, reminderDate > Date() else { continue }
+
+            let trigger = service.createDateTrigger(for: reminderDate)
+            let context = [
+                "quarter": deadline.quarter,
+                "date": TNFormatters.date(deadline.date)
+            ]
+
+            await scheduleNotification(type: .taxDeadlineReminder, context: context, trigger: trigger)
+        }
+    }
+
+    /// Schedule weekly expense reminder
+    func scheduleExpenseReminder() async {
+        guard notificationPreferences.expenseReminders else { return }
+        guard let service = notificationService else { return }
+
+        // Schedule for Friday at 5pm
+        let trigger = service.createWeeklyTrigger(weekday: 6, hour: 17, minute: 0)
+        await scheduleNotification(type: .expenseReminder, trigger: trigger)
+    }
+
+    /// Update notifications based on current preferences
+    func syncNotificationSchedules() async {
+        await checkNotificationPermission()
+
+        guard notificationPermissionGranted && notificationPreferences.pushEnabled else {
+            // Cancel all notifications if push is disabled
+            let center = UNUserNotificationCenter.current()
+            center.removeAllPendingNotificationRequests()
+            return
+        }
+
+        // Schedule based on preferences
+        if notificationPreferences.taxDeadlineReminders {
+            await scheduleTaxDeadlineReminders()
+        } else {
+            cancelNotifications(of: .taxDeadlineReminder)
+        }
+
+        if notificationPreferences.expenseReminders {
+            await scheduleExpenseReminder()
+        } else {
+            cancelNotifications(of: .expenseReminder)
+        }
+
+        if !notificationPreferences.assignmentReminders {
+            cancelNotifications(of: .assignmentEnding)
+        }
     }
 }
 
