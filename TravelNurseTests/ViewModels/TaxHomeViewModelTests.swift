@@ -537,14 +537,15 @@ final class TaxHomeComplianceTests: XCTestCase {
 @MainActor
 final class ComplianceChecklistItemTests: XCTestCase {
 
-    func testInit_setsDefaultStatus() {
+    func testInit_setsPropertiesCorrectly() {
         // Given
         let item = ComplianceChecklistItem(
             id: "test-id",
             title: "Test Item",
             description: "Test description",
             category: .residence,
-            weight: 1
+            weight: 1,
+            status: .incomplete
         )
 
         // Then
@@ -580,15 +581,16 @@ final class ComplianceChecklistItemTests: XCTestCase {
             title: "Test Item",
             description: "Test description",
             category: .residence,
-            weight: 1
+            weight: 1,
+            status: .incomplete
         )
-        XCTAssertEqual(item.status, .incomplete)
+        XCTAssertEqual(item.status, ComplianceItemStatus.incomplete)
 
         // When
-        item.status = .complete
+        item.status = ComplianceItemStatus.complete
 
         // Then
-        XCTAssertEqual(item.status, .complete)
+        XCTAssertEqual(item.status, ComplianceItemStatus.complete)
     }
 
     func testWeight_affectsScoring() {
@@ -598,7 +600,8 @@ final class ComplianceChecklistItemTests: XCTestCase {
             title: "Low Weight Item",
             description: "Description",
             category: .residence,
-            weight: 1
+            weight: 1,
+            status: .incomplete
         )
 
         let highWeightItem = ComplianceChecklistItem(
@@ -606,7 +609,8 @@ final class ComplianceChecklistItemTests: XCTestCase {
             title: "High Weight Item",
             description: "Description",
             category: .residence,
-            weight: 10
+            weight: 10,
+            status: .incomplete
         )
 
         // Then
@@ -623,7 +627,8 @@ final class ComplianceChecklistItemTests: XCTestCase {
                 title: "Test",
                 description: "Description",
                 category: category,
-                weight: 1
+                weight: 1,
+                status: .incomplete
             )
 
             // Then

@@ -181,12 +181,12 @@ final class OCRService: OCRServiceProtocol {
 
     private func extractTotalAmount(from text: String) -> Decimal? {
         // Common patterns for total amounts on receipts
+        // Note: Using word boundary \b to avoid matching "subtotal" with "total"
         let patterns = [
-            "total\\s*[:\\$]?\\s*\\$?([0-9]+\\.?[0-9]*)",
+            "\\btotal\\s*[:\\$]?\\s*\\$?([0-9]+\\.?[0-9]*)",
             "grand\\s*total\\s*[:\\$]?\\s*\\$?([0-9]+\\.?[0-9]*)",
             "amount\\s*due\\s*[:\\$]?\\s*\\$?([0-9]+\\.?[0-9]*)",
-            "balance\\s*due\\s*[:\\$]?\\s*\\$?([0-9]+\\.?[0-9]*)",
-            "\\$([0-9]+\\.[0-9]{2})"
+            "balance\\s*due\\s*[:\\$]?\\s*\\$?([0-9]+\\.?[0-9]*)"
         ]
 
         let lowercasedText = text.lowercased()
