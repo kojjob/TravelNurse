@@ -56,8 +56,8 @@ public final class TaxHomeCompliance {
     /// Checklist items decoded from JSON
     public var checklistItems: [ComplianceChecklistItem] {
         get {
-            guard let data = checklistItemsData else { return Self.defaultChecklistItems }
-            return (try? JSONDecoder().decode([ComplianceChecklistItem].self, from: data)) ?? Self.defaultChecklistItems
+            guard let data = checklistItemsData else { return defaultTaxHomeChecklistItems }
+            return (try? JSONDecoder().decode([ComplianceChecklistItem].self, from: data)) ?? defaultTaxHomeChecklistItems
         }
         set {
             checklistItemsData = try? JSONEncoder().encode(newValue)
@@ -110,7 +110,7 @@ public final class TaxHomeCompliance {
         self.createdAt = Date()
         self.updatedAt = Date()
         // Initialize with default checklist
-        self.checklistItems = Self.defaultChecklistItems
+        self.checklistItems = defaultTaxHomeChecklistItems
     }
 }
 
@@ -165,116 +165,8 @@ extension TaxHomeCompliance {
 
 extension TaxHomeCompliance {
     /// Default IRS tax home compliance checklist items
-    public static let defaultChecklistItems: [ComplianceChecklistItem] = [
-        ComplianceChecklistItem(
-            id: "maintain_residence",
-            title: "Maintain a residence at tax home",
-            description: "You own or rent a home at your tax home location",
-            category: .residence,
-            weight: 15
-        ),
-        ComplianceChecklistItem(
-            id: "pay_expenses",
-            title: "Pay tax home expenses",
-            description: "You pay mortgage/rent and utilities at your tax home",
-            category: .residence,
-            weight: 15
-        ),
-        ComplianceChecklistItem(
-            id: "regular_visits",
-            title: "Return regularly to tax home",
-            description: "You return to your tax home at least once every 30 days",
-            category: .presence,
-            weight: 15
-        ),
-        ComplianceChecklistItem(
-            id: "family_ties",
-            title: "Family at tax home",
-            description: "Family members live at your tax home (spouse, children, etc.)",
-            category: .ties,
-            weight: 10
-        ),
-        ComplianceChecklistItem(
-            id: "voter_registration",
-            title: "Voter registration",
-            description: "You're registered to vote at your tax home address",
-            category: .ties,
-            weight: 5
-        ),
-        ComplianceChecklistItem(
-            id: "drivers_license",
-            title: "Driver's license",
-            description: "Your driver's license shows your tax home address",
-            category: .ties,
-            weight: 5
-        ),
-        ComplianceChecklistItem(
-            id: "vehicle_registration",
-            title: "Vehicle registration",
-            description: "Your vehicle is registered at your tax home address",
-            category: .ties,
-            weight: 5
-        ),
-        ComplianceChecklistItem(
-            id: "bank_accounts",
-            title: "Bank accounts",
-            description: "You have bank accounts at your tax home location",
-            category: .ties,
-            weight: 5
-        ),
-        ComplianceChecklistItem(
-            id: "professional_affiliations",
-            title: "Professional affiliations",
-            description: "You maintain professional memberships at your tax home",
-            category: .ties,
-            weight: 5
-        ),
-        ComplianceChecklistItem(
-            id: "religious_civic",
-            title: "Community involvement",
-            description: "You're involved in religious/civic organizations at tax home",
-            category: .ties,
-            weight: 5
-        )
-    ]
-}
-
-// MARK: - Checklist Item Model
-
-/// Individual compliance checklist item
-public struct ComplianceChecklistItem: Codable, Identifiable, Hashable {
-    public let id: String
-    public let title: String
-    public let description: String
-    public let category: ChecklistCategory
-    public let weight: Int
-    public var status: ComplianceItemStatus
-    public var notes: String?
-    public var documentPath: String?
-    public var lastUpdated: Date?
-
-    public init(
-        id: String,
-        title: String,
-        description: String,
-        category: ChecklistCategory,
-        weight: Int,
-        status: ComplianceItemStatus = .incomplete
-    ) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.category = category
-        self.weight = weight
-        self.status = status
+    /// Note: Actual items defined in ComplianceChecklistItem.swift to avoid MainActor isolation
+    @MainActor public static var defaultChecklistItems: [ComplianceChecklistItem] {
+        defaultTaxHomeChecklistItems
     }
-}
-
-/// Categories for checklist items
-public enum ChecklistCategory: String, Codable, CaseIterable {
-    case residence = "Residence"
-    case presence = "Physical Presence"
-    case ties = "Community Ties"
-    case financial = "Financial Ties"
-    case documentation = "Documentation"
 }
