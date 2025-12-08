@@ -13,6 +13,7 @@ struct HomeView: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = HomeViewModel()
+    @State private var subscriptionManager = SubscriptionManager.shared
     @State private var showingAddExpense = false
     @State private var showingMileageLog = false
     @State private var showingTaxHome = false
@@ -22,6 +23,7 @@ struct HomeView: View {
     @State private var showingCalculator = false
     @State private var showingTaxAssistant = false
     @State private var showingQuickAdd = false
+    @State private var showingPaywall = false
 
     // Animation states
     @State private var cardsAppeared = false
@@ -101,6 +103,9 @@ struct HomeView: View {
                         await viewModel.refresh()
                     }
                 }
+            }
+            .sheet(isPresented: $showingPaywall) {
+                PaywallView()
             }
         }
     }
@@ -299,6 +304,11 @@ struct HomeView: View {
 
     private var quickActionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Upgrade banner for free users
+            if !subscriptionManager.isPremium {
+                UpgradeBanner()
+            }
+
             Text("Quick Actions")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(TNColors.textPrimary)
@@ -350,22 +360,34 @@ struct HomeView: View {
                         showingTaxHome = true
                     }
 
-                    QuickActionButton(
+                    PremiumQuickActionButton(
                         title: "AI Assistant",
                         icon: "brain.head.profile",
-                        color: TNColors.primary
+                        color: TNColors.primary,
+                        feature: .aiTaxAssistant,
+                        isPremium: subscriptionManager.isPremium
                     ) {
                         HapticManager.lightImpact()
-                        showingTaxAssistant = true
+                        if subscriptionManager.canAccess(.aiTaxAssistant) {
+                            showingTaxAssistant = true
+                        } else {
+                            showingPaywall = true
+                        }
                     }
 
-                    QuickActionButton(
+                    PremiumQuickActionButton(
                         title: "Quick Add",
                         icon: "wand.and.stars",
-                        color: Color(hex: "EC4899")
+                        color: Color(hex: "EC4899"),
+                        feature: .quickAddExpense,
+                        isPremium: subscriptionManager.isPremium
                     ) {
                         HapticManager.lightImpact()
-                        showingQuickAdd = true
+                        if subscriptionManager.canAccess(.quickAddExpense) {
+                            showingQuickAdd = true
+                        } else {
+                            showingPaywall = true
+                        }
                     }
                 }
             }
@@ -497,6 +519,58 @@ struct QuickActionButton: View {
                     Image(systemName: icon)
                         .font(.system(size: 18))
                         .foregroundColor(color)
+                }
+
+                Text(title)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(TNColors.textSecondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Premium Quick Action Button
+
+struct PremiumQuickActionButton: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let feature: PremiumFeature
+    let isPremium: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.12))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: icon)
+                        .font(.system(size: 18))
+                        .foregroundColor(color)
+
+                    // Lock badge for non-premium
+                    if !isPremium {
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Spacer()
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 8))
+                                    .foregroundColor(.white)
+                                    .padding(4)
+                                    .background(Color.black.opacity(0.6))
+                                    .clipShape(Circle())
+                                    .offset(x: 4, y: 4)
+                            }
+                        }
+                        .frame(width: 44, height: 44)
+                    }
                 }
 
                 Text(title)
