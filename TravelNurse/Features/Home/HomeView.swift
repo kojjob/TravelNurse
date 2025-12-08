@@ -70,6 +70,16 @@ struct HomeView: View {
             }) {
                 MileageTrackerView()
             }
+            .sheet(isPresented: $showingTaxHome, onDismiss: {
+                Task {
+                    await viewModel.refresh()
+                }
+            }) {
+                TaxHomeView()
+            }
+            .sheet(isPresented: $showingReports) {
+                ReportsView()
+            }
         }
     }
 
