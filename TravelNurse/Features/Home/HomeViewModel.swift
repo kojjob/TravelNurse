@@ -217,11 +217,72 @@ final class HomeViewModel {
         ytdDeductions
     }
 
-    /// Income change percentage from last month (placeholder calculation)
+    /// Income change percentage from last month
     var incomeChangePercent: Double {
-        // TODO: Implement actual month-over-month calculation
-        // For now, return a positive placeholder
-        12.5
+        calculateMonthOverMonthChange()
+    }
+
+    /// Calculate actual month-over-month income change
+    private func calculateMonthOverMonthChange() -> Double {
+        guard let assignmentService = serviceContainer.assignmentService else { return 0 }
+
+        let calendar = Calendar.current
+        let now = Date()
+
+        // Get current month range
+        guard let currentMonthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: now)),
+              let currentMonthEnd = calendar.date(byAdding: .month, value: 1, to: currentMonthStart),
+              let previousMonthStart = calendar.date(byAdding: .month, value: -1, to: currentMonthStart) else {
+            return 0
+        }
+
+        let assignments = assignmentService.fetchAllOrEmpty()
+
+        // Calculate income for current month (pro-rated)
+        let currentMonthIncome = calculateIncomeForPeriod(
+            assignments: assignments,
+            startDate: currentMonthStart,
+            endDate: min(currentMonthEnd, now)
+        )
+
+        // Calculate income for previous month
+        let previousMonthIncome = calculateIncomeForPeriod(
+            assignments: assignments,
+            startDate: previousMonthStart,
+            endDate: currentMonthStart
+        )
+
+        // Calculate percentage change
+        guard previousMonthIncome > 0 else {
+            return currentMonthIncome > 0 ? 100 : 0
+        }
+
+        let change = ((currentMonthIncome - previousMonthIncome) / previousMonthIncome) * 100
+        return Double(truncating: change as NSNumber)
+    }
+
+    /// Calculate income for a specific date range from assignments
+    private func calculateIncomeForPeriod(assignments: [Assignment], startDate: Date, endDate: Date) -> Decimal {
+        let calendar = Calendar.current
+
+        return assignments.reduce(Decimal.zero) { total, assignment in
+            guard let pay = assignment.payBreakdown else { return total }
+
+            // Check if assignment overlaps with the period
+            let assignmentEnd = assignment.endDate
+            guard assignment.startDate < endDate && assignmentEnd > startDate else { return total }
+
+            // Calculate overlap
+            let overlapStart = max(assignment.startDate, startDate)
+            let overlapEnd = min(assignmentEnd, endDate)
+
+            let days = calendar.dateComponents([.day], from: overlapStart, to: overlapEnd).day ?? 0
+            guard days > 0 else { return total }
+
+            // Calculate daily rate and pro-rate
+            let dailyRate = pay.weeklyGross / 7
+            return total + (dailyRate * Decimal(days))
+        }
     }
 
     /// Whether the income change is positive
@@ -263,14 +324,40 @@ final class HomeViewModel {
 
     /// Compliance badge text for Tax Home quick action
     var complianceBadge: String {
-        // TODO: Get actual compliance status from ComplianceService
-        "On Track"
+        guard let complianceService = serviceContainer.complianceService else {
+            return "Unknown"
+        }
+
+        let level = complianceService.currentComplianceLevel()
+        switch level {
+        case .excellent:
+            return "Excellent"
+        case .compliant:
+            return "On Track"
+        case .atRisk:
+            return "At Risk"
+        case .unknown:
+            return "Setup Needed"
+        }
     }
 
     /// Compliance badge color
     var complianceBadgeColor: Color {
-        // TODO: Calculate based on actual compliance level
-        TNColors.success
+        guard let complianceService = serviceContainer.complianceService else {
+            return TNColors.textSecondary
+        }
+
+        let level = complianceService.currentComplianceLevel()
+        switch level {
+        case .excellent:
+            return TNColors.success
+        case .compliant:
+            return TNColors.primary
+        case .atRisk:
+            return TNColors.error
+        case .unknown:
+            return TNColors.warning
+        }
     }
 
     /// Weekly rate as Decimal value for AssignmentProgressCard
@@ -282,23 +369,149 @@ final class HomeViewModel {
 
     /// Trend data for income mini chart (last 6 months normalized 0-1)
     var incomeTrendData: [Double] {
-        // TODO: Implement actual monthly income trend calculation
-        // For now, return sample upward trend data
-        [0.3, 0.4, 0.35, 0.5, 0.6, 0.75, 0.85]
+        calculateMonthlyTrendData(type: .income)
     }
 
     /// Trend data for deductions mini chart (last 6 months normalized 0-1)
     var deductionsTrendData: [Double] {
-        // TODO: Implement actual monthly deductions trend calculation
-        // For now, return sample trend data
-        [0.2, 0.3, 0.25, 0.4, 0.35, 0.5, 0.45]
+        calculateMonthlyTrendData(type: .deductions)
     }
 
     /// Percentage of quarterly tax already paid (0.0 to 1.0)
+    /// Note: This calculates based on time elapsed in the quarter as a proxy
+    /// until actual payment tracking is implemented
     var taxPaidPercentage: Double {
-        // TODO: Implement actual tax payment tracking
-        // For now, return placeholder (75% paid as shown in design)
-        0.75
+        calculateQuarterProgress()
+    }
+
+    /// Type of trend data to calculate
+    private enum TrendType {
+        case income
+        case deductions
+    }
+
+    /// Calculate monthly trend data for the last 6 months
+    private func calculateMonthlyTrendData(type: TrendType) -> [Double] {
+        let calendar = Calendar.current
+        let now = Date()
+
+        // Get the start of the current month and go back 6 months
+        guard let currentMonthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) else {
+            return Array(repeating: 0.5, count: 6)
+        }
+
+        var monthlyValues: [Decimal] = []
+
+        // Calculate values for each of the last 6 months
+        for monthOffset in (0..<6).reversed() {
+            guard let monthStart = calendar.date(byAdding: .month, value: -monthOffset, to: currentMonthStart),
+                  let monthEnd = calendar.date(byAdding: .month, value: 1, to: monthStart) else {
+                monthlyValues.append(0)
+                continue
+            }
+
+            let value: Decimal
+            switch type {
+            case .income:
+                value = calculateIncomeForMonth(startDate: monthStart, endDate: monthEnd)
+            case .deductions:
+                value = calculateDeductionsForMonth(startDate: monthStart, endDate: monthEnd)
+            }
+            monthlyValues.append(value)
+        }
+
+        // Normalize to 0-1 range
+        let maxValue = monthlyValues.max() ?? 1
+        guard maxValue > 0 else {
+            return Array(repeating: 0.1, count: 6)
+        }
+
+        return monthlyValues.map { value in
+            let normalized = Double(truncating: (value / maxValue) as NSNumber)
+            return max(0.1, min(1.0, normalized)) // Ensure minimum visibility
+        }
+    }
+
+    /// Calculate income for a specific month
+    private func calculateIncomeForMonth(startDate: Date, endDate: Date) -> Decimal {
+        guard let assignmentService = serviceContainer.assignmentService else { return 0 }
+        let assignments = assignmentService.fetchAllOrEmpty()
+        return calculateIncomeForPeriod(assignments: assignments, startDate: startDate, endDate: endDate)
+    }
+
+    /// Calculate deductions for a specific month
+    private func calculateDeductionsForMonth(startDate: Date, endDate: Date) -> Decimal {
+        var total: Decimal = 0
+
+        // Get expenses
+        if let expenseService = serviceContainer.expenseService {
+            let expenses = expenseService.fetchAllOrEmpty()
+            let monthExpenses = expenses.filter {
+                $0.date >= startDate && $0.date < endDate && $0.isDeductible
+            }
+            total += monthExpenses.reduce(Decimal.zero) { $0 + $1.amount }
+        }
+
+        // Get mileage deductions
+        if let mileageService = serviceContainer.mileageService {
+            let trips = mileageService.fetchAllOrEmpty()
+            let monthTrips = trips.filter {
+                $0.startTime >= startDate && $0.startTime < endDate
+            }
+            total += monthTrips.reduce(Decimal.zero) { $0 + $1.deductionAmount }
+        }
+
+        return total
+    }
+
+    /// Calculate progress through the current quarter (as a proxy for tax paid)
+    private func calculateQuarterProgress() -> Double {
+        let calendar = Calendar.current
+        let now = Date()
+
+        let month = calendar.component(.month, from: now)
+
+        // Determine which quarter we're in and the quarter boundaries
+        let quarterStartMonth: Int
+        let quarterEndMonth: Int
+
+        switch month {
+        case 1...3:
+            quarterStartMonth = 1
+            quarterEndMonth = 4
+        case 4...6:
+            quarterStartMonth = 4
+            quarterEndMonth = 7
+        case 7...9:
+            quarterStartMonth = 7
+            quarterEndMonth = 10
+        default:
+            quarterStartMonth = 10
+            quarterEndMonth = 1 // Next year
+        }
+
+        // Calculate days elapsed in quarter
+        guard let quarterStart = calendar.date(from: DateComponents(
+            year: calendar.component(.year, from: now),
+            month: quarterStartMonth,
+            day: 1
+        )) else {
+            return 0.5
+        }
+
+        let nextYear = quarterEndMonth == 1 ? calendar.component(.year, from: now) + 1 : calendar.component(.year, from: now)
+        guard let quarterEnd = calendar.date(from: DateComponents(
+            year: nextYear,
+            month: quarterEndMonth,
+            day: 1
+        )) else {
+            return 0.5
+        }
+
+        let totalDays = calendar.dateComponents([.day], from: quarterStart, to: quarterEnd).day ?? 90
+        let elapsedDays = calendar.dateComponents([.day], from: quarterStart, to: now).day ?? 0
+
+        return min(1.0, max(0.0, Double(elapsedDays) / Double(totalDays)))
     }
 
     /// Days remaining in current assignment
@@ -372,9 +585,23 @@ final class HomeViewModel {
     // MARK: - Private Methods
 
     private func loadUserProfile() {
-        // TODO: Load from UserProfile service when available
-        // For now, keep the default "Nurse" greeting
-        // The userName property is initialized to "Nurse" by default
+        // Try to load from UserDefaults where settings are stored
+        let defaults = UserDefaults.standard
+
+        // Check for stored profile data from SettingsViewModel
+        if let data = defaults.data(forKey: "settings.profile"),
+           let profile = try? JSONDecoder().decode(StoredProfile.self, from: data) {
+            userName = profile.firstName.isEmpty ? "Nurse" : profile.firstName
+        } else {
+            // Fallback to default
+            userName = "Nurse"
+        }
+    }
+
+    /// Minimal profile struct for decoding stored settings
+    private struct StoredProfile: Codable {
+        let firstName: String
+        let lastName: String
     }
 
     private func loadCurrentAssignment() throws {
