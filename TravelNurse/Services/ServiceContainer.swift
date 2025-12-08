@@ -45,6 +45,9 @@ public final class ServiceContainer {
     /// Notification service for push notifications
     public private(set) var notificationService: NotificationService?
 
+    /// Tax calculation service
+    public private(set) var taxCalculationService: TaxCalculationService?
+
     // MARK: - Initialization
 
     private init() {}
@@ -65,6 +68,9 @@ public final class ServiceContainer {
 
         // Initialize notification service (singleton, doesn't need model context)
         self.notificationService = NotificationService.shared
+
+        // Initialize tax calculation service (doesn't need model context)
+        self.taxCalculationService = TaxCalculationService()
     }
 
     // MARK: - Service Access
@@ -117,6 +123,14 @@ public final class ServiceContainer {
         return service
     }
 
+    /// Get tax calculation service (throws if not configured)
+    public func getTaxCalculationService() throws -> TaxCalculationService {
+        guard let service = taxCalculationService else {
+            throw ServiceContainerError.serviceNotConfigured("TaxCalculationService")
+        }
+        return service
+    }
+
     // MARK: - Testing Support
 
     /// Reset all services (primarily for testing)
@@ -127,6 +141,7 @@ public final class ServiceContainer {
         mileageService = nil
         locationService = nil
         notificationService = nil
+        taxCalculationService = nil
         modelContext = nil
     }
 

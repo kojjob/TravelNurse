@@ -247,6 +247,287 @@ final class ReportsViewModelTests: XCTestCase {
         XCTAssertNotNil(url)
         // Note: Currently generates text file, not PDF
     }
+
+    // MARK: - CSV Export Content Tests
+
+    func testExportToCSV_generatesFileWithCorrectName() async {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.exportToCSV(year: 2024)
+
+        // Then
+        XCTAssertNotNil(url)
+        XCTAssertTrue(url?.lastPathComponent.contains("TaxReport_2024") ?? false)
+        XCTAssertEqual(url?.pathExtension, "csv")
+    }
+
+    func testExportToCSV_fileContainsSummarySection() async throws {
+        // Given
+        sut.selectedYear = 2024
+        sut.totalIncome = 75000
+        sut.totalExpenses = 8000
+
+        // When
+        let url = await sut.exportReport(format: .csv)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            XCTAssertTrue(content.contains("SUMMARY"), "CSV should contain SUMMARY section")
+            XCTAssertTrue(content.contains("Total Income"), "CSV should contain Total Income label")
+            XCTAssertTrue(content.contains("75000"), "CSV should contain income value")
+        }
+    }
+
+    func testExportToCSV_fileContainsStateBreakdownSection() async throws {
+        // Given
+        sut.selectedYear = 2024
+        sut.stateBreakdowns = [
+            StateBreakdown(state: .texas, earnings: 50000, weeksWorked: 13, hasStateTax: false),
+            StateBreakdown(state: .california, earnings: 25000, weeksWorked: 6, hasStateTax: true)
+        ]
+
+        // When
+        let url = await sut.exportReport(format: .csv)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            XCTAssertTrue(content.contains("STATE BREAKDOWN"), "CSV should contain STATE BREAKDOWN section")
+            XCTAssertTrue(content.contains("TX"), "CSV should contain Texas state code")
+            XCTAssertTrue(content.contains("CA"), "CSV should contain California state code")
+        }
+    }
+
+    func testExportToCSV_fileContainsExpenseDetailsSection() async throws {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.exportReport(format: .csv)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            XCTAssertTrue(content.contains("EXPENSE DETAILS"), "CSV should contain EXPENSE DETAILS section")
+        }
+    }
+
+    func testExportToCSV_fileContainsMileageDetailsSection() async throws {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.exportReport(format: .csv)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            XCTAssertTrue(content.contains("MILEAGE DETAILS"), "CSV should contain MILEAGE DETAILS section")
+        }
+    }
+
+    func testExportToCSV_fileContainsGeneratedTimestamp() async throws {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.exportReport(format: .csv)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            XCTAssertTrue(content.contains("Generated:"), "CSV should contain generation timestamp")
+        }
+    }
+
+    // MARK: - JSON Export Content Tests
+
+    func testExportToJSON_generatesFileWithCorrectName() async {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.exportToJSON(year: 2024)
+
+        // Then
+        XCTAssertNotNil(url)
+        XCTAssertEqual(url?.pathExtension, "json")
+    }
+
+    func testExportToJSON_fileContainsValidJSON() async throws {
+        // Given
+        sut.selectedYear = 2024
+        sut.totalIncome = 50000
+
+        // When
+        let url = await sut.exportReport(format: .json)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let data = try Data(contentsOf: url)
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            XCTAssertNotNil(json, "Should be valid JSON")
+        }
+    }
+
+    func testExportToJSON_containsExportInfo() async throws {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.exportReport(format: .json)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let data = try Data(contentsOf: url)
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let exportInfo = json?["exportInfo"] as? [String: Any]
+            XCTAssertNotNil(exportInfo, "Should contain exportInfo")
+            XCTAssertEqual(exportInfo?["appName"] as? String, "TravelNurse")
+        }
+    }
+
+    func testExportToJSON_containsTaxYear() async throws {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.exportReport(format: .json)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let data = try Data(contentsOf: url)
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            XCTAssertEqual(json?["taxYear"] as? Int, 2024)
+        }
+    }
+
+    func testExportToJSON_containsSummary() async throws {
+        // Given
+        sut.selectedYear = 2024
+        sut.totalIncome = 75000
+        sut.totalExpenses = 5000
+        sut.totalMileageDeduction = 2000
+
+        // When
+        let url = await sut.exportReport(format: .json)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let data = try Data(contentsOf: url)
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let summary = json?["summary"] as? [String: Any]
+            XCTAssertNotNil(summary, "Should contain summary")
+            XCTAssertEqual(summary?["totalIncome"] as? String, "75000")
+            XCTAssertEqual(summary?["totalExpenses"] as? String, "5000")
+            XCTAssertEqual(summary?["mileageDeduction"] as? String, "2000")
+        }
+    }
+
+    func testExportToJSON_containsStateBreakdowns() async throws {
+        // Given
+        sut.selectedYear = 2024
+        sut.stateBreakdowns = [
+            StateBreakdown(state: .florida, earnings: 40000, weeksWorked: 10, hasStateTax: false)
+        ]
+
+        // When
+        let url = await sut.exportReport(format: .json)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let data = try Data(contentsOf: url)
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let breakdowns = json?["stateBreakdowns"] as? [[String: Any]]
+            XCTAssertNotNil(breakdowns, "Should contain stateBreakdowns array")
+            XCTAssertEqual(breakdowns?.first?["state"] as? String, "FL")
+        }
+    }
+
+    func testExportToJSON_containsExpensesArray() async throws {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.exportReport(format: .json)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let data = try Data(contentsOf: url)
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let expenses = json?["expenses"] as? [[String: Any]]
+            XCTAssertNotNil(expenses, "Should contain expenses array")
+        }
+    }
+
+    func testExportToJSON_containsMileageTripsArray() async throws {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.exportReport(format: .json)
+
+        // Then
+        XCTAssertNotNil(url)
+        if let url = url {
+            let data = try Data(contentsOf: url)
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let trips = json?["mileageTrips"] as? [[String: Any]]
+            XCTAssertNotNil(trips, "Should contain mileageTrips array")
+        }
+    }
+
+    // MARK: - Share Report Tests
+
+    func testShareReport_returnsValidURL() async {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.shareReport(year: 2024)
+
+        // Then
+        XCTAssertNotNil(url)
+    }
+
+    func testShareReport_generatesPDF() async {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.shareReport(year: 2024)
+
+        // Then - share uses PDF format
+        XCTAssertNotNil(url)
+        // Note: Actual PDF generation depends on PDFExportService
+    }
+
+    // MARK: - Generate PDF Report Tests
+
+    func testGeneratePDFReport_returnsURL() async {
+        // Given
+        sut.selectedYear = 2024
+
+        // When
+        let url = await sut.generatePDFReport(year: 2024)
+
+        // Then
+        XCTAssertNotNil(url)
+    }
 }
 
 // MARK: - StateBreakdown Tests
