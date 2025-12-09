@@ -303,13 +303,13 @@ final class QuickAddExpenseViewModel {
     private(set) var confidence: Double = 0
     private(set) var isDeductible = false
 
-    @ObservationIgnored private let categorizationService: ExpenseCategorizationService
-    @ObservationIgnored private let parser: NaturalLanguageParserService
+    @ObservationIgnored private var categorizationService: ExpenseCategorizationService
+    @ObservationIgnored private var parser: NaturalLanguageParserService
 
     init() {
         let service = ExpenseCategorizationService()
-        self.categorizationService = service
-        self.parser = NaturalLanguageParserService(categorizationService: service)
+        categorizationService = service
+        parser = NaturalLanguageParserService(categorizationService: service)
     }
 
     private var parseTask: Task<Void, Never>?
