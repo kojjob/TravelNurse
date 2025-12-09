@@ -310,8 +310,8 @@ struct QuickAddExpenseView: View {
         }
 
         // Dismiss after showing success feedback
-        Task {
-            try? await Task.sleep(nanoseconds: 600_000_000) // 0.6 seconds
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
             dismiss()
         }
     }
