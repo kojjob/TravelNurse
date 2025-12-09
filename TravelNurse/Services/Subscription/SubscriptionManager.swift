@@ -56,7 +56,9 @@ final class SubscriptionManager {
 
     // MARK: - Private Properties
 
-    private var updateListenerTask: Task<Void, Error>?
+    // nonisolated(unsafe) allows access in deinit which is nonisolated
+    // Task.cancel() is thread-safe so this is safe
+    private nonisolated(unsafe) var updateListenerTask: Task<Void, Error>?
 
     // MARK: - Initialization
 

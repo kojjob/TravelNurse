@@ -98,7 +98,7 @@ public final class LicenseService {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching licenses: \(error)")
+            ServiceLogger.logFetchError("all licenses", error: error, category: .license)
             return []
         }
     }
@@ -115,7 +115,7 @@ public final class LicenseService {
             // Filter out expired ones
             return licenses.filter { !$0.isExpired }
         } catch {
-            print("Error fetching active licenses: \(error)")
+            ServiceLogger.logFetchError("active licenses", error: error, category: .license)
             return []
         }
     }
@@ -130,7 +130,7 @@ public final class LicenseService {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching licenses by state: \(error)")
+            ServiceLogger.logFetchError("licenses by state", error: error, category: .license)
             return []
         }
     }
@@ -145,7 +145,7 @@ public final class LicenseService {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching licenses by type: \(error)")
+            ServiceLogger.logFetchError("licenses by type", error: error, category: .license)
             return []
         }
     }
@@ -172,7 +172,7 @@ public final class LicenseService {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching compact licenses: \(error)")
+            ServiceLogger.logFetchError("compact licenses", error: error, category: .license)
             return []
         }
     }
@@ -333,7 +333,7 @@ public final class LicenseService {
         do {
             try modelContext.save()
         } catch {
-            print("Error saving context: \(error)")
+            ServiceLogger.logSaveError("license changes", error: error, category: .license)
         }
     }
 }

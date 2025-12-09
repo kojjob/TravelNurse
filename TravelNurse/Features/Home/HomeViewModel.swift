@@ -332,9 +332,9 @@ final class HomeViewModel {
         switch level {
         case .excellent:
             return "Excellent"
-        case .compliant:
+        case .good:
             return "On Track"
-        case .atRisk:
+        case .atRisk, .nonCompliant:
             return "At Risk"
         case .unknown:
             return "Setup Needed"
@@ -351,9 +351,9 @@ final class HomeViewModel {
         switch level {
         case .excellent:
             return TNColors.success
-        case .compliant:
+        case .good:
             return TNColors.primary
-        case .atRisk:
+        case .atRisk, .nonCompliant:
             return TNColors.error
         case .unknown:
             return TNColors.warning

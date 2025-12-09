@@ -388,13 +388,9 @@ final class TaxesViewModel {
 
     /// Get user's tax home state, defaulting to Texas (no state tax) if not set
     private func getUserTaxHomeState() -> USState {
-        // Try to get from compliance service (tax home)
-        if let complianceService = serviceContainer.complianceService,
-           let taxHome = complianceService.fetchCurrentTaxHome(),
-           let state = taxHome.homeAddress?.state {
-            return state
-        }
-        // Default to Texas (no state income tax) if no tax home is set
+        // TODO: In future, get from UserProfile.taxHomeState via userService
+        // For now, default to Texas (no state income tax)
+        // This is a safe default as Texas has no state income tax
         return .texas
     }
 

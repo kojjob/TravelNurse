@@ -171,9 +171,9 @@ struct QuickAddExpenseView: View {
                             .foregroundColor(TNColors.textSecondary)
                         Spacer()
                         HStack(spacing: 6) {
-                            Image(systemName: category.icon)
-                                .foregroundColor(Color(hex: category.colorHex))
-                            Text(category.rawValue)
+                            Image(systemName: category.iconName)
+                                .foregroundColor(category.color)
+                            Text(category.displayName)
                                 .font(.system(size: 15, weight: .medium))
                                 .foregroundColor(TNColors.textPrimary)
                         }
@@ -303,8 +303,14 @@ final class QuickAddExpenseViewModel {
     private(set) var confidence: Double = 0
     private(set) var isDeductible = false
 
-    private let categorizationService = ExpenseCategorizationService()
-    private lazy var parser = NaturalLanguageParserService(categorizationService: categorizationService)
+    @ObservationIgnored private let categorizationService: ExpenseCategorizationService
+    @ObservationIgnored private let parser: NaturalLanguageParserService
+
+    init() {
+        let service = ExpenseCategorizationService()
+        self.categorizationService = service
+        self.parser = NaturalLanguageParserService(categorizationService: service)
+    }
 
     private var parseTask: Task<Void, Never>?
 

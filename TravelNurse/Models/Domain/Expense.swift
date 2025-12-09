@@ -153,32 +153,33 @@ extension Expense {
 
     /// Sample expenses array for previews
     static var previews: [Expense] {
-        [
+        let now = Date()
+        return [
             Expense(
                 category: .meals,
                 amount: 45.99,
-                date: Date(),
+                date: now,
                 merchantName: "Whole Foods Market",
                 isDeductible: true
             ),
             Expense(
                 category: .gasoline,
                 amount: 68.50,
-                date: Calendar.current.date(byAdding: .day, value: -1, to: Date())!,
+                date: Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now,
                 merchantName: "Shell Gas Station",
                 isDeductible: true
             ),
             Expense(
                 category: .licensure,
                 amount: 150.00,
-                date: Calendar.current.date(byAdding: .day, value: -3, to: Date())!,
+                date: Calendar.current.date(byAdding: .day, value: -3, to: now) ?? now,
                 merchantName: "State Board of Nursing",
                 isDeductible: true
             ),
             Expense(
                 category: .uniformsScrubs,
                 amount: 89.00,
-                date: Calendar.current.date(byAdding: .day, value: -5, to: Date())!,
+                date: Calendar.current.date(byAdding: .day, value: -5, to: now) ?? now,
                 merchantName: "Cherokee Uniforms",
                 isDeductible: true
             )

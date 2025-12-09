@@ -18,6 +18,7 @@ public enum NotificationType: String, CaseIterable {
     case expenseReminder = "expense_reminder"
     case weeklyDigest = "weekly_digest"
     case oneYearRule = "one_year_rule"
+    case documentExpiry = "document_expiry"
 
     var title: String {
         switch self {
@@ -29,6 +30,7 @@ public enum NotificationType: String, CaseIterable {
         case .expenseReminder: return "Log Your Expenses"
         case .weeklyDigest: return "Weekly Summary"
         case .oneYearRule: return "IRS One-Year Rule Alert"
+        case .documentExpiry: return "Document Expiring Soon"
         }
     }
 
@@ -83,7 +85,7 @@ public final class NotificationService: NotificationServiceProtocol {
 
             return granted
         } catch {
-            print("Error requesting notification authorization: \(error)")
+            ServiceLogger.log("Failed to request notification authorization", category: .notification, level: .error, error: error)
             return false
         }
     }
@@ -175,9 +177,9 @@ public final class NotificationService: NotificationServiceProtocol {
 
         do {
             try await notificationCenter.add(request)
-            print("Scheduled notification: \(id) for \(triggerDate)")
+            ServiceLogger.logSuccess("Scheduled notification: \(id) for \(triggerDate)", category: .notification)
         } catch {
-            print("Error scheduling notification: \(error)")
+            ServiceLogger.log("Failed to schedule notification", category: .notification, level: .error, error: error)
         }
     }
 
@@ -439,9 +441,9 @@ public final class NotificationService: NotificationServiceProtocol {
 
         do {
             try await notificationCenter.add(request)
-            print("Scheduled weekly expense reminder")
+            ServiceLogger.logSuccess("Scheduled weekly expense reminder", category: .notification)
         } catch {
-            print("Error scheduling weekly expense reminder: \(error)")
+            ServiceLogger.log("Failed to schedule weekly expense reminder", category: .notification, level: .error, error: error)
         }
     }
 
@@ -500,5 +502,40 @@ public final class NotificationService: NotificationServiceProtocol {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         return formatter.string(from: date)
+    }
+
+    // MARK: - Convenience Methods for Services
+
+    /// Schedule a notification with custom title (non-async convenience wrapper)
+    /// Used by LicenseService and QuarterlyPaymentService
+    public func scheduleNotification(id: String, title: String, body: String, date: Date) {
+        Task {
+            let content = UNMutableNotificationContent()
+            content.title = title
+            content.body = body
+            content.sound = .default
+
+            let components = Calendar.current.dateComponents(
+                [.year, .month, .day, .hour, .minute],
+                from: date
+            )
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+
+            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+
+            do {
+                try await notificationCenter.add(request)
+                ServiceLogger.logSuccess("Scheduled notification: \(id) for \(date)", category: .notification)
+            } catch {
+                ServiceLogger.log("Failed to schedule notification: \(id)", category: .notification, level: .error, error: error)
+            }
+        }
+    }
+
+    /// Cancel multiple notifications by identifiers (non-async convenience wrapper)
+    /// Used by LicenseService and QuarterlyPaymentService
+    public func cancelNotifications(ids: [String]) {
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: ids)
+        notificationCenter.removeDeliveredNotifications(withIdentifiers: ids)
     }
 }

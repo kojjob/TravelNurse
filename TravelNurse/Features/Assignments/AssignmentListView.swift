@@ -331,7 +331,7 @@ struct AssignmentListView: View {
 
 // MARK: - Filter Chip Component
 
-struct FilterChip: View {
+private struct FilterChip: View {
     let title: String
     let isSelected: Bool
     let count: Int?

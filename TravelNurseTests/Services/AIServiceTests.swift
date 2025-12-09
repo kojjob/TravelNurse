@@ -69,7 +69,7 @@ final class ExpenseCategorizationTests: XCTestCase {
             amount: 25.00
         )
 
-        XCTAssertEqual(prediction.category, .transportation)
+        XCTAssertEqual(prediction.category, .rideshare)
         XCTAssertTrue(prediction.isDeductible)
     }
 
@@ -80,7 +80,7 @@ final class ExpenseCategorizationTests: XCTestCase {
             amount: 55.00
         )
 
-        XCTAssertEqual(prediction.category, .transportation)
+        XCTAssertEqual(prediction.category, .gasoline)
     }
 
     func testCategorizeParkingExpense() async throws {
@@ -90,7 +90,7 @@ final class ExpenseCategorizationTests: XCTestCase {
             amount: 15.00
         )
 
-        XCTAssertEqual(prediction.category, .transportation)
+        XCTAssertEqual(prediction.category, .parking)
     }
 
     // MARK: - Medical Supplies Categorization
@@ -102,7 +102,7 @@ final class ExpenseCategorizationTests: XCTestCase {
             amount: 120.00
         )
 
-        XCTAssertEqual(prediction.category, .medicalSupplies)
+        XCTAssertEqual(prediction.category, .uniformsScrubs)
         XCTAssertTrue(prediction.isDeductible)
     }
 
@@ -113,7 +113,7 @@ final class ExpenseCategorizationTests: XCTestCase {
             amount: 200.00
         )
 
-        XCTAssertEqual(prediction.category, .medicalSupplies)
+        XCTAssertEqual(prediction.category, .medicalEquipment)
     }
 
     // MARK: - Education Categorization
@@ -125,7 +125,7 @@ final class ExpenseCategorizationTests: XCTestCase {
             amount: 99.00
         )
 
-        XCTAssertEqual(prediction.category, .education)
+        XCTAssertEqual(prediction.category, .continuingEducation)
         XCTAssertTrue(prediction.isDeductible)
     }
 
@@ -136,7 +136,7 @@ final class ExpenseCategorizationTests: XCTestCase {
             amount: 175.00
         )
 
-        XCTAssertEqual(prediction.category, .education)
+        XCTAssertEqual(prediction.category, .certifications)
     }
 
     // MARK: - Lodging Categorization
@@ -148,7 +148,7 @@ final class ExpenseCategorizationTests: XCTestCase {
             amount: 800.00
         )
 
-        XCTAssertEqual(prediction.category, .lodging)
+        XCTAssertEqual(prediction.category, .rent)
         XCTAssertTrue(prediction.isDeductible)
     }
 
@@ -159,7 +159,7 @@ final class ExpenseCategorizationTests: XCTestCase {
             amount: 2500.00
         )
 
-        XCTAssertEqual(prediction.category, .lodging)
+        XCTAssertEqual(prediction.category, .rent)
     }
 
     // MARK: - Batch Categorization
@@ -175,8 +175,8 @@ final class ExpenseCategorizationTests: XCTestCase {
 
         XCTAssertEqual(predictions.count, 3)
         XCTAssertEqual(predictions[0].category, .meals)
-        XCTAssertEqual(predictions[1].category, .transportation)
-        XCTAssertEqual(predictions[2].category, .medicalSupplies)
+        XCTAssertEqual(predictions[1].category, .gasoline)
+        XCTAssertEqual(predictions[2].category, .uniformsScrubs)
     }
 }
 
@@ -219,7 +219,7 @@ final class NaturalLanguageParserTests: XCTestCase {
 
         XCTAssertEqual(result.amount, 50)
         XCTAssertEqual(result.merchant, "Shell")
-        XCTAssertEqual(result.category, .transportation)
+        XCTAssertEqual(result.category, .gasoline)
     }
 
     func testParseExpenseWithToday() async throws {

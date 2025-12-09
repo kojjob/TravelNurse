@@ -81,8 +81,13 @@ final class QuarterlyPaymentsViewModel {
 
     // MARK: - Initialization
 
-    nonisolated init(serviceContainer: ServiceContainer = .shared) {
+    nonisolated init(serviceContainer: ServiceContainer) {
         self.serviceContainer = serviceContainer
+    }
+
+    @MainActor
+    convenience init() {
+        self.init(serviceContainer: .shared)
     }
 
     // MARK: - Actions
@@ -230,12 +235,8 @@ final class QuarterlyPaymentsViewModel {
                 .filter { $0.isDeductible }
                 .reduce(Decimal(0)) { $0 + $1.amount }
 
-            // Get tax home state
-            if let complianceService = serviceContainer.complianceService,
-               let taxHome = complianceService.fetchCurrentTaxHome(),
-               let state = taxHome.homeAddress?.state {
-                taxHomeState = state
-            }
+            // TODO: In future, get from UserProfile.taxHomeState via userService
+            // For now, taxHomeState defaults to Texas (no state income tax)
         } catch {
             print("Error loading income data: \(error)")
         }

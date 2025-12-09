@@ -132,7 +132,7 @@ public final class RecurringExpense {
     }
 
     /// Calculate the next occurrence date
-    public var nextOccurrence: Date? {
+    @MainActor public var nextOccurrence: Date? {
         guard isActive else { return nil }
 
         let calendar = Calendar.current
@@ -160,7 +160,7 @@ public final class RecurringExpense {
     }
 
     /// Whether this expense is due to be generated
-    public var isDue: Bool {
+    @MainActor public var isDue: Bool {
         guard isActive, let next = nextOccurrence else { return false }
         return next <= Date()
     }
@@ -171,17 +171,17 @@ public final class RecurringExpense {
     }
 
     /// Estimated monthly cost
-    public var monthlyEstimate: Decimal {
+    @MainActor public var monthlyEstimate: Decimal {
         amount * frequency.monthlyMultiplier
     }
 
     /// Estimated annual cost
-    public var annualEstimate: Decimal {
+    @MainActor public var annualEstimate: Decimal {
         monthlyEstimate * 12
     }
 
     /// Description of frequency and amount
-    public var frequencyDescription: String {
+    @MainActor public var frequencyDescription: String {
         "\(frequency.displayName)"
     }
 
