@@ -311,7 +311,7 @@ struct QuickAddExpenseView: View {
 
         // Dismiss after showing success feedback
         Task {
-            try? await Task.sleep(nanoseconds: 1_200_000_000) // 1.2 seconds
+            try? await Task.sleep(nanoseconds: 600_000_000) // 0.6 seconds
             dismiss()
         }
     }
