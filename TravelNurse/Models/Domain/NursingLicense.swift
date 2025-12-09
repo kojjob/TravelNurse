@@ -187,12 +187,12 @@ public final class NursingLicense {
     }
 
     /// Display name combining state and license type
-    public var displayName: String {
+    @MainActor public var displayName: String {
         "\(state.fullName) \(licenseType.shortName)"
     }
 
     /// Short display name
-    public var shortDisplayName: String {
+    @MainActor public var shortDisplayName: String {
         "\(state.rawValue) \(licenseType.shortName)"
     }
 

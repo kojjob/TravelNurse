@@ -120,6 +120,9 @@ public enum ServiceLogger {
     private static let expenseLogger = Logger(subsystem: subsystem, category: "ExpenseService")
     private static let mileageLogger = Logger(subsystem: subsystem, category: "MileageService")
     private static let complianceLogger = Logger(subsystem: subsystem, category: "ComplianceService")
+    private static let licenseLogger = Logger(subsystem: subsystem, category: "LicenseService")
+    private static let notificationLogger = Logger(subsystem: subsystem, category: "NotificationService")
+    private static let taxLogger = Logger(subsystem: subsystem, category: "TaxService")
     private static let generalLogger = Logger(subsystem: subsystem, category: "Services")
 
     /// Log categories for service operations
@@ -128,6 +131,9 @@ public enum ServiceLogger {
         case expense = "ExpenseService"
         case mileage = "MileageService"
         case compliance = "ComplianceService"
+        case license = "LicenseService"
+        case notification = "NotificationService"
+        case tax = "TaxService"
         case general = "Services"
     }
 
@@ -235,6 +241,9 @@ public enum ServiceLogger {
         case .expense: return expenseLogger
         case .mileage: return mileageLogger
         case .compliance: return complianceLogger
+        case .license: return licenseLogger
+        case .notification: return notificationLogger
+        case .tax: return taxLogger
         case .general: return generalLogger
         }
     }

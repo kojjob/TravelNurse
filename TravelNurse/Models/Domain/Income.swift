@@ -113,7 +113,7 @@ public final class Income {
 
     // MARK: - Initializer
 
-    @MainActor public init(
+    public init(
         type: IncomeType,
         amount: Decimal,
         date: Date = Date(),

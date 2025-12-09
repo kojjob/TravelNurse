@@ -52,7 +52,7 @@ public final class ComplianceService: ComplianceServiceProtocol {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching compliance records: \(error)")
+            ServiceLogger.logFetchError("all compliance records", error: error, category: .compliance)
             return []
         }
     }
@@ -66,7 +66,7 @@ public final class ComplianceService: ComplianceServiceProtocol {
         do {
             return try modelContext.fetch(descriptor).first
         } catch {
-            print("Error fetching compliance by ID: \(error)")
+            ServiceLogger.logFetchError("compliance by ID", error: error, category: .compliance)
             return nil
         }
     }
@@ -80,7 +80,7 @@ public final class ComplianceService: ComplianceServiceProtocol {
         do {
             return try modelContext.fetch(descriptor).first
         } catch {
-            print("Error fetching compliance for year: \(error)")
+            ServiceLogger.logFetchError("compliance for year \(year)", error: error, category: .compliance)
             return nil
         }
     }
@@ -192,7 +192,7 @@ public final class ComplianceService: ComplianceServiceProtocol {
         do {
             try modelContext.save()
         } catch {
-            print("Error saving context: \(error)")
+            ServiceLogger.logSaveError("compliance changes", error: error, category: .compliance)
         }
     }
 }

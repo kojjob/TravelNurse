@@ -221,7 +221,7 @@ final class RecurringExpenseModelTests: XCTestCase {
     // MARK: - Formatted Properties Tests
 
     func test_frequencyDescription_returnsCorrectString() {
-        let recurring = makeRecurringExpense(frequency: .monthly, amount: 1500)
+        let recurring = makeRecurringExpense(amount: 1500, frequency: .monthly)
 
         XCTAssertTrue(recurring.frequencyDescription.contains("Monthly"))
     }

@@ -135,7 +135,7 @@ final class StipendCalculatorServiceTests: XCTestCase {
         // Then
         // Weekly gross: 3913
         // Blended: 3913 / 36 = 108.69
-        XCTAssertEqual(result, Decimal(string: "108.69")!, accuracy: Decimal(string: "0.01")!)
+        Decimal.assertEqual(result, Decimal(string: "108.69")!, accuracy: Decimal(string: "0.01")!)
     }
 
     func testCalculateBlendedRateZeroHours() {
@@ -441,9 +441,3 @@ extension Decimal {
     }
 }
 
-extension XCTestCase {
-    func XCTAssertEqual(_ lhs: Decimal, _ rhs: Decimal, accuracy: Decimal, file: StaticString = #file, line: UInt = #line) {
-        let diff = abs(lhs - rhs)
-        XCTAssertTrue(diff <= accuracy, "\(lhs) is not equal to \(rhs) within accuracy \(accuracy)", file: file, line: line)
-    }
-}

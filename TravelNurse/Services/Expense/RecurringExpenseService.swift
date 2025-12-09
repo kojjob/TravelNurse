@@ -94,7 +94,7 @@ public final class RecurringExpenseService {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching recurring expenses: \(error)")
+            ServiceLogger.logFetchError("all recurring expenses", error: error, category: .expense)
             return []
         }
     }
@@ -109,7 +109,7 @@ public final class RecurringExpenseService {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching active recurring expenses: \(error)")
+            ServiceLogger.logFetchError("active recurring expenses", error: error, category: .expense)
             return []
         }
     }
@@ -130,7 +130,7 @@ public final class RecurringExpenseService {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching recurring expenses by category: \(error)")
+            ServiceLogger.logFetchError("recurring expenses by category", error: error, category: .expense)
             return []
         }
     }
@@ -264,7 +264,7 @@ public final class RecurringExpenseService {
         do {
             try modelContext.save()
         } catch {
-            print("Error saving context: \(error)")
+            ServiceLogger.logSaveError("recurring expense changes", error: error, category: .expense)
         }
     }
 }

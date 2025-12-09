@@ -25,7 +25,7 @@ final class ExpenseCategorizationService: ExpenseCategorizationAI {
             deductionReason: "Business meals while on assignment (50% deductible)"
         ),
 
-        .transportation: CategoryMatcher(
+        .gasoline: CategoryMatcher(
             keywords: ["uber", "lyft", "taxi", "gas", "fuel", "parking", "toll", "transit",
                       "bus", "train", "metro", "subway", "airport", "shuttle", "rental car",
                       "hertz", "enterprise", "avis", "budget", "national", "shell", "exxon",
@@ -35,7 +35,7 @@ final class ExpenseCategorizationService: ExpenseCategorizationAI {
             deductionReason: "Work-related transportation expenses"
         ),
 
-        .lodging: CategoryMatcher(
+        .rent: CategoryMatcher(
             keywords: ["hotel", "motel", "airbnb", "vrbo", "marriott", "hilton", "hyatt",
                       "holiday inn", "hampton", "residence inn", "extended stay", "rent",
                       "apartment", "housing", "lodging", "accommodation", "suite"],
@@ -44,7 +44,7 @@ final class ExpenseCategorizationService: ExpenseCategorizationAI {
             deductionReason: "Temporary lodging while on assignment"
         ),
 
-        .medicalSupplies: CategoryMatcher(
+        .uniformsScrubs: CategoryMatcher(
             keywords: ["scrubs", "stethoscope", "medical", "nursing", "supplies", "uniform",
                       "shoes", "clogs", "compression", "badge", "lanyard", "pen light",
                       "bandage scissors", "nursing bag", "figs", "cherokee", "dickies",
@@ -54,7 +54,7 @@ final class ExpenseCategorizationService: ExpenseCategorizationAI {
             deductionReason: "Required nursing supplies and uniforms"
         ),
 
-        .education: CategoryMatcher(
+        .continuingEducation: CategoryMatcher(
             keywords: ["ceu", "continuing education", "certification", "license", "exam",
                       "nclex", "acls", "bls", "pals", "cpr", "training", "course", "class",
                       "seminar", "conference", "workshop", "textbook", "study guide",
@@ -73,7 +73,7 @@ final class ExpenseCategorizationService: ExpenseCategorizationAI {
             deductionReason: "Work-related communication expenses (prorated)"
         ),
 
-        .travel: CategoryMatcher(
+        .airfare: CategoryMatcher(
             keywords: ["flight", "airline", "airplane", "airport", "baggage", "luggage",
                       "southwest", "delta", "united", "american airlines", "jetblue",
                       "spirit", "frontier", "moving", "relocation", "pod", "uhaul",
@@ -83,7 +83,7 @@ final class ExpenseCategorizationService: ExpenseCategorizationAI {
             deductionReason: "Travel between tax home and assignment"
         ),
 
-        .insurance: CategoryMatcher(
+        .liability: CategoryMatcher(
             keywords: ["insurance", "malpractice", "liability", "health insurance",
                       "professional insurance", "nso", "proliability", "hpso",
                       "coverage", "premium"],
@@ -92,7 +92,7 @@ final class ExpenseCategorizationService: ExpenseCategorizationAI {
             deductionReason: "Professional liability insurance"
         ),
 
-        .fees: CategoryMatcher(
+        .licensure: CategoryMatcher(
             keywords: ["license fee", "renewal fee", "application fee", "background check",
                       "fingerprint", "drug test", "physical", "credential", "verification",
                       "nursys", "state board", "agency fee", "subscription fee"],
@@ -212,11 +212,11 @@ final class ExpenseCategorizationService: ExpenseCategorizationAI {
             for keyword in matcher.keywords.prefix(5) {
                 let words = text.components(separatedBy: .whitespaces)
                 for word in words where word.count > 2 {
-                    if let distance = embedder.distance(between: word, and: keyword) {
-                        // Convert distance to similarity (lower distance = higher similarity)
-                        if distance < 0.5 {
-                            score += (0.5 - distance) * 0.2
-                        }
+                    let distance = embedder.distance(between: word, and: keyword)
+                    // Convert distance to similarity (lower distance = higher similarity)
+                    // NLDistance returns NaN for unknown words, so check for valid distance
+                    if !distance.isNaN && distance < 0.5 {
+                        score += (0.5 - distance) * 0.2
                     }
                 }
             }
@@ -235,38 +235,3 @@ private struct CategoryMatcher {
     let deductionReason: String?
 }
 
-// MARK: - Expense Category Extension
-
-extension ExpenseCategory {
-    /// Icon for the category
-    var icon: String {
-        switch self {
-        case .meals: return "fork.knife"
-        case .transportation: return "car.fill"
-        case .lodging: return "house.fill"
-        case .medicalSupplies: return "cross.case.fill"
-        case .education: return "book.fill"
-        case .utilities: return "bolt.fill"
-        case .travel: return "airplane"
-        case .insurance: return "shield.fill"
-        case .fees: return "doc.text.fill"
-        case .other: return "ellipsis.circle.fill"
-        }
-    }
-
-    /// Color for the category
-    var colorHex: String {
-        switch self {
-        case .meals: return "F59E0B"
-        case .transportation: return "3B82F6"
-        case .lodging: return "8B5CF6"
-        case .medicalSupplies: return "EF4444"
-        case .education: return "10B981"
-        case .utilities: return "6366F1"
-        case .travel: return "EC4899"
-        case .insurance: return "14B8A6"
-        case .fees: return "F97316"
-        case .other: return "6B7280"
-        }
-    }
-}

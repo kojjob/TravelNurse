@@ -54,7 +54,7 @@ public final class QuarterlyPaymentService {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching quarterly payments: \(error)")
+            ServiceLogger.logFetchError("quarterly payments for year \(year)", error: error, category: .tax)
             return []
         }
     }
@@ -69,7 +69,7 @@ public final class QuarterlyPaymentService {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching unpaid payments: \(error)")
+            ServiceLogger.logFetchError("unpaid payments", error: error, category: .tax)
             return []
         }
     }
@@ -86,7 +86,7 @@ public final class QuarterlyPaymentService {
         do {
             return try modelContext.fetch(descriptor)
         } catch {
-            print("Error fetching overdue payments: \(error)")
+            ServiceLogger.logFetchError("overdue payments", error: error, category: .tax)
             return []
         }
     }
@@ -105,7 +105,7 @@ public final class QuarterlyPaymentService {
             let payments = try modelContext.fetch(descriptor)
             return payments.first
         } catch {
-            print("Error fetching next payment: \(error)")
+            ServiceLogger.logFetchError("next upcoming payment", error: error, category: .tax)
             return nil
         }
     }
@@ -310,7 +310,7 @@ public final class QuarterlyPaymentService {
         do {
             try modelContext.save()
         } catch {
-            print("Error saving context: \(error)")
+            ServiceLogger.logSaveError("quarterly payment changes", error: error, category: .tax)
         }
     }
 

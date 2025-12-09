@@ -286,9 +286,9 @@ final class DocumentVaultViewModel {
         if let reminderDate = Calendar.current.date(byAdding: .day, value: -30, to: expirationDate),
            reminderDate > Date() {
             await notificationService.scheduleNotification(
-                title: "Document Expiring Soon",
+                type: .documentExpiry,
                 body: "\(document.title) expires in 30 days",
-                date: reminderDate,
+                triggerDate: reminderDate,
                 identifier: "document_expiry_30_\(document.id.uuidString)"
             )
         }
@@ -297,9 +297,9 @@ final class DocumentVaultViewModel {
         if let reminderDate = Calendar.current.date(byAdding: .day, value: -7, to: expirationDate),
            reminderDate > Date() {
             await notificationService.scheduleNotification(
-                title: "Document Expiring Soon",
+                type: .documentExpiry,
                 body: "\(document.title) expires in 7 days",
-                date: reminderDate,
+                triggerDate: reminderDate,
                 identifier: "document_expiry_7_\(document.id.uuidString)"
             )
         }
