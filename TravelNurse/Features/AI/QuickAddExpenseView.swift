@@ -310,8 +310,8 @@ struct QuickAddExpenseView: View {
         }
 
         // Dismiss after showing success feedback
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(600))
+        // Using DispatchQueue instead of Task - Task can be cancelled on view re-render
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [dismiss] in
             dismiss()
         }
     }
