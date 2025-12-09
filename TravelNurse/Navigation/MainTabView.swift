@@ -2,15 +2,15 @@
 //  MainTabView.swift
 //  TravelNurse
 //
-//  Main navigation container with 5-tab layout
+//  Main navigation container with 4-tab layout
 //
 
 import SwiftUI
 import SwiftData
 
 /// Main navigation container for the app
-/// Manages tab-based navigation with 5 primary tabs:
-/// Home, Assignments, Expenses, Tax Home, Reports
+/// Manages tab-based navigation with 4 primary tabs:
+/// Home, Services, Activities, Account
 struct MainTabView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -18,28 +18,25 @@ struct MainTabView: View {
 
     enum Tab: Int, CaseIterable {
         case home = 0
-        case assignments = 1
-        case expenses = 2
-        case taxHome = 3
-        case reports = 4
+        case services = 1
+        case activities = 2
+        case account = 3
 
         var title: String {
             switch self {
             case .home: return "Home"
-            case .assignments: return "Assignments"
-            case .expenses: return "Expenses"
-            case .taxHome: return "Tax Home"
-            case .reports: return "Reports"
+            case .services: return "Services"
+            case .activities: return "Activities"
+            case .account: return "Account"
             }
         }
 
         var icon: String {
             switch self {
             case .home: return "house.fill"
-            case .assignments: return "briefcase.fill"
-            case .expenses: return "creditcard.fill"
-            case .taxHome: return "mappin.and.ellipse"
-            case .reports: return "chart.bar.fill"
+            case .services: return "square.grid.2x2.fill"
+            case .activities: return "clock.fill"
+            case .account: return "person.circle.fill"
             }
         }
     }
@@ -52,29 +49,23 @@ struct MainTabView: View {
                 }
                 .tag(Tab.home)
 
-            AssignmentListView()
+            ServicesView()
                 .tabItem {
-                    Label(Tab.assignments.title, systemImage: Tab.assignments.icon)
+                    Label(Tab.services.title, systemImage: Tab.services.icon)
                 }
-                .tag(Tab.assignments)
+                .tag(Tab.services)
 
-            ExpenseListView()
+            ActivitiesView()
                 .tabItem {
-                    Label(Tab.expenses.title, systemImage: Tab.expenses.icon)
+                    Label(Tab.activities.title, systemImage: Tab.activities.icon)
                 }
-                .tag(Tab.expenses)
+                .tag(Tab.activities)
 
-            TaxHomeView()
+            AccountView()
                 .tabItem {
-                    Label(Tab.taxHome.title, systemImage: Tab.taxHome.icon)
+                    Label(Tab.account.title, systemImage: Tab.account.icon)
                 }
-                .tag(Tab.taxHome)
-
-            ReportsView()
-                .tabItem {
-                    Label(Tab.reports.title, systemImage: Tab.reports.icon)
-                }
-                .tag(Tab.reports)
+                .tag(Tab.account)
         }
         .tint(TNColors.primary)
         .onAppear {
