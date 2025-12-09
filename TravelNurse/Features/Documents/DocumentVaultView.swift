@@ -13,6 +13,7 @@ import PhotosUI
 struct DocumentVaultView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel: DocumentVaultViewModel?
 
     var body: some View {
@@ -25,6 +26,13 @@ struct DocumentVaultView: View {
                 }
             }
             .navigationTitle("Document Vault")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
             .onAppear {
                 if viewModel == nil {
                     viewModel = DocumentVaultViewModel(modelContext: modelContext)

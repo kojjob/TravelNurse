@@ -10,6 +10,7 @@ import SwiftUI
 /// AI Tax Assistant chat interface for travel nurses
 struct TaxAssistantView: View {
 
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel = TaxAssistantViewModel()
     @FocusState private var isInputFocused: Bool
 
@@ -67,6 +68,12 @@ struct TaxAssistantView: View {
             .navigationTitle("Tax Assistant")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
