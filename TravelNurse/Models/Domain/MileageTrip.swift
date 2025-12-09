@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 import CoreLocation
+import SwiftUI
 
 /// A tracked mileage trip for tax deduction
 @Model
@@ -221,6 +222,17 @@ public enum MileageTripType: String, CaseIterable, Codable, Identifiable {
         case .professionalDevelopment: return "graduationcap.fill"
         case .medicalAppointment: return "stethoscope"
         case .other: return "car.fill"
+        }
+    }
+
+    public var color: Color {
+        switch self {
+        case .workRelated: return TNColors.primary
+        case .taxHomeTravel: return TNColors.success
+        case .licensure: return TNColors.secondary
+        case .professionalDevelopment: return TNColors.accent
+        case .medicalAppointment: return TNColors.warning
+        case .other: return TNColors.textSecondary
         }
     }
 }

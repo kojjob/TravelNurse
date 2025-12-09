@@ -239,7 +239,7 @@ struct DocumentVaultContent: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     ForEach(DocumentFilter.allCases) { filter in
-                        FilterChip(
+                        DocumentFilterChip(
                             title: filter.rawValue,
                             icon: filter.iconName,
                             isSelected: viewModel.selectedFilter == filter
@@ -314,7 +314,7 @@ struct DocumentStatCard: View {
 
 // MARK: - Filter Chip
 
-private struct FilterChip: View {
+private struct DocumentFilterChip: View {
     let title: String
     let icon: String
     let isSelected: Bool
