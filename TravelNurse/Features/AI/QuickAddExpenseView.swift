@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// Quick add expense using natural language
 struct QuickAddExpenseView: View {
 
     @State private var viewModel = QuickAddExpenseViewModel()
+    @State private var showSuccess = false
     @Environment(\.dismiss) private var dismiss
     @FocusState private var isInputFocused: Bool
 
@@ -22,23 +24,30 @@ struct QuickAddExpenseView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Input section
-                inputSection
+            ZStack {
+                VStack(spacing: 0) {
+                    // Input section
+                    inputSection
 
-                // Parsed preview
-                if viewModel.parsedExpense != nil {
-                    parsedPreviewSection
+                    // Parsed preview
+                    if viewModel.parsedExpense != nil {
+                        parsedPreviewSection
+                    }
+
+                    Spacer()
+
+                    // Example prompts
+                    if viewModel.inputText.isEmpty {
+                        examplesSection
+                    }
                 }
+                .background(Color(hex: "F8FAFC"))
 
-                Spacer()
-
-                // Example prompts
-                if viewModel.inputText.isEmpty {
-                    examplesSection
+                // Success overlay
+                if showSuccess {
+                    successOverlay
                 }
             }
-            .background(Color(hex: "F8FAFC"))
             .navigationTitle("Quick Add")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -50,7 +59,7 @@ struct QuickAddExpenseView: View {
                     Button("Add") {
                         saveExpense()
                     }
-                    .disabled(!viewModel.canSave)
+                    .disabled(!viewModel.canSave || showSuccess)
                     .fontWeight(.semibold)
                 }
             }
@@ -58,6 +67,39 @@ struct QuickAddExpenseView: View {
                 isInputFocused = true
             }
         }
+    }
+
+    // MARK: - Success Overlay
+
+    private var successOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(TNColors.success)
+                        .frame(width: 80, height: 80)
+
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 40, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .scaleEffect(showSuccess ? 1.0 : 0.5)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: showSuccess)
+
+                Text("Expense Added!")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            .padding(32)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.ultraThinMaterial)
+            )
+        }
+        .transition(.opacity)
     }
 
     // MARK: - Input Section
@@ -255,8 +297,23 @@ struct QuickAddExpenseView: View {
     private func saveExpense() {
         guard let parsed = viewModel.parsedExpense else { return }
 
+        // Trigger haptic feedback
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+
+        // Call the save callback
         onSave?(parsed)
-        dismiss()
+
+        // Show success overlay with animation
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showSuccess = true
+        }
+
+        // Dismiss after showing success feedback
+        // Using DispatchQueue instead of Task - Task can be cancelled on view re-render
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [dismiss] in
+            dismiss()
+        }
     }
 }
 
@@ -308,8 +365,10 @@ final class QuickAddExpenseViewModel {
 
     init() {
         let service = ExpenseCategorizationService()
+        let parserInstance = NaturalLanguageParserService(categorizationService: service)
+        
         self.categorizationService = service
-        self.parser = NaturalLanguageParserService(categorizationService: service)
+        self.parser = parserInstance
     }
 
     private var parseTask: Task<Void, Never>?
